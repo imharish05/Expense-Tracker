@@ -20,7 +20,17 @@ location
 "coimbatore",
 projectName : "Sam homes",
 projectType: "Residential",
-status : "Initialized"}
+status : "Initialized"},
+{
+  id: "1ba2906f-e70e-4520-b603-9c84ead1aa6f",
+  projectName: "Sampel",
+  location: "Coimbatore",
+  customerName: "Kathryn Murphy",
+  customerId: 1,
+  cost: 1500000,
+  projectType: "Residential",
+  status: "Initialized"
+}
     ]
 }
 
@@ -47,11 +57,32 @@ const projectSlice = createSlice({
              state.projects = state.projects.filter(
         (p) => p.id != action.payload // Use action.payload directly
     )
-}
-
+},
+assignStaffToProject: (state, action) => {
+    const { projectId, staffId, staffName } = action.payload;
+    
+    // Using find with loose equality or String() to ensure a match
+    const project = state.projects.find(p => String(p.id) === String(projectId));
+    
+    if (project) {
+        project.assignedStaffId = staffId;
+        project.assignedStaffName = staffName;
     }
+}
+    },
+
+    removeStaffFromProject: (state, action) => {
+    const { projectId } = action.payload;
+    const project = state.projects.find((p) => String(p.id) === String(projectId));
+    
+    if (project) {
+        // Clear the assignment fields
+        project.assignedStaffId = null;
+        project.assignedStaffName = null;
+    }
+},
 })
 
 
-export const {allProjects,addProjects,updateProject,deleteProject} = projectSlice.actions;
+export const {allProjects,addProjects,updateProject,deleteProject,assignStaffToProject,removeStaffFromProject} = projectSlice.actions;
 export default projectSlice.reducer

@@ -1,6 +1,6 @@
 import Swal from "sweetalert2"
 import api from "../../api/axios"
-import { addProjects, allProjects, deleteProject, updateProject } from "./projectSlice"
+import { addProjects, allProjects, assignStaffToProject, deleteProject, removeStaffFromProject, updateProject } from "./projectSlice"
 
 export const getAllProjects = async(dispatch) => {
     try {
@@ -110,5 +110,62 @@ export const deleteProjectFunction = async (dispatch, id) => {
             icon: "error",
             confirmButtonColor: "#d33",
         });
+    }
+};
+
+export const assignStaffToProjectFunction = async (dispatch, projectId, staffId, staffName) => {
+    try {
+        // 1. Update backend (Assumes a junction table or FK update)
+        // await api.post(`/projects/assign-staff`, { projectId, staffId });
+
+        // 2. Update Redux store using the specific reducer you created
+        // dispatch(assignStaffToProject({ projectId, staffId, staffName }));
+
+        dispatch(assignStaffToProject({projectId, staffId, staffName}))
+
+        Swal.fire({
+            title: "Assigned!",
+            text: `${staffName} has been assigned to the project.`,
+            icon: "success",
+            confirmButtonColor: "#ea8b0c",
+            timer: 2000
+        });
+
+        return true;
+
+    } catch (err) {
+        const message = err.response?.data?.message || "Assignment failed";
+        Swal.fire({ title: "Error!", text: message, icon: "error", confirmButtonColor: "#d33" });
+
+        return false;
+    }
+};
+
+
+export const unAssignStaffFromProjectFunction = async (dispatch, projectId, staffId, staffName, silent = false) => {
+    try {
+        // 1. Optional: Backend API Call
+        // await api.delete(`/projects/unassign-staff/${projectId}`);
+
+        // 2. Update Redux store
+        dispatch(removeStaffFromProject({ projectId }));
+        
+
+        // 3. Notification (only if not silent)
+        if (!silent) {
+            Swal.fire({
+                title: "Removed!",
+                text: `${staffName} has been removed from the project.`,
+                icon: "success",
+                confirmButtonColor: "#ea8b0c",
+                timer: 2000
+            });
+        }
+
+        return true;
+    } catch (err) {
+        const message = err.response?.data?.message || "Unassignment failed";
+        Swal.fire({ title: "Error!", text: message, icon: "error", confirmButtonColor: "#d33" });
+        return false;
     }
 };

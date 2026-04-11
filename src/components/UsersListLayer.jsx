@@ -19,7 +19,6 @@ const UsersListLayer = () => {
    // Initial Data with default status set to "Active"
 
   // State Management
-  const [users, setUsers] = useState(customerList);
   const [searchTerm, setSearchTerm] = useState("");
   const [projectFilter, setProjectFilter] = useState("");
   const [itemsPerPage, setItemsPerPage] = useState(5);
@@ -106,8 +105,8 @@ const filteredUsers = useMemo(() => {
 };
 
   // 👁️ View and ✏️ Edit Navigation
-  const handleView = (id) => navigate(`/users/${id}`);
-  const handleEdit = (id) => navigate(`/edit-user/${id}`);
+  const handleView = (id) => navigate(`/customer/${id}`);
+  const handleEdit = (id) => navigate(`/edit-customer/${id}`);
 
   return (
     <div className="card h-100 p-0 radius-12">

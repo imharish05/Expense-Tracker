@@ -38,10 +38,12 @@ import DocumentUpload from "./pages/DocumentUpload";
 import ReportPage from "./pages/ReportPage";
 import ProjectListPage from "./pages/ProjectListPage";
 import EditUserPageList from "./pages/EditUserListPage";
-import SingleProjectLayer from "./components/SingleProjectLayer";
 import SingleProjectPage from "./pages/SingleProjectPage";
 import AddProjectPage from "./pages/AddProjectPage";
+import AddStaffPage from "./pages/AddStaffPage";
 import EditProjectPage from "./pages/EditProjectPage";
+import StaffListPage from "./pages/StaffListPage";
+import EditStaffListPage from "./pages/EditStaffListPage";
 
 function App() {
   return (
@@ -51,7 +53,7 @@ function App() {
         <Route exact path='/' element={<HomePageOne />} />
 
         {/* SL */}
-        <Route exact path='/add-user' element={<AddUserPage />} />
+        
         <Route exact path='/assign-role' element={<AssignRolePage />} />
     
         <Route exact path='/calendar-main' element={<CalendarMainPage />} />
@@ -81,15 +83,27 @@ function App() {
         <Route exact path='/sign-up' element={<SignUpPage />} />
      
       
+      {/* Projects  */}
         <Route exact path='/projects-list' element={<ProjectListPage />} />
         <Route exact path='/projects/:id' element={<SingleProjectPage />} />
         <Route exact path='/add-projects' element={<AddProjectPage />} />
         <Route exact path='/edit-project/:id' element={<EditProjectPage />} />
       
-        <Route exact path='/users-list' element={<UsersListPage />} />
-        <Route exact path='/edit-user/:id' element={<EditUserPageList />} />
+
+
+
+      {/* UserList */}
+      <Route exact path='/add-customer' element={<AddUserPage />} />
+        <Route exact path='/customers-list' element={<UsersListPage />} />
+        <Route exact path='/edit-customer/:id' element={<EditUserPageList />} />
         <Route exact path='/view-details' element={<ViewDetailsPage />} />
         <Route exact path='/view-profile' element={<ViewProfilePage />} />
+
+{/* Staff List */}
+        <Route exact path='/add-staff' element={<AddStaffPage />} />
+        <Route exact path='/staff-list' element={<StaffListPage />} />
+        <Route exact path='/edit-staff/:id' element={<EditStaffListPage />} />
+
 
         <Route exact path='*' element={<ErrorPage />} />
 

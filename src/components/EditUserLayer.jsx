@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
-import { updateCustomerFunction } from '../features/customers/customerService';
 import api from '../api/axios';
+import { updateStaffFunction } from '../features/staff/staffService';
 
     const EditUserLayer = () => {
         const navigate = useNavigate()
@@ -19,12 +19,14 @@ import api from '../api/axios';
         const [status,setStatus] = useState("")
         
 
-const customer = useSelector((state) => 
-    state.customers.customers.find((c) => c.id == (id))
-);
+    const customerList = useSelector((state) => state.customers.customers)
+
+    const customer = useMemo(() => 
+     customerList.find((c) => c.id == id || c._id == id)
+    ,[customerList,id])
+
 
     useEffect(() => {
-
         if (customer) {
         setName(customer.name || "");
         setBudget(customer.budget || "");
@@ -55,7 +57,7 @@ const customer = useSelector((state) =>
                 const payload = {
                    id : id ,name,address,phone,budget,projectType,status
                 }
-                updateCustomerFunction(dispatch,id,payload)
+                updateStaffFunction(dispatch,id,payload)
             }
             catch(err){
                 console.log(err.message)

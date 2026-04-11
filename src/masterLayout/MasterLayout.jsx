@@ -92,6 +92,12 @@ const isCustomerRoute =
   location.pathname.startsWith("/users-list") ||
   location.pathname.startsWith("/add-user") ||
   location.pathname.startsWith("/edit-user");
+
+
+  const isStaffRoute =
+  location.pathname.startsWith("/staff-list") ||
+  location.pathname.startsWith("/add-staff") ||
+  location.pathname.startsWith("/edit-staff");
   
   return (
     <section className={mobileMenu ? "overlay active" : "overlay "}>
@@ -145,9 +151,10 @@ const isCustomerRoute =
               </NavLink>
             </li>
 
+{/* Customers */}
 
        <li className={`dropdown mt-3 ${isCustomerRoute ? "open" : ""}`}>
-  <NavLink to="/users-list" className="d-flex align-items-center gap-2">
+  <NavLink to="/customers-list" className="d-flex align-items-center gap-2">
     <Icon
       icon="flowbite:users-group-outline"
       className="menu-icon"
@@ -165,7 +172,7 @@ const isCustomerRoute =
   >
     <li>
       <NavLink
-        to="/users-list"
+        to="/customers-list"
         className={({ isActive }) =>
           isActive ? "active-page" : ""
         }
@@ -177,13 +184,54 @@ const isCustomerRoute =
 
     <li>
       <NavLink
-        to="/add-user"
+        to="/add-customer"
         className={({ isActive }) =>
           isActive ? "active-page" : ""
         }
       >
         <i className="ri-circle-fill circle-icon text-info-main w-auto" />
         Add Customer
+      </NavLink>
+    </li>
+  </ul>
+</li>
+
+{/* Stafffs or Users */}
+<li className={`dropdown mt-3 ${isStaffRoute ? "open" : ""}`}>
+  <NavLink to="/staff-list" className="d-flex align-items-center gap-2">
+   <Icon icon="flowbite:user-circle-outline" className="menu-icon" />
+    <span>Staffs</span>
+  </NavLink>
+
+  <ul
+    className="sidebar-submenu"
+    style={{
+      maxHeight: isStaffRoute ? "500px" : "0px",
+      overflow: "hidden",
+      transition: "max-height 0.3s ease",
+    }}
+  >
+    <li>
+      <NavLink
+        to="/staff-list"
+        className={({ isActive }) =>
+          isActive ? "active-page" : ""
+        }
+      >
+        <i className="ri-circle-fill circle-icon text-primary-600 w-auto" />
+        Staffs List
+      </NavLink>
+    </li>
+
+    <li>
+      <NavLink
+        to="/add-staff"
+        className={({ isActive }) =>
+          isActive ? "active-page" : ""
+        }
+      >
+        <i className="ri-circle-fill circle-icon text-info-main w-auto" />
+        Add Staff
       </NavLink>
     </li>
   </ul>

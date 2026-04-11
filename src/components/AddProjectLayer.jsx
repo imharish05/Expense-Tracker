@@ -31,12 +31,19 @@ const AddProjectLayer = () => {
 
         const customersList = useSelector((state) => state.customers.customers)
 
+        const staffList = useSelector((state) => state.staffs.staffs)
+
 
 // Inside your AddProjectLayer component:
 const [searchTerm, setSearchTerm] = useState("");
 const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-// Filter list based on search term
+const [staffSearchTerm, setStaffSearchTerm] = useState("");
+const [isStaffDropdownOpen, setIsStaffDropdownOpen] = useState(false);
+const [selectedStaffId, setSelectedStaffId] = useState("");
+const [selectedStaffName, setSelectedStaffName] = useState("");
+
+// Filter list based on search term for dropdown
 const filteredCustomers = customersList.filter(customer => {
     const name = customer?.name || ""; 
     const location = customer?.location || "";
@@ -45,13 +52,20 @@ const filteredCustomers = customersList.filter(customer => {
            location.toLowerCase().includes(searchTerm.toLowerCase());
 });
 
+const filteredStaff = (staffList || []).filter(staff => {
+    const name = staff?.name || "";
+    const role = staff?.role || ""; // Or any other field like designation
+    return name.toLowerCase().includes(staffSearchTerm.toLowerCase()) ||
+           role.toLowerCase().includes(staffSearchTerm.toLowerCase());
+});
+
         const handleProject= async(e) =>{
             e.preventDefault()
             
             try{
 
                 const payload = {
-                    id : crypto.randomUUID(),projectName,location,customerName,customerId,cost,projectType,status : "Initialized"
+                    id : crypto.randomUUID(),projectName,location,customerName,customerId,staffName : selectedStaffName,staffId : selectedStaffId,cost,projectType,status : "Initialized"
                 }
                 
                 console.log(payload);
@@ -152,6 +166,57 @@ const filteredCustomers = customersList.filter(customer => {
                                             />
                                         </div>
 
+                                        {/* For staff */}
+
+                                        {/* SEARCHABLE STAFF DROPDOWN */}
+<div className="mb-20 position-relative">
+    <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+        Assign Staff / Manager <span className="text-danger-600">*</span>
+    </label>
+    
+    <div className="input-group">
+        <input
+            type="text"
+            className="form-control radius-8"
+            placeholder="Search staff by name or role..."
+            value={staffSearchTerm}
+            onFocus={() => setIsStaffDropdownOpen(true)}
+            onBlur={() => setTimeout(() => setIsStaffDropdownOpen(false), 200)} // Small delay to allow click
+            onChange={(e) => {
+                setStaffSearchTerm(e.target.value);
+                setIsStaffDropdownOpen(true);
+            }}
+            disabled={customerName.length === 0}
+        />
+    </div>
+
+    {isStaffDropdownOpen && (
+        <ul className="position-absolute w-100 mt-1 bg-white radius-8 shadow-lg z-3 overflow-auto" 
+            style={{ maxHeight: '200px', listStyle: 'none', padding: 0, border: "1px solid #e5e7eb" }}>
+            {filteredStaff.length > 0 ? (
+                filteredStaff.map((staff) => (
+                    <li 
+                        key={staff.id || staff._id}
+                        className="p-10 border-bottom cursor-pointer hover-bg-primary-50"
+                        onMouseDown={(e) => {
+                            e.preventDefault(); 
+                            setSelectedStaffId(staff.id);
+                            setSelectedStaffName(staff.name);
+                            setStaffSearchTerm(staff.name);
+                            setIsStaffDropdownOpen(false);
+                        }}
+                    >
+                        <div className="fw-medium text-primary-light">{staff.name}</div>
+                        <small className="text-gray-500">{staff?.address || staff?.location}</small>
+                    </li>
+                ))
+            ) : (
+                <li className="p-10 text-center text-gray-400">No staff found</li>
+            )}
+        </ul>
+    )}
+</div>
+
 
                         {/* For location  */}
                                         <div className="mb-20">
@@ -194,6 +259,7 @@ const filteredCustomers = customersList.filter(customer => {
     <option value="Commercial">Commercial</option>
 </select>
                                         </div>
+
 
 
 {/* For cost */}

@@ -59,7 +59,7 @@ export const addCustomerFunction = async(dispatch,payload) => {
 export const updateCustomerFunction = async(dispatch,id,payload) => {
     try{
 
-        // const res = await api.post('/update-customer/${id}',payload)
+        // const res = await api.patch('/update-customer/${id}',payload)
 
         // const data = res.data.customer;
 

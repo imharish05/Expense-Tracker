@@ -14,11 +14,11 @@ const ProjectListLayer = () => {
   // Initial Project  and customer Data
   const customers = useSelector((state) => state.customers.customers)
   const projectList = useSelector((state) =>  state.projects.projects)
+  const staffList = useSelector((state) => state.staffs.staffs)
 
 
 
   // State Management
-  const [projects, setProjects] = useState(projectList);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [itemsPerPage, setItemsPerPage] = useState(5);
@@ -40,6 +40,10 @@ const ProjectListLayer = () => {
     return customer ? customer.name : "Unassigned";
   };
 
+  const getStaffName = (staffId) => {
+    const staff = staffList.find((s) => s.id == staffId)
+    return staff ? staff.name : "Unassigned"
+  }
 
   // Status Badge Styling
   const getStatusClass = (status) => {
@@ -69,6 +73,8 @@ const filteredProjects = useMemo(() => {
         // 3. Safe Customer Name Extraction
         const customerResult = getCustomerName(project?.customerId);
         const customerName = customerResult || ""; 
+        const staffResult = getStaffName(project?.staffId)
+        const staffName = staffResult || ""
 
         // 4. Safe Search matching (Pre-calculate search for performance)
         const search = (searchTerm || "").toLowerCase();
@@ -76,7 +82,8 @@ const filteredProjects = useMemo(() => {
         const matchesSearch =
             name.toLowerCase().includes(search) ||
             location.toLowerCase().includes(search) ||
-            customerName.toLowerCase().includes(search);
+            customerName.toLowerCase().includes(search) || 
+            staffName.toLowerCase().includes(search);
 
         // 5. Safe Status matching
         const status = project?.status || "";
@@ -86,7 +93,7 @@ const filteredProjects = useMemo(() => {
     });
     
     // 6. Ensure projectList is in dependencies so deletion triggers a refresh
-}, [projectList, searchTerm, statusFilter, customers]);
+}, [projectList, searchTerm, statusFilter, customers,staffList]);
 
 
   // 📄 Pagination Logic
@@ -210,6 +217,7 @@ const filteredProjects = useMemo(() => {
               <tr>
                 <th>S.No</th>
                 <th>Project Name</th>
+                <th>Assigned To</th>
                 <th>Customer</th>
                 <th>Location</th>
                 <th>Total Cost</th>
@@ -237,6 +245,7 @@ const filteredProjects = useMemo(() => {
       {project.projectName}
     </Link>
   </td>
+                    <td>{getStaffName(project.assignedStaffId)}</td>
                     <td>{getCustomerName(project.customerId)}</td>
                     <td>{project.location}</td>
                     <td className="fw-medium text-primary">

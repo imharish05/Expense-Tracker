@@ -154,7 +154,6 @@ const AddUserLayer = () => {
                                             />
                                         </div>
 
-
                                         <div className="d-flex align-items-center justify-content-center gap-3">
                                             <button
                                             type='button'
