@@ -1,23 +1,44 @@
-import { Icon } from '@iconify/react/dist/iconify.js';
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import {useDispatch} from "react-redux"
-import { addCustomerFunction } from '../features/customers/customerService';
+import React, { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate, useParams } from 'react-router-dom';
+import { updateCustomerFunction } from '../features/customers/customerService';
+import api from '../api/axios';
 
-const AddUserLayer = () => {
-    
-    // Hooks
-    const dispatch = useDispatch()
-    const navigate = useNavigate()
+    const EditUserLayer = () => {
+        const navigate = useNavigate()
 
-        
+        const dispatch = useDispatch()
+
+        const {id} = useParams()
+
         const [name,setName] = useState("")
         const [address,setAddress] = useState("")
         const [phone,setPhone] = useState("")
         const [projectType,setProjectType] = useState("")
         const [budget,setBudget] = useState("")
+        const [status,setStatus] = useState("")
+        
+
+const customer = useSelector((state) => 
+    state.customers.customers.find((c) => c.id == (id))
+);
+
+    useEffect(() => {
+
+        if (customer) {
+        setName(customer.name || "");
+        setBudget(customer.budget || "");
+        setAddress(customer.address || "");
+        setPhone(customer.phone || "");
+        setProjectType(customer.projectType || "");
+        setStatus(customer.status || "");
+    }
+
+}, [customer, id]); 
         
         const handleCancel = () => {
+
+
             setName("")
             setBudget("")
             setAddress("")
@@ -25,31 +46,16 @@ const AddUserLayer = () => {
             setProjectType("")
             navigate(-1)
         }
+
         
-        const [sampleId,setSampleId] = useState(1)
         
-        const handleCustomer = async(e) =>{
+        const handleCustomerEdit = async(e) =>{
             e.preventDefault()
-            
             try{
-
-                console.log(sampleId,sampleId);
-                
-
                 const payload = {
-                    // Change the id
-                    id : crypto.randomUUID(),name,address,phone,budget,projectType,status : "Active"
+                   id : id ,name,address,phone,budget,projectType,status
                 }
-                setSampleId((prev) => prev +1)
-                
-            addCustomerFunction(dispatch,payload)
-
-            setName("")
-            setBudget("")
-            setAddress("")
-            setPhone("")
-            setProjectType("")
-            navigate(-1)
+                updateCustomerFunction(dispatch,id,payload)
             }
             catch(err){
                 console.log(err.message)
@@ -63,8 +69,8 @@ const AddUserLayer = () => {
                         <div className="col-xxl-6 col-xl-8 col-lg-10">
                             <div className="card border">
                                 <div className="card-body">
-                                    <h6 className="text-lg text-center text-primary-light mb-16">Add New Customer</h6>
-                                    <form action="#" onSubmit={(e)=>handleCustomer(e)}>
+                                    <h6 className="text-lg text-center text-primary-light mb-16">Edit Customer</h6>
+                                    <form action="#" onSubmit={(e)=>handleCustomerEdit(e)}>
                                         <div className="mb-20">
                                             <label
                                                 htmlFor="name"
@@ -103,8 +109,7 @@ const AddUserLayer = () => {
                                             <label
                                                 htmlFor="number"
                                                 className="form-label fw-semibold text-primary-light text-sm mb-8"
-                                            >
-                                                Phone <span className="text-danger-600">*</span>
+                                            > Phone <span className="text-danger-600">*</span>
                                             </label>
                                             <input
                                             value={phone}
@@ -154,6 +159,27 @@ const AddUserLayer = () => {
                                             />
                                         </div>
 
+                                                                                <div className="mb-20">
+                                            <label
+                                                htmlFor="depart"
+                                                className="form-label fw-semibold text-primary-light text-sm mb-8"
+                                            >
+                                                Status
+                                                <span className="text-danger-600">*</span>{" "}
+                                            </label>
+                                            <select
+    className="form-control radius-8 form-select"
+    id="status"
+    value={status || "Select the status"} 
+    onChange={(e)=>setStatus(e.target.value)}
+    required
+>
+    <option value="Select the status" disabled>Select the status</option>
+    <option value="active">Active</option>
+    <option value="completed">Completed</option>
+</select>
+                                        </div>
+
 
                                         <div className="d-flex align-items-center justify-content-center gap-3">
                                             <button
@@ -181,4 +207,4 @@ const AddUserLayer = () => {
         );
     };
 
-    export default AddUserLayer;
+    export default EditUserLayer;

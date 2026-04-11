@@ -1,24 +1,23 @@
-import React from "react";
 import MasterLayout from "../masterLayout/MasterLayout";
 import Breadcrumb from "../components/Breadcrumb";
-import AddUserLayer from "../components/AddUserLayer";
+import EditUserLayer from "../components/EditUserLayer";
 
 
-const AddUserPage = () => {
+const EditUserPageList = () => {
   return (
     <>
       {/* MasterLayout */}
       <MasterLayout>
 
         {/* Breadcrumb */}
-        <Breadcrumb title="Add User" />
+        <Breadcrumb title="Edit User" />
 
         {/* AddUserLayer */}
-        <AddUserLayer />
+        <EditUserLayer />
 
       </MasterLayout>
     </>
   );
 };
 
-export default AddUserPage;
+export default EditUserPageList;

@@ -36,6 +36,12 @@ import RouteScrollToTop from "./helper/RouteScrollToTop";
 
 import DocumentUpload from "./pages/DocumentUpload";
 import ReportPage from "./pages/ReportPage";
+import ProjectListPage from "./pages/ProjectListPage";
+import EditUserPageList from "./pages/EditUserListPage";
+import SingleProjectLayer from "./components/SingleProjectLayer";
+import SingleProjectPage from "./pages/SingleProjectPage";
+import AddProjectPage from "./pages/AddProjectPage";
+import EditProjectPage from "./pages/EditProjectPage";
 
 function App() {
   return (
@@ -75,8 +81,13 @@ function App() {
         <Route exact path='/sign-up' element={<SignUpPage />} />
      
       
+        <Route exact path='/projects-list' element={<ProjectListPage />} />
+        <Route exact path='/projects/:id' element={<SingleProjectPage />} />
+        <Route exact path='/add-projects' element={<AddProjectPage />} />
+        <Route exact path='/edit-project/:id' element={<EditProjectPage />} />
       
         <Route exact path='/users-list' element={<UsersListPage />} />
+        <Route exact path='/edit-user/:id' element={<EditUserPageList />} />
         <Route exact path='/view-details' element={<ViewDetailsPage />} />
         <Route exact path='/view-profile' element={<ViewProfilePage />} />
 

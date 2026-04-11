@@ -1,31 +1,30 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import { Icon } from "@iconify/react";
 import { Link, useNavigate } from "react-router-dom";
-import { useSelector, useDispatch } from "react-redux";
-import { allCustomerFunction, deleteCustomerFunction } from "../features/customers/customerService";
+import { useDispatch, useSelector } from "react-redux";
 import Swal from "sweetalert2";
+import { deleteProjectFunction } from "../features/projects/projectService";
 
-const UsersListLayer = () => {
+const ProjectListLayer = () => {
   const navigate = useNavigate();
+  
   const dispatch = useDispatch()
-  
-  
-  const customerList = useSelector((state) => state.customers.customers) || [];
 
-  useEffect(() => {
-    allCustomerFunction(dispatch)
-  },[dispatch])
-  
-   // Initial Data with default status set to "Active"
+
+  // Initial Project  and customer Data
+  const customers = useSelector((state) => state.customers.customers)
+  const projectList = useSelector((state) =>  state.projects.projects)
+
+
 
   // State Management
-  const [users, setUsers] = useState(customerList);
+  const [projects, setProjects] = useState(projectList);
   const [searchTerm, setSearchTerm] = useState("");
-  const [projectFilter, setProjectFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
   const [itemsPerPage, setItemsPerPage] = useState(5);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Format Budget as Indian Rupees
+  // Format Currency (INR)
   const formatCurrency = (amount) => {
     if (amount == null) return "—";
     return new Intl.NumberFormat("en-IN", {
@@ -35,12 +34,23 @@ const UsersListLayer = () => {
     }).format(amount);
   };
 
+  // Get Customer Name by ID
+  const getCustomerName = (customerId) => {
+    const customer = customers.find((c) => c.id === customerId);
+    return customer ? customer.name : "Unassigned";
+  };
+
+
   // Status Badge Styling
   const getStatusClass = (status) => {
     switch (status) {
-      case "Active":
+      case "Initialized":
+        return "bg-info-focus text-info-600 border border-info-main";
+      case "In Progress":
+        return "bg-warning-focus text-warning-600 border border-warning-main";
+      case "Completed":
         return "bg-success-focus text-success-600 border border-success-main";
-      case "Inactive":
+      case "On Hold":
         return "bg-neutral-200 text-neutral-600 border border-neutral-400";
       default:
         return "bg-neutral-200 text-neutral-600 border border-neutral-400";
@@ -48,37 +58,50 @@ const UsersListLayer = () => {
   };
 
   // 🔍 Search & Filter Logic
-// 🔍 Search & Filter Logic (SAFE VERSION)
-const filteredUsers = useMemo(() => {
-  return customerList.filter((user) => {
-    // 1. Safe Property Extraction: Use optional chaining (?.) and fallback to empty string ("")
-    const name = user?.name || "";
-    const address = user?.address || "";
-    const phone = user?.phone || "";
-    const projectType = user?.projectType || "";
+const filteredProjects = useMemo(() => {
+    // 1. Use projectList (the Redux source) directly to ensure UI updates after delete
+    return (projectList || []).filter((project) => {
+        
+        // 2. Safe Property Extraction: Fallback to "" if data is missing
+        const name = project?.projectName || ""; 
+        const location = project?.location || "";
+        
+        // 3. Safe Customer Name Extraction
+        const customerResult = getCustomerName(project?.customerId);
+        const customerName = customerResult || ""; 
 
-    // 2. Safe Search matching
-    const matchesSearch =
-      name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      address.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      phone.includes(searchTerm);
+        // 4. Safe Search matching (Pre-calculate search for performance)
+        const search = (searchTerm || "").toLowerCase();
+        
+        const matchesSearch =
+            name.toLowerCase().includes(search) ||
+            location.toLowerCase().includes(search) ||
+            customerName.toLowerCase().includes(search);
 
-    // 3. Safe Project matching
-    const matchesProject =
-      projectFilter === "" || projectType === projectFilter;
+        // 5. Safe Status matching
+        const status = project?.status || "";
+        const matchesStatus = statusFilter === "" || status === statusFilter;
 
-    return matchesSearch && matchesProject;
-  });
-}, [customerList, searchTerm, projectFilter]);
+        return matchesSearch && matchesStatus;
+    });
+    
+    // 6. Ensure projectList is in dependencies so deletion triggers a refresh
+}, [projectList, searchTerm, statusFilter, customers]);
+
+
   // 📄 Pagination Logic
-  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
-  const paginatedUsers = filteredUsers.slice(
+  const totalPages = Math.ceil(filteredProjects.length / itemsPerPage);
+  const paginatedProjects = filteredProjects.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
+
   );
 
-  // 🗑️ Delete Functionality
-  const handleDelete = (id) => {
+  // 👁️ View and ✏️ Edit Navigation
+  const handleView = (id) => navigate(`/projects/${id}`);
+  const handleEdit = (id) => navigate(`/edit-project/${id}`);
+
+    const handleDelete = (id) => {
     Swal.fire({
       title : "Are you sure ?",
       text: "You won't be able to revert this!",
@@ -91,8 +114,7 @@ const filteredUsers = useMemo(() => {
         reverseButtons: true // Places 'Confirm' on the right
     }).then((result) => {
         if (result.isConfirmed) {
-            // Only calls the service if user clicked 'Yes'
-            deleteCustomerFunction(dispatch, id);
+            deleteProjectFunction(dispatch, id);
         } else if (result.dismiss === Swal.DismissReason.cancel) {
             Swal.fire({
                 title: "Cancelled",
@@ -105,9 +127,7 @@ const filteredUsers = useMemo(() => {
     });
 };
 
-  // 👁️ View and ✏️ Edit Navigation
-  const handleView = (id) => navigate(`/users/${id}`);
-  const handleEdit = (id) => navigate(`/edit-user/${id}`);
+
 
   return (
     <div className="card h-100 p-0 radius-12">
@@ -139,7 +159,7 @@ const filteredUsers = useMemo(() => {
             <input
               type="text"
               className="bg-base h-40-px w-auto"
-              placeholder="Search by name, address"
+              placeholder="Search..."
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value);
@@ -152,31 +172,33 @@ const filteredUsers = useMemo(() => {
             />
           </div>
 
-          {/* Project Type Filter */}
+          {/* Status Filter */}
           <select
             className="form-select form-select-sm w-auto ps-12 radius-12 h-40-px"
-            value={projectFilter}
+            value={statusFilter}
             onChange={(e) => {
-              setProjectFilter(e.target.value);
+              setStatusFilter(e.target.value);
               setCurrentPage(1);
             }}
           >
-            <option value="">All Project Types</option>
-            <option value="Residential">Residential</option>
-            <option value="Commercial">Commercial</option>
+            <option value="">All Status</option>
+            <option value="Initialized">Initialized</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Completed">Completed</option>
+            <option value="On Hold">On Hold</option>
           </select>
         </div>
 
-        {/* Add User */}
+        {/* Add Project */}
         <Link
-          to="/add-user"
+          to="/add-projects"
           className="btn btn-primary text-sm btn-sm px-12 py-12 radius-8 d-flex align-items-center gap-2"
         >
           <Icon
             icon="ic:baseline-plus"
             className="icon text-xl line-height-1"
           />
-          Add New User
+          Add New Project
         </Link>
       </div>
 
@@ -187,45 +209,54 @@ const filteredUsers = useMemo(() => {
             <thead>
               <tr>
                 <th>S.No</th>
-                <th>Name</th>
-                <th>Phone</th>
-                <th>Address</th>
-                <th>Type</th>
-                <th>Budget</th>
+                <th>Project Name</th>
+                <th>Customer</th>
+                <th>Location</th>
+                <th>Total Cost</th>
                 <th>Status</th>
+                
                 <th className="text-center">Action</th>
               </tr>
             </thead>
             <tbody>
-              {paginatedUsers.length > 0 ? (
-                paginatedUsers.map((user, index) => (
-                  <tr key={user.id}>
+              {paginatedProjects.length > 0 ? (
+                paginatedProjects.map((project, index) => (
+                  <tr key={project.id}>
                     <td>
                       {String(
                         (currentPage - 1) * itemsPerPage + index + 1
                       ).padStart(2, "0")}
                     </td>
-                    <td>{user.name}</td>
-                    <td>{user.phone}</td>
-                    <td>{user.address}</td>
-                    <td>{user.projectType}</td>
+                   <td>
+    <Link 
+      to={`/projects/${project.id}`} 
+      className="text-primary-600 text-hover-underline"
+      style={{ cursor: 'pointer' }}
+      id="projectLink"
+    >
+      {project.projectName}
+    </Link>
+  </td>
+                    <td>{getCustomerName(project.customerId)}</td>
+                    <td>{project.location}</td>
                     <td className="fw-medium text-primary">
-                      {formatCurrency(user.budget)}
+                      {formatCurrency(project.cost)}
                     </td>
                     <td>
                       <span
                         className={`${getStatusClass(
-                          user.status
+                          project.status
                         )} px-12 py-4 radius-4 fw-medium text-sm`}
                       >
-                        {user.status}
+                        {project.status}
                       </span>
                     </td>
+
                     <td className="text-center">
                       <div className="d-flex align-items-center gap-10 justify-content-center">
                         <button
                           type="button"
-                          onClick={() => handleView(user.id)}
+                          onClick={() => handleView(project.id)}
                           className="bg-info-focus bg-hover-info-200 text-info-600 fw-medium w-40-px h-40-px d-flex justify-content-center align-items-center rounded-circle"
                         >
                           <Icon
@@ -236,7 +267,7 @@ const filteredUsers = useMemo(() => {
 
                         <button
                           type="button"
-                          onClick={() => handleEdit(user.id)}
+                          onClick={() => handleEdit(project.id)}
                           className="bg-success-focus text-success-600 bg-hover-success-200 fw-medium w-40-px h-40-px d-flex justify-content-center align-items-center rounded-circle"
                         >
                           <Icon icon="lucide:edit" className="menu-icon" />
@@ -244,7 +275,7 @@ const filteredUsers = useMemo(() => {
 
                         <button
                           type="button"
-                          onClick={() => handleDelete(user.id)}
+                          onClick={() => handleDelete(project.id)}
                           className="remove-item-btn bg-danger-focus bg-hover-danger-200 text-danger-600 fw-medium w-40-px h-40-px d-flex justify-content-center align-items-center rounded-circle"
                         >
                           <Icon
@@ -258,8 +289,8 @@ const filteredUsers = useMemo(() => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="8" className="text-center py-4">
-                    No users found.
+                  <td colSpan="7" className="text-center py-4">
+                    No projects found.
                   </td>
                 </tr>
               )}
@@ -304,4 +335,4 @@ const filteredUsers = useMemo(() => {
   );
 };
 
-export default UsersListLayer;
+export default ProjectListLayer;

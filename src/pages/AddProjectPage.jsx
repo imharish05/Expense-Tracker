@@ -1,26 +1,24 @@
 import React from "react";
 import MasterLayout from "../masterLayout/MasterLayout";
 import Breadcrumb from "../components/Breadcrumb";
-import UsersGridLayer from "../components/UsersGridLayer";
+import AddProjectLayer from "../components/AddProjectLayer";
 
 
-const UsersGridPage = () => {
+const AddProjectPage = () => {
   return (
     <>
-
       {/* MasterLayout */}
       <MasterLayout>
 
         {/* Breadcrumb */}
-        <Breadcrumb title="Users Grid" />
+        <Breadcrumb title="Add Project" />
 
-        {/* UsersGridLayer */}
-        <UsersGridLayer />
+        {/* AddUserLayer */}
+        <AddProjectLayer />
 
       </MasterLayout>
-
     </>
   );
 };
 
-export default UsersGridPage; 
+export default AddProjectPage;
