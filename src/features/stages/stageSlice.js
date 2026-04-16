@@ -13,7 +13,8 @@ const initialState = {
           "paid": 5000,
           "status": "In Progress",
           "customer_id": 1,
-          "documentPath": null,
+          "payment_mode" : "offline",
+          "documentPath": "dummy_path.pdf",
           "duration" : "2026-04-14T17:06"
         }
       ]
@@ -108,7 +109,23 @@ const projectProgressSlice = createSlice({
     // 3. Call this if the upload fails
     uploadDocumentError: (state) => {
       state.documentLoading = false;
+    },
+
+updateStageStatus: (state, action) => {
+  const { projectId, stageId, status } = action.payload;
+  
+  const projectProgress = state.stage.find(p => String(p.projectId) === String(projectId));
+
+  if (projectProgress) {
+    const stage = projectProgress.stages.find(s => 
+      String(s.id) === String(stageId) || String(s._id) === String(stageId)
+    );
+    
+    if (stage) {
+      stage.status = status;
     }
+  }
+},
   },
 });
 
@@ -119,7 +136,7 @@ export const {
   recordDocument, 
   startDocumentUpload, 
   uploadDocumentError,
-  deleteDocumentSuccess
+  deleteDocumentSuccess,updateStageStatus
 } = projectProgressSlice.actions;
 
 export default projectProgressSlice.reducer;

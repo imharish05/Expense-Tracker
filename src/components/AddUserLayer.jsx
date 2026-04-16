@@ -17,6 +17,7 @@ const AddUserLayer = () => {
         const [phone,setPhone] = useState("")
         const [projectType,setProjectType] = useState("")
         const [budget,setBudget] = useState("")
+        const [errors,setErrors] = useState({})
         
         const handleCancel = () => {
             setName("")
@@ -26,12 +27,52 @@ const AddUserLayer = () => {
             setProjectType("")
             navigate(-1)
         }
+
+          const handlePhoneChange = (e) => {
+    const value = e.target.value;
+
+    if(/^\d*$/.test(value) && value.length<=10){
+      setPhone(value)
+    }
+
+  }
         
+       const validate = () => {
+    const newErrors = {};
+
+    if (!name.trim()) {
+        newErrors.name = "Name is required";
+    }
+
+    // Fix: Trigger error if phone is empty
+    if (!phone.trim()) {
+        newErrors.phone = "Phone number is required";
+    } else if (phone.length < 10) {
+        newErrors.phone = "Phone number must be 10 digits";
+    }
+
+    if (!projectType || projectType === "Select the project type") {
+        newErrors.project = "Project type is required";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+};
+
+          const ErrorMsg = ({field}) => {
+    return errors[field] ? (
+      <div className="text-danger mt-4 fw-medium" style={{fontSize : "11px"}}>
+        {errors[field]}
+      </div>
+    ): null
+  }
+
         const [sampleId,setSampleId] = useState(1)
         
         const handleCustomer = async(e) =>{
             e.preventDefault()
-            
+            const isValid = validate({ field: "" }); 
+    if (!isValid) return; // Stop if there are errors
             try{
 
                 console.log(sampleId,sampleId);
@@ -83,6 +124,7 @@ const AddUserLayer = () => {
                                                 onChange={(e) => setName(e.target.value)}
                                                 placeholder="Enter Full Name"
                                             />
+                                            <ErrorMsg field={"name"}/>
                                         </div>
                                         <div className="mb-20">
                                             <label
@@ -109,13 +151,14 @@ const AddUserLayer = () => {
                                             </label>
                                             <input
                                             value={phone}
-                                                onChange={(e) => setPhone(e.target.value)}
+                                                onChange={(e) =>handlePhoneChange(e)}
                                                 type="tel"
                                                 required
                                                 className="form-control radius-8"
                                                 id="number"
                                                 placeholder="Enter phone number"
                                             />
+                                            <ErrorMsg field={"phone"}/>
                                         </div>
                                         <div className="mb-20">
                                             <label
@@ -136,6 +179,8 @@ const AddUserLayer = () => {
     <option value="Residential">Residential</option>
     <option value="Commercial">Commercial</option>
 </select>
+
+<ErrorMsg field={"project"}/>
                                         </div>
 
                                         <div className="mb-20">

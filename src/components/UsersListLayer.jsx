@@ -80,7 +80,7 @@ const filteredUsers = useMemo(() => {
   // 🗑️ Delete Functionality
   const handleDelete = (id) => {
     Swal.fire({
-      title : "Are you sure ?",
+      title : '<span style="font-size: 25px">Are You Sure </span>',
       text: "You won't be able to revert this!",
       icon: "warning",
         showCancelButton: true,
@@ -95,7 +95,7 @@ const filteredUsers = useMemo(() => {
             deleteCustomerFunction(dispatch, id);
         } else if (result.dismiss === Swal.DismissReason.cancel) {
             Swal.fire({
-                title: "Cancelled",
+                title : '<span style="font-size: 25px">Cancelled </span>',
                 text: "The customer record is safe :)",
                 icon: "info",
                 confirmButtonColor: "#ea8b0c",

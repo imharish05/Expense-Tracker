@@ -1,5 +1,5 @@
 import { Icon } from '@iconify/react/dist/iconify.js';
-import React, { useState } from 'react';
+import React, { useId, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {useDispatch, useSelector} from "react-redux"
 import { addNewProject } from '../features/projects/projectService';
@@ -7,6 +7,8 @@ import { toggleAssignmentFunction } from '../features/staff/staffService';
 
 const AddProjectLayer = () => {
     
+    const id = useId()
+
     // Hooks
     const dispatch = useDispatch()
     const navigate = useNavigate()
@@ -18,6 +20,7 @@ const AddProjectLayer = () => {
         const [customerName,setCustomerName] = useState("")
         const [projectType,setProjectType] = useState("")
         const [cost,setCost] = useState("")
+        const [errors,setErrors] = useState({})
         
         const handleCancel = () => {
             setProjectName("")
@@ -28,6 +31,7 @@ const AddProjectLayer = () => {
             setProjectType("")
             navigate(-1)
         }
+
         
 
         const customersList = useSelector((state) => state.customers.customers)
@@ -60,13 +64,53 @@ const filteredStaff = (staffList || []).filter(staff => {
            role.toLowerCase().includes(staffSearchTerm.toLowerCase());
 });
 
+
+
+const validate = () => {
+    const newErrors = {};
+
+    // 1. Project Name check
+    if (!projectName.trim()) {
+        newErrors.projectName = "Project Name is Required";
+    }
+    
+    // 2. Customer Check
+    // Check customerId instead of customerName to ensure a selection was actually made from the list
+    if (!customerId) {
+        newErrors.customerName = "Please select a customer from the list";
+    }
+
+    // 3. Staff Check
+    if (!selectedStaffId) {
+        newErrors.selectStaff = "Please select a staff / designer";
+    }
+    
+    // 4. Project Type Check
+    if (!projectType || projectType === "Select the project type") {
+        newErrors.projectType = "Please select the project type";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+};
+            const ErrorMsg = ({ field }) => (
+        errors[field] ? (
+            <div className="text-danger mt-4 fw-medium" style={{ fontSize: '11px' }}>
+                {errors[field]}
+            </div>
+        ) : null
+    );
+
         const handleProject= async(e) =>{
+
             e.preventDefault()
-            
+
+            if(!validate()) return;
+
             try{
 
                 const payload = {
-                    id : crypto.randomUUID(),projectName,location,customerName,customerId,staffName : selectedStaffName,staffId : selectedStaffId,cost,projectType,status : "Initialized"
+                    id : id,projectName,location,customerName,customerId,staffName : selectedStaffName,staffId : selectedStaffId,cost,projectType,status : "Initialized"
                 }
                 
             const success = await addNewProject(dispatch,payload)
@@ -125,6 +169,8 @@ if (success) {
         />
     </div>
 
+    <ErrorMsg field={"customerName"}/>
+
     {isDropdownOpen && (
         <ul className="position-absolute w-100 mt-1 bg-white radius-8 shadow-lg z-3 overflow-auto" 
             style={{ maxHeight: '200px', listStyle: 'none', padding: 0,border : "1px solid black" }}>
@@ -172,6 +218,7 @@ if (success) {
                                                 placeholder="Enter Project Name"
                                                 disabled = {customerName.length == "0" ? true : false}
                                             />
+                                              <ErrorMsg field={"projectName"}/>
                                         </div>
 
                                         {/* For staff */}
@@ -196,7 +243,9 @@ if (success) {
             }}
             disabled={customerName.length === 0}
         />
+
     </div>
+        <ErrorMsg field={"selectStaff"}></ErrorMsg>
 
     {isStaffDropdownOpen && (
         <ul className="position-absolute w-100 mt-1 bg-white radius-8 shadow-lg z-3 overflow-auto" 
@@ -266,6 +315,7 @@ if (success) {
     <option value="Residential">Residential</option>
     <option value="Commercial">Commercial</option>
 </select>
+<ErrorMsg field={"projectType"}/>
                                         </div>
 
 

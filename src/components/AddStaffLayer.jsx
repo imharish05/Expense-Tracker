@@ -19,11 +19,20 @@ const AddStaffLayer = () => {
     const [status, setStatus] = useState("Active");
     const [role, setRole] = useState(""); // Default to Staff
     const [showPassword, setShowPassword] = useState(false);
-    
+
     // UI State
     const [searchTerm, setSearchTerm] = useState("");
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [errors, setErrors] = useState({}); // Stores validation messages
+
+const handlePhoneChange = (e) => {
+    const value = e.target.value;
+
+    if(/^\d*$/.test(value) && value.length<=10){
+      setPhone(value)
+    }
+
+  }
 
     const handleCancel = () => navigate(-1);
 
@@ -137,7 +146,7 @@ const validate = () => {
                                         {/* Phone Field */}
                                         <div className="col-md-6 mb-20">
                                             <label className="form-label fw-semibold text-primary-light text-sm mb-8">Phone Number *</label>
-                                            <input type="tel" className={`form-control radius-8 ${errors.phone ? 'border-danger' : ''}`} value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Phone number" />
+                                            <input type="tel" className={`form-control radius-8 ${errors.phone ? 'border-danger' : ''}`} value={phone} onChange={(e) => handlePhoneChange(e)} placeholder="Phone number" />
                                             <ErrorMsg field="phone" />
                                         </div>
                                         {/* Location Field */}

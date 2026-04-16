@@ -1,7 +1,7 @@
 import React from "react";
 import MasterLayout from "../masterLayout/MasterLayout";
 import Breadcrumb from "../components/Breadcrumb";
-import NotificationAlertLayer from "../components/NotificationAlertLayer";
+import ProjectReminders from "../components/ProjectRemainders";
 
 
 const NotificationAlertPage = () => {
@@ -15,7 +15,7 @@ const NotificationAlertPage = () => {
         <Breadcrumb title="Settings - Notification Alert" />
 
         {/* NotificationAlertLayer */}
-        <NotificationAlertLayer />
+        <ProjectReminders />
 
       </MasterLayout>
 

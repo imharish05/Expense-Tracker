@@ -36,7 +36,7 @@ export const addCustomerFunction = async(dispatch,payload) => {
         dispatch(addCustomer(payload))
 
         Swal.fire({
-            title : "Success!",
+            title : '<span style="font-size: 25px">Success! </span>',
             text : "Customer has been added Successfully",
             icon : "success",
             confirmButtonColor : "#ea8b0c",
@@ -70,7 +70,7 @@ export const updateCustomerFunction = async(dispatch,id,payload) => {
         
 
         Swal.fire({
-            title : "Success!",
+            title : '<span style="font-size: 25px">Success! </span>',
             text : "Customer has been updated Successfully",
             icon : "success",
             confirmButtonColor : "#ea8b0c",
@@ -98,7 +98,7 @@ export const deleteCustomerFunction = async (dispatch, id) => {
         dispatch(deleteCustomer(id));
 
         Swal.fire({
-            title: "Deleted!",
+            title : '<span style="font-size: 25px">Deleted! </span>',
             text: "Customer record has been removed.",
             icon: "success",
             confirmButtonColor: "#ea8b0c",

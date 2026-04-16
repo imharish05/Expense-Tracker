@@ -7,7 +7,8 @@ import {
   addStageFunction, 
   deleteStageDocumentFunction, 
   recordDocumentFunction, 
-  recordStagePaymentFunction 
+  recordStagePaymentFunction, 
+  updateStageStatusFunction
 } from "../features/stages/stageService";
 
 const SingleProjectLayer = () => {
@@ -173,27 +174,48 @@ const addNewStage = async () => {
   const recordPayment = async (stageId, stageAmount, stagePaid) => {
     const stageRemaining = Math.max(0, Number(stageAmount) - Number(stagePaid));
 
-    const { value: paymentAmount } = await Swal.fire({
-      title: 'Record Payment',
+    const { value: formValues } = await Swal.fire({
+      title: '<span style="font-size: 25px">Record Payment</span>',
       width: window.innerWidth < 500 ? '95%' : '350px',
-      html: `
-        <div class="text-start">
-          <p class="text-secondary-light mb-8" style="font-size: 12px;">
-            Stage Balance: <b class="text-danger">${formatCurrency(stageRemaining)}</b>
-          </p>
-          <label class="text-xs fw-bold mb-1">Enter Payment Amount (₹)</label>
-          <input id="swal-payment" type="number" class="form-control text-sm" value="${stageRemaining}">
-        </div>`,
+html: `
+  <div style="text-align: left; padding: 0 5px;">
+    <p style="color: #64748b; margin-bottom: 12px; font-size: 12px; font-weight: 500;">
+      Stage Balance: <span style="color: #ef4444; font-weight: 700;">${formatCurrency(stageRemaining)}</span>
+    </p>
+
+    <div style="margin-bottom: 16px;">
+      <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px;">Payment Amount (₹)</label>
+      <input id="swal-payment" type="number" class="form-control" value="${stageRemaining}" 
+             style="width: 100%; display: block; height: 42px;">
+    </div>
+
+    <div style="margin-bottom: 8px;">
+      <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px;">Payment Mode</label>
+      <select id="swal-mode" class="form-select" 
+              style="width: 100% !important; 
+                     display: block !important; 
+                     height: 42px !important; 
+                     visibility: visible !important; 
+                     opacity: 1 !important;
+                     position: relative !important;
+                     z-index: 9999 !important;">
+        <option value="" disabled selected>Select Payment Mode</option>
+        <option value="online">Online</option>
+        <option value="offline">Offline</option>
+      </select>
+    </div>
+  </div>`,
       preConfirm: () => {
-        const val = Number(document.getElementById('swal-payment').value);
-        if (!val || val <= 0) return Swal.showValidationMessage('Invalid amount');
-        if (val > stageRemaining) return Swal.showValidationMessage(`Maximum allowed is ${formatCurrency(stageRemaining)}`);
-        return val;
+        const paymentAmount = Number(document.getElementById('swal-payment').value);
+        const paymentMode = Number(document.getElementById('swal-mode').value);
+        if (!paymentAmount || paymentAmount <= 0) return Swal.showValidationMessage('Invalid amount');
+        if (paymentAmount > stageRemaining) return Swal.showValidationMessage(`Maximum allowed is ${formatCurrency(stageRemaining)}`);
+        return {paymentAmount,paymentMode};
       }
     });
 
-    if (paymentAmount) {
-      const success = await recordStagePaymentFunction(dispatch, { amount: paymentAmount }, stageId, id);
+    if (formValues) {
+      const success = await recordStagePaymentFunction(dispatch, { amount: formValues.paymentAmount,payment_mode : formValues.paymentMode }, stageId, id);
       if (success) {
         setIsDocumentUploaded(false);
         setUploadedFile(null);
@@ -225,8 +247,8 @@ const addNewStage = async () => {
         
         return `
           <div class="mb-10 d-flex justify-content-between align-items-center">
-            <span class="text-xxs fw-bold text-uppercase text-secondary-light">Selected Files</span>
-            <button type="button" class="btn btn-xs btn-primary-100 text-primary-600 add-more-btn">+ Add More</button>
+            <span class="text-xs fw-bold text-uppercase text-secondary-light">Selected Files</span>
+            <button type="button" class="btn btn-sm btn-primary-100 text-primary-600 add-more-btn">+ Add More</button>
           </div>
           ${currentFiles.map((file, index) => {
             const isPreviewable = file.type.startsWith('image/') || file.type === 'application/pdf';
@@ -250,11 +272,11 @@ const addNewStage = async () => {
       };
 
       const { value: finalFiles, isConfirmed } = await Swal.fire({
-        title: 'Review Uploads',
+        title: '<span style="font-size: 25px">Review Uploads</span>',
         width: window.innerWidth < 500 ? '95%' : '450px',
         html: `
           <div class="text-start">
-            <div id="swal-file-container" style="max-height: 300px; overflow-y: auto; border: 1px solid #f1f1f1; border-radius: 8px; padding: 10px;">
+            <div id="swal-file-container" style="max-height: 300px; overflow-y: auto; border: 1px solid #f1f1f1; border-radius: 8px; ">
               ${renderFileList(files)}
             </div>
           </div>`,
@@ -310,7 +332,7 @@ const addNewStage = async () => {
         setUploadedFile(finalFiles);
         setIsDocumentUploaded(true);
         setForceReupload(false);
-        Swal.fire({ title: "Uploaded!", icon: "success", timer: 1500, showConfirmButton: false });
+        Swal.fire({ title:'<span style="font-size: 25px">Uploaded</span>', icon: "success", timer: 1500, showConfirmButton: false });
       }
     };
     mainInput.click();
@@ -318,7 +340,7 @@ const addNewStage = async () => {
 
 const clearFileSelection = async (stageId) => {
   const result = await Swal.fire({
-    title: "Are you sure?",
+    title: '<span style="font-size: 25px">Are You Sure ?</span>',
     text: "This will permanently delete the uploaded files from the server.",
     icon: "warning",
     showCancelButton: true,
@@ -340,7 +362,7 @@ const clearFileSelection = async (stageId) => {
       setForceReupload(true);
 
       Swal.fire({
-        title: "Deleted!",
+        title: '<span style="font-size: 25px">Deleted</span>',
         text: "Files have been removed.",
         icon: "success",
         timer: 1500,
@@ -369,8 +391,8 @@ const clearFileSelection = async (stageId) => {
       }).join('');
 
       return Swal.fire({
-        title: 'Recently Uploaded',
-        html: `<div class="text-start" style="max-height: 400px; overflow-y: auto;">${filesHtml}</div>`,
+        title: '<span style="font-size: 25px">Recently Uploaded</span>',
+        html: `<div class="text-start" style="max-height: 350px; overflow-y: auto;">${filesHtml}</div>`,
         width: window.innerWidth < 500 ? '95%' : '500px',
         showCloseButton: true,
         showConfirmButton: false,
@@ -393,6 +415,29 @@ const clearFileSelection = async (stageId) => {
       });
     }
   };
+
+
+  const updateStatus = async (stageId, currentStatus) => {
+    const { value: newStatus } = await Swal.fire({
+        title: 'Update Stage Status',
+        input: 'select',
+        inputOptions: {
+            'Initialized': 'Initialized',
+            'In Progress': 'In Progress',
+            'Completed': 'Completed'
+        },
+        inputValue: currentStatus,
+        showCancelButton: true,
+        inputValidator: (value) => {
+            if (!value) return 'You need to select a status';
+        }
+    });
+
+    if (newStatus && newStatus !== currentStatus) {
+        // Replace with your actual service call
+        await updateStageStatusFunction(dispatch, { status: newStatus }, stageId, id);
+    }
+};
 
   return (
     <div className="p-12 p-md-24 bg-base radius-12 shadow-sm border">
@@ -441,6 +486,14 @@ const clearFileSelection = async (stageId) => {
                     <div className="col-xl-6 col-lg-7">
                       <div className="d-flex align-items-center gap-2 mb-1">
                         <h6 className={`mb-0 text-md fw-bold ${isCompleted ? 'text-success-main' : ''}`}>{stage.stage_Name}</h6>
+                        {index === activeStageIndex &&
+                        (<button 
+    onClick={() => updateStatus(stage.id, stage.status || 'Initialized')}
+    className="btn p-0 border-0 d-flex align-items-center text-primary-light hover-text-primary"
+    title="Update Status"
+  >
+    <Icon icon="lucide:edit-3" width="14" />
+  </button>)}
                         {isCompleted && <Icon icon="icon-park-solid:check-one" className="text-success-main" />}
                       </div>
                       <p className="text-secondary-light text-sm mb-12">{stage.description}</p>
@@ -470,6 +523,17 @@ const clearFileSelection = async (stageId) => {
                           <button onClick={() => recordPayment(stage.id, goal, paid)} className="btn btn-success-600 btn-sm py-4 px-12 text-xs radius-4 d-flex align-items-center gap-2 d-flex align-items-center justify-content-center" disabled={!isDocumentUploaded && (!stage.documentPath || forceReupload)}>
                             <Icon icon="solar:cash-out-bold" /> Record Payment
                           </button>
+                          <div className={`d-flex align-items-center gap-2 px-12 py-4 radius-4 border ${
+    stage.status === 'Completed' ? 'bg-success-50 border-success-100 text-success-600' :
+    stage.status === 'In Progress' ? 'bg-warning-50 border-warning-100 text-warning-600' :
+    'bg-info-50 border-info-100 text-info-600'
+  }`}>
+    <span className={`w-8 h-8 rounded-circle ${
+      stage.status === 'Completed' ? 'bg-success-main' :
+      stage.status === 'In Progress' ? 'bg-warning-main' : 'bg-info-main'
+    }`}></span>
+    <span className="text-xxs fw-bold text-uppercase">{stage.status || 'Initialized'}</span>
+  </div>
                         </div>
                       )}
                     </div>

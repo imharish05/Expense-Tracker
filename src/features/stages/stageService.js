@@ -1,6 +1,6 @@
 import Swal from "sweetalert2";
 import api from "../../api/axios";
-import { setStages, addStage, recordStagePayment, recordDocument, startDocumentUpload, uploadDocumentError, deleteDocumentSuccess } from "./stageSlice";
+import { setStages, addStage, recordStagePayment, recordDocument, startDocumentUpload, uploadDocumentError, deleteDocumentSuccess, updateStageStatus } from "./stageSlice";
 
 /**
  * Fetch all stages for a specific project
@@ -187,6 +187,33 @@ export const deleteStageDocumentFunction = async (dispatch, projectId, stageId) 
   } catch (error) {
     console.error("Error deleting document:", error);
     Swal.fire("Error", "Failed to delete files from server.", "error");
+    return false;
+  }
+};
+
+
+export const updateStageStatusFunction = async (dispatch, data, stageId, projectId) => {
+  try {
+    // 1. API Call to your backend
+    // const response = await axios.patch(`/api/stages/update-status/${stageId}`, data);
+
+    // if (response.status === 200) {
+    //   dispatch(updateStageStatus({ 
+    //     projectId, 
+    //     stageId, 
+    //     status: data.status 
+    //   }));
+    
+
+  dispatch(updateStageStatus({ 
+        projectId, 
+        stageId, 
+        status: data.status
+      }));
+
+      return true;
+  } catch (error) {
+    console.error("Status update failed", error);
     return false;
   }
 };

@@ -15709,3 +15709,9 @@ td.fc-header-center {
 #projectLink:hover{
   text-decoration: underline !important;
 }
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+
+

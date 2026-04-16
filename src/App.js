@@ -25,10 +25,12 @@ import EditStaffListPage from "./pages/EditStaffListPage";
 import PermissionPage from "./pages/PermissionPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import HasPermission from "./components/HasPermission";
+import ProjectReminders from "./components/ProjectRemainders";
+import NotificationAlertPage from "./pages/NotificationAlertPage";
 
 function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/infinus">
       <RouteScrollToTop />
       <Routes>
         {/* Public Routes */}
@@ -71,7 +73,7 @@ function App() {
         <Route path='/role-access' element={<ProtectedRoute><HasPermission permission="manage-access"><PermissionPage /></HasPermission></ProtectedRoute>} />
 
         {/* Misc */}
-        <Route path='/notification' element={<ProtectedRoute><HasPermission permission="manage-remainders"><NotificationPage /></HasPermission></ProtectedRoute>} />
+        <Route path='/remainders' element={<ProtectedRoute><HasPermission permission="manage-remainders"><NotificationAlertPage /></HasPermission></ProtectedRoute>} />
         
         {/* FIXED LINE 69 BELOW */}
         <Route path='/reports' element={<ProtectedRoute><HasPermission permission="view-reports"><ReportPage /></HasPermission></ProtectedRoute>} />
