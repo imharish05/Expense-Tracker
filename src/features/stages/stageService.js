@@ -88,6 +88,10 @@ export const addStageFunction = async (dispatch, payload, projectId) => {
  * Record a payment for a specific stage
  */
 export const recordStagePaymentFunction = async (dispatch, payload, stageId, projectId) => {
+
+    console.log(payload);
+    
+
     try {
         // const res = await api.put(`/stages/record-payment/${stageId}`, payload);
         // const data = res.data.stage;
@@ -104,7 +108,10 @@ export const recordStagePaymentFunction = async (dispatch, payload, stageId, pro
             projectId,
             stageId: stageId, 
             paid: payload.amount,
-            status: "completed" 
+            status: "completed",
+            payment_date : payload.payment_date,
+            payment_mode:payload.payment_mode,
+            payment_status:payload.payment_status
         }));
 
         

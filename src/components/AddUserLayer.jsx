@@ -4,8 +4,11 @@ import { useNavigate } from 'react-router-dom';
 import {useDispatch} from "react-redux"
 import { addCustomerFunction } from '../features/customers/customerService';
 import HasPermission from './HasPermission';
+import { useId } from 'react';
 
 const AddUserLayer = () => {
+
+    const {id} =useId()
     
     // Hooks
     const dispatch = useDispatch()
@@ -80,7 +83,7 @@ const AddUserLayer = () => {
 
                 const payload = {
                     // Change the id
-                    id : crypto.randomUUID(),name,address,phone,budget,projectType,status : "Active",role : "customer"
+                    id : id,name,address,phone,budget,projectType,status : "Active",role : "customer"
                 }
                 setSampleId((prev) => prev +1)
                 

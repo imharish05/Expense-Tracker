@@ -4,14 +4,12 @@ import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import ThemeToggleButton from "../helper/ThemeToggleButton";
 import HasPermission from "../components/HasPermission";
 import { usePaymentReminders } from "../hook/usePaymentReminders";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { logout } from "../features/auth/authSlice";
 
 const MasterLayout = ({ children }) => {
   const { overdue, unpaidCompleted, totalCount } = usePaymentReminders();
   const {user} = useSelector((state) => state.auth)
-
-  console.log(overdue, unpaidCompleted, totalCount);
-  
 
   const [prevCount,setPrevCount] = useState(totalCount)
   const[showAlert,setShowAlert] = useState(false)
@@ -117,15 +115,26 @@ useEffect(()=>{
   // Customer Route Active list
 
 const isCustomerRoute =
-  location.pathname.startsWith("/users-list") ||
-  location.pathname.startsWith("/add-user") ||
-  location.pathname.startsWith("/edit-user");
+  location.pathname.startsWith("/customers-list") ||
+  location.pathname.startsWith("/add-customer") ||
+  location.pathname.startsWith("/edit-customer");
 
-
-  const isStaffRoute =
+const isStaffRoute =
   location.pathname.startsWith("/staff-list") ||
   location.pathname.startsWith("/add-staff") ||
   location.pathname.startsWith("/edit-staff");
+
+// ADDED: Project route check
+const isProjectRoute =
+  location.pathname.startsWith("/projects-list") ||
+  location.pathname.startsWith("/add-projects") ||
+  location.pathname.startsWith("/projects/"); // This covers single project views
+
+  const dispatch = useDispatch()
+
+  const handleLogout = () =>{
+    dispatch(logout())
+  }
   
   return (
     <section className={mobileMenu ? "overlay active" : "overlay "}>
@@ -165,13 +174,13 @@ const isCustomerRoute =
             />
           </Link>
         </div>
-        <div className='sidebar-menu-area border'>
+        <div className='sidebar-menu-area'>
           <ul className='sidebar-menu' id='sidebar-menu'>
 
 <HasPermission permission = {["view-dashboard","view-admin"]} mode = "any">
             <li>
               <NavLink to='/'
-              className={(navData) => (navData.isActive ? "active-page" : "")} d-flex align-items-center gap-2>
+              className={`${(navData) => (navData.isActive ? "active-page" : "")} d-flex align-items-center gap-2 `} >
                 <Icon
                   icon='solar:home-smile-angle-outline'
                   className='menu-icon'
@@ -183,61 +192,49 @@ const isCustomerRoute =
 
 {/* Customers */}
 
-<HasPermission permission={["view-customers","create-customer"]} mode = "any">
+<HasPermission permission={["view-customers", "create-customer"]} mode="any">
+  <li className={`dropdown ${isCustomerRoute ? "open" : ""} mt-3`}>
+    <NavLink 
+      to="/customers-list" 
+      className={`d-flex align-items-center ${isCustomerRoute ? "active" : ""}`}
+    >
+      <Icon icon="flowbite:users-group-outline" className="menu-icon" />
+      <span>Customers</span>
+    </NavLink>
 
-<li className={`dropdown ${isCustomerRoute ? "open" : ""} mt-3`}>
-  <NavLink to="/customers-list" className="d-flex align-items-center">
-    <Icon
-      icon="flowbite:users-group-outline"
-      className="menu-icon"
-    />
-    <span>Customers</span>
-  </NavLink>
-
-  <ul
-    className="sidebar-submenu"
-    style={{
-      maxHeight: isCustomerRoute ? "500px" : "0px",
-      overflow: "hidden",
-      transition: "max-height 0.3s ease",
-    }}
-  >
-
-{/* Has permission for the customer add */}
-    <HasPermission permission={"create-customer"}>
-
-       <li>
-      <NavLink
-        to="/add-customer"
-        className={({ isActive }) =>
-          isActive ? "active-page" : ""
-      }
-      >
-        <i className="ri-circle-fill circle-icon text-info-main w-auto" />
-        Add Customer
-      </NavLink>
-    </li>
+    <ul
+      className="sidebar-submenu"
+      style={{
+        maxHeight: isCustomerRoute ? "500px" : "0px",
+        overflow: "hidden",
+        transition: "max-height 0.3s ease",
+      }}
+    >
+      <HasPermission permission={"create-customer"}>
+        <li>
+          <NavLink
+            to="/add-customer"
+            className={({ isActive }) => (isActive ? "active-page" : "")}
+          >
+            <i className="ri-circle-fill circle-icon text-info-main w-auto" />
+            Add Customer
+          </NavLink>
+        </li>
       </HasPermission>
 
-
-<HasPermission permission={"view-customers"}>
-    <li>
-      <NavLink
-        to="/customers-list"
-        className={({ isActive }) =>
-          isActive ? "active-page" : ""
-      }
-      >
-        <i className="ri-circle-fill circle-icon text-primary-600 w-auto" />
-        Customer List
-      </NavLink>
-    </li>
-
-</HasPermission>
-
-  </ul>
-</li>
-
+      <HasPermission permission={"view-customers"}>
+        <li>
+          <NavLink
+            to="/customers-list"
+            className={({ isActive }) => (isActive ? "active-page" : "")}
+          >
+            <i className="ri-circle-fill circle-icon text-primary-600 w-auto" />
+            Customer List
+          </NavLink>
+        </li>
+      </HasPermission>
+    </ul>
+  </li>
 </HasPermission>
 
 {/* Stafffs or Users */}
@@ -295,43 +292,50 @@ const isCustomerRoute =
 </HasPermission>
 
 
-<HasPermission permission = {["view-projects","create-projects"]} mode = "any">
-            {/* Projects */}
-            <li className='dropdown'>
-              <Link to='#'>
-                <Icon icon='solar:folder-with-files-outline' className='menu-icon' />
-                <span>Projects</span>
-              </Link>
-              <ul className='sidebar-submenu'>
-                <HasPermission permission = {"create-projects"}>
-                <li>
-                  <NavLink
-                    to='/add-projects'
-                    className={(navData) =>
-                      navData.isActive ? "active-page" : ""
-                    }
-                  >
-                    <i className='ri-circle-fill circle-icon text-info-main w-auto' />{" "}
-                    Add Project
-                  </NavLink>
-                </li>
-  </HasPermission>
-
-<HasPermission permission={"view-projects"}>
-  <li>
-    <NavLink
-      to='/projects-list'
-      className={(navData) => navData.isActive ? "active-page" : ""}
+{/* Projects Dropdown */}
+<HasPermission permission={["view-projects", "create-projects"]} mode="any">
+  <li className={`dropdown ${isProjectRoute ? "open" : ""}`}>
+    <NavLink 
+      to="/projects-list" 
+      className={`d-flex align-items-center ${isProjectRoute ? "active" : ""}`}
     >
-      <i className='ri-circle-fill circle-icon text-primary-600 w-auto' />{" "}
-      Project List
+      <Icon icon='solar:folder-with-files-outline' className='menu-icon' />
+      <span>Projects</span>
     </NavLink>
+    
+    <ul 
+      className='sidebar-submenu'
+      style={{
+        maxHeight: isProjectRoute ? "500px" : "0px",
+        overflow: "hidden",
+        transition: "max-height 0.3s ease",
+      }}
+    >
+      <HasPermission permission={"create-projects"}>
+        <li>
+          <NavLink
+            to='/add-projects'
+            className={({ isActive }) => (isActive ? "active-page" : "")}
+          >
+            <i className='ri-circle-fill circle-icon text-info-main w-auto' />
+            Add Project
+          </NavLink>
+        </li>
+      </HasPermission>
+
+      <HasPermission permission={"view-projects"}>
+        <li>
+          <NavLink
+            to='/projects-list'
+            className={({ isActive }) => (isActive ? "active-page" : "")}
+          >
+            <i className='ri-circle-fill circle-icon text-primary-600 w-auto' />
+            Project List
+          </NavLink>
+        </li>
+      </HasPermission>
+    </ul>
   </li>
-</HasPermission>
-
-              </ul>
-            </li>
-
 </HasPermission>
 
         {/* Payments */}
@@ -494,16 +498,16 @@ const isCustomerRoute =
                 >
                   <Icon icon='heroicons:bars-3-solid' className='icon' />
                 </button>
-                <form className='navbar-search'>
+                {/* <form className='navbar-search'>
                   <input type='text' name='search' placeholder='Search' />
                   <Icon icon='ion:search-outline' className='icon' />
-                </form>
+                </form> */}
               </div>
             </div>
             <div className='col-auto'>
               <div className='d-flex flex-wrap align-items-center gap-3'>
-                {/* ThemeToggleButton */}
-                <ThemeToggleButton />
+                
+                {/* <ThemeToggleButton /> */}
                
 
                 {/* Message dropdown end */}
@@ -574,11 +578,9 @@ const isCustomerRoute =
                     type='button'
                     data-bs-toggle='dropdown'
                   >
-                    <img
-                      src='/assets/images/user.png'
-                      alt='image_user'
-                      className='w-40-px h-40-px object-fit-cover rounded-circle'
-                    />
+                    <Icon icon="solar:user-circle-bold"  className='w-40-px h-40-px object-fit-cover rounded-circle'/>
+                     
+                  
                   </button>
                   <div className='dropdown-menu to-top dropdown-menu-sm'>
                     <div className='py-12 px-16 radius-8 bg-primary-50 mb-16 d-flex align-items-center justify-content-between gap-2'>
@@ -598,7 +600,7 @@ const isCustomerRoute =
                       </button>
                     </div>
                     <ul className='to-top-list'>
-                      <li>
+                      {/* <li>
                         <Link
                           className='dropdown-item text-black px-0 py-8 hover-bg-transparent hover-text-primary d-flex align-items-center gap-3'
                           to='/view-profile'
@@ -613,18 +615,6 @@ const isCustomerRoute =
                       <li>
                         <Link
                           className='dropdown-item text-black px-0 py-8 hover-bg-transparent hover-text-primary d-flex align-items-center gap-3'
-                          to='/email'
-                        >
-                          <Icon
-                            icon='tabler:message-check'
-                            className='icon text-xl'
-                          />{" "}
-                          Inbox
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          className='dropdown-item text-black px-0 py-8 hover-bg-transparent hover-text-primary d-flex align-items-center gap-3'
                           to='/company'
                         >
                           <Icon
@@ -633,15 +623,14 @@ const isCustomerRoute =
                           />
                           Setting
                         </Link>
-                      </li>
+                      </li> */}
                       <li>
-                        <Link
+                        <button onClick={() =>{handleLogout()}}
                           className='dropdown-item text-black px-0 py-8 hover-bg-transparent hover-text-danger d-flex align-items-center gap-3'
-                          to='#'
                         >
                           <Icon icon='lucide:power' className='icon text-xl' />{" "}
                           Log Out
-                        </Link>
+                        </button>
                       </li>
                     </ul>
                   </div>

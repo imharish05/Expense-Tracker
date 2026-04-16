@@ -20,23 +20,8 @@ const DashBoardLayerOne = () => {
                 {/* SalesStatisticOne */}
                 <SalesStatisticOne />
 
-                {/* TotalSubscriberOne */}
-                <TotalSubscriberOne />
-
-                {/* UsersOverviewOne */}
-                <UsersOverviewOne />
-
                 {/* LatestRegisteredOne */}
                 <LatestRegisteredOne />
-
-                {/* TopPerformerOne */}
-                <TopPerformerOne />
-
-                {/* TopCountries */}
-                <TopCountries />
-
-                {/* GeneratedContent */}
-                <GeneratedContent />
 
             </section>
         </>

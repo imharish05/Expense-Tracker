@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Icon } from "@iconify/react";
 import Swal from "sweetalert2";
 import { useDispatch, useSelector } from "react-redux";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { 
   addStageFunction, 
   deleteStageDocumentFunction, 
@@ -10,11 +10,15 @@ import {
   recordStagePaymentFunction, 
   updateStageStatusFunction
 } from "../features/stages/stageService";
+import { stagePaymentCollection } from "../features/payment/paymentService";
+import HasPermission from "./HasPermission";
 
 const SingleProjectLayer = () => {
   const dispatch = useDispatch();
   const { id } = useParams();
 
+const [searchParams] = useSearchParams();
+  const isReadOnly = searchParams.get("mode") === "view";
   // Selectors
   const projectList = useSelector((state) => state.projects.projects) || [];
   const stages = useSelector((state) => state.stages.stage) || [];
@@ -207,15 +211,42 @@ html: `
   </div>`,
       preConfirm: () => {
         const paymentAmount = Number(document.getElementById('swal-payment').value);
-        const paymentMode = Number(document.getElementById('swal-mode').value);
+        const paymentMode = document.getElementById('swal-mode').value;
+        const paymentDate = new Date().toISOString()
+        
         if (!paymentAmount || paymentAmount <= 0) return Swal.showValidationMessage('Invalid amount');
         if (paymentAmount > stageRemaining) return Swal.showValidationMessage(`Maximum allowed is ${formatCurrency(stageRemaining)}`);
-        return {paymentAmount,paymentMode};
+
+        let paymentStatus;
+        if (paymentAmount === stageRemaining) {
+          paymentStatus = "paid";
+        } else {
+          paymentStatus = "partially paid";
+        }
+
+        return {paymentAmount,paymentMode,paymentDate,paymentStatus};
       }
     });
 
     if (formValues) {
-      const success = await recordStagePaymentFunction(dispatch, { amount: formValues.paymentAmount,payment_mode : formValues.paymentMode }, stageId, id);
+
+      console.log( {amount: formValues.paymentAmount,payment_mode : formValues.paymentMode,payment_date : formValues.paymentDate,payment_status : formValues.paymentStatus}, stageId, id);
+      
+
+      const success = await recordStagePaymentFunction(dispatch, { amount: formValues.paymentAmount,payment_mode : formValues.paymentMode,payment_date : formValues.paymentDate,payment_status : formValues.paymentStatus}, stageId, id);
+      
+     await stagePaymentCollection(dispatch,{ 
+  stage_amount : stageAmount,
+  amount: formValues.paymentAmount, 
+  payment_mode: formValues.paymentMode, 
+  payment_date: formValues.paymentDate, 
+  payment_status: formValues.paymentStatus,
+  customerId: customerId,
+  budget : totals.cost,
+  customerName: currentProject?.customerName || "N/A", 
+  projectName: currentProject?.projectName || "N/A"
+}, stageId, id);
+
       if (success) {
         setIsDocumentUploaded(false);
         setUploadedFile(null);
@@ -446,9 +477,13 @@ const clearFileSelection = async (stageId) => {
           <h5 className="mb-4 text-primary-900">{currentProject?.projectName || "Project Progress"}</h5>
           <p className="text-secondary-light text-sm mb-0">Project tracking for {currentProject?.projectName}</p>
         </div>
+      <HasPermission permission={"manage-payment"}>
+        {!isReadOnly && (
         <button onClick={addNewStage} className="btn btn-primary-600 btn-sm d-flex align-items-center gap-2 radius-8 w-sm-auto justify-content-center">
           <Icon icon="ic:baseline-plus" /> Add Stage
         </button>
+          )}
+          </HasPermission>
       </div>
 
       <div className="row row-cols-1 row-cols-sm-2 row-cols-xl-4 gy-4 mb-32">
@@ -456,7 +491,7 @@ const clearFileSelection = async (stageId) => {
           { label: "Total Budget", val: totals.cost, color: "bg-gradient-start-1", text: "" },
           { label: "Total Collected", val: totals.paid, color: "bg-gradient-start-2", text: "text-success-main" },
           { label: "Stage Outstanding", val: totals.balance, color: "bg-gradient-start-5", text: "text-danger-main" },
-          { label: "Remaining Balance", val: totals.cost - totals.paid, color: "bg-gradient-start-4", text: "text-danger-main" }
+          { label: "Remaining Balance", val: totals.cost - totals.paid, color: "bg-gradient-start-4", text: "text-warning" }
         ].map((item, i) => (
           <div className="col" key={i}>
             <div className={`card shadow-none border ${item.color} p-16 p-md-20 h-100`}>
@@ -486,14 +521,28 @@ const clearFileSelection = async (stageId) => {
                     <div className="col-xl-6 col-lg-7">
                       <div className="d-flex align-items-center gap-2 mb-1">
                         <h6 className={`mb-0 text-md fw-bold ${isCompleted ? 'text-success-main' : ''}`}>{stage.stage_Name}</h6>
-                        {index === activeStageIndex &&
+                         <div className={`d-flex align-items-center gap-2 px-12 py-4 radius-4 border ${
+    stage.status === 'Completed' ? 'bg-success-50 border-success-100 text-success-600' :
+    stage.status === 'In Progress' ? 'bg-warning-50 border-warning-100 text-warning-600' :
+    'bg-info-50 border-info-100 text-info-600'
+  }`} style={{width : "max-content"}}>
+    <span className={`w-8 h-8 rounded-circle ${
+      stage.status === 'Completed' ? 'bg-success-main' :
+      stage.status === 'In Progress' ? 'bg-warning-main' : 'bg-info-main'
+    }`}></span>
+    <span className="text-xxs fw-bold text-uppercase">{stage.status || 'Initialized'}</span>
+  </div>
+
+  <HasPermission permission={"upload-docs"}>
+                        {index === activeStageIndex && !isReadOnly && (
                         (<button 
     onClick={() => updateStatus(stage.id, stage.status || 'Initialized')}
     className="btn p-0 border-0 d-flex align-items-center text-primary-light hover-text-primary"
     title="Update Status"
   >
     <Icon icon="lucide:edit-3" width="14" />
-  </button>)}
+  </button>))}
+  </HasPermission>
                         {isCompleted && <Icon icon="icon-park-solid:check-one" className="text-success-main" />}
                       </div>
                       <p className="text-secondary-light text-sm mb-12">{stage.description}</p>
@@ -503,39 +552,60 @@ const clearFileSelection = async (stageId) => {
     Deadline: {new Date(stage.duration).toLocaleString()}
   </p>
 )}
+                      <div className="d-flex flex-column flex-md-row gap-4">
+
                       
                       {index === activeStageIndex && (
                         <div className="d-flex flex-wrap gap-2 gap-sm-3">
                           <div className="d-flex align-items-center gap-2">
                             {(isDocumentUploaded || (stage.documentPath && !forceReupload)) ? (
                               <>
-                                <button onClick={() => openPreviewModal(stage)} className="btn btn-success-100 text-success-600 btn-sm py-4 px-12 text-xs radius-4 d-flex align-items-center gap-2">
+                              <HasPermission permission={"upload-docs"}>
+
+                               {!isReadOnly && (
+                                 <button onClick={() => openPreviewModal(stage)} className="btn btn-success-100 text-success-600 btn-sm py-4 px-12 text-xs radius-4 d-flex align-items-center gap-2">
                                   <Icon icon="solar:documents-bold" /> <span className="d-none d-sm-inline">View Docs</span><span className="d-inline d-sm-none">View</span>
                                 </button>
-                                <button onClick={() => clearFileSelection(stage.id)} className="btn btn-danger-100 text-danger-600 btn-sm p-4 radius-4 d-flex align-items-center justify-content-center"><Icon icon="ic:round-close" className="text-sm" /></button>
+                               )}
+                               </HasPermission>
+
+                               <HasPermission permission={"upload-docs"}>
+
+                                {!isReadOnly && (
+                                  <button onClick={() => clearFileSelection(stage.id)} className="btn btn-danger-100 text-danger-600 btn-sm p-4 radius-4 d-flex align-items-center justify-content-center"><Icon icon="ic:round-close" className="text-sm" /></button>
+                                )}
+                                </HasPermission>
                               </>
                             ) : (
-                              <button onClick={() => fileUpload(stage.id)} className="btn btn-primary-600 btn-md py-4 px-12 text-xs radius-4 d-flex align-items-center gap-2">
-                                <Icon icon="solar:upload-bold" /> Upload
-                              </button>
+
+                              <HasPermission permission={"upload-docs"}>
+  {!isReadOnly && (
+    <button 
+      onClick={() => fileUpload(stage.id)} 
+      className="btn btn-primary-600 btn-md py-4 px-12 text-xs radius-4 d-flex align-items-center gap-2"
+    >
+      <Icon icon="solar:upload-bold" /> Upload
+    </button>
+  )}
+</HasPermission>
                             )}
                           </div>
-                          <button onClick={() => recordPayment(stage.id, goal, paid)} className="btn btn-success-600 btn-sm py-4 px-12 text-xs radius-4 d-flex align-items-center gap-2 d-flex align-items-center justify-content-center" disabled={!isDocumentUploaded && (!stage.documentPath || forceReupload)}>
+
+                          <HasPermission permission={"manage-payment"}>
+
+                          {!isReadOnly && (
+                            
+                            <button onClick={() => recordPayment(stage.id, goal, paid)} className="btn btn-success-600 btn-sm py-4 px-12 text-xs radius-4 d-flex align-items-center gap-2 d-flex align-items-center justify-content-center" disabled={!isDocumentUploaded && (!stage.documentPath || forceReupload)}>
                             <Icon icon="solar:cash-out-bold" /> Record Payment
                           </button>
-                          <div className={`d-flex align-items-center gap-2 px-12 py-4 radius-4 border ${
-    stage.status === 'Completed' ? 'bg-success-50 border-success-100 text-success-600' :
-    stage.status === 'In Progress' ? 'bg-warning-50 border-warning-100 text-warning-600' :
-    'bg-info-50 border-info-100 text-info-600'
-  }`}>
-    <span className={`w-8 h-8 rounded-circle ${
-      stage.status === 'Completed' ? 'bg-success-main' :
-      stage.status === 'In Progress' ? 'bg-warning-main' : 'bg-info-main'
-    }`}></span>
-    <span className="text-xxs fw-bold text-uppercase">{stage.status || 'Initialized'}</span>
-  </div>
+                          )}
+                          </HasPermission>
+                        
                         </div>
                       )}
+                      
+
+                      </div>
                     </div>
 
                     <div className="col-xl-6 col-lg-5">
@@ -551,6 +621,12 @@ const clearFileSelection = async (stageId) => {
                         <div className="text-center flex-fill ps-1">
                           <p className="text-sm text-neutral-500 fw-bold mb-1 uppercase">Pending</p>
                           <p className={`text-md fw-bold mb-0 ${pending > 0 ? 'text-danger-main' : 'text-success-main'}`}>{formatCurrency(pending)}</p>
+                        </div>
+                        <div className="text-center flex-fill ps-1">
+                          <p className="text-sm text-neutral-500 fw-bold mb-1 uppercase">Payment Status</p>
+                          <p className={`text-md fw-bold text-capitalize mb-0 ${stage.payment_status === "partially paid" || stage.payment_status === "pending" ? 'text-danger-main' : 'text-success-main'}`}>
+  {stage.payment_status}
+</p>
                         </div>
                       </div>
                     </div>

@@ -12,7 +12,7 @@ const NotificationAlertPage = () => {
       <MasterLayout>
 
         {/* Breadcrumb */}
-        <Breadcrumb title="Settings - Notification Alert" />
+        <Breadcrumb title="Notification Alert" />
 
         {/* NotificationAlertLayer */}
         <ProjectReminders />

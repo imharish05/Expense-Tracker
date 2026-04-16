@@ -10,10 +10,12 @@ const initialState = {
           "stage_Name": "Architecture Design",
           "description": "Initial blueprints",
           "amount": 50000,
-          "paid": 5000,
+          "paid": 0,
           "status": "In Progress",
           "customer_id": 1,
-          "payment_mode" : "offline",
+          "payment_mode" : null,
+          "payment_date" : null,
+          "payment_status" : "pending",
           "documentPath": "dummy_path.pdf",
           "duration" : "2026-04-14T17:06"
         }
@@ -52,7 +54,7 @@ const projectProgressSlice = createSlice({
     },
 
     recordStagePayment: (state, action) => {
-      const { projectId, stageId, paid } = action.payload;
+      const { projectId, stageId, paid,payment_date,payment_mode,payment_status } = action.payload;
       const projectProgress = state.stage.find(p => p.projectId === projectId);
 
       if (projectProgress) {
@@ -61,7 +63,10 @@ const projectProgressSlice = createSlice({
           const incoming = Number(paid) || 0;
           const currentPaid = Number(stage.paid) || 0;
           const stageGoal = Number(stage.amount) || 0;
-
+          
+          stage.payment_date = payment_date;
+          stage.payment_mode = payment_mode;
+          stage.payment_status = payment_status;
           stage.paid = Math.min(stageGoal, currentPaid + incoming);
           stage.status = stage.paid >= stageGoal ? "Completed" : "In Progress";
         }

@@ -32,6 +32,7 @@ const initialState = {
   "create-projects",
   "edit-projects",
   "delete-projects",
+  "manage-payment",
   "upload-docs",
   "manage-access",
   "manage-remainders",

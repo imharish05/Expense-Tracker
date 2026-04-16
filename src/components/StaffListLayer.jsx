@@ -24,6 +24,7 @@ const StaffsListLayer = () => {
   const [projectFilter, setProjectFilter] = useState("");
   const [itemsPerPage, setItemsPerPage] = useState(5);
   const [currentPage, setCurrentPage] = useState(1);
+  const [roleFilter, setRoleFilter] = useState("");
 
   // --- 🛠️ 1. CREATE A PROJECT LOOKUP MAP ---
   // This turns [{id: 1, projectName: 'A'}] into { "1": {projectName: 'A'} }
@@ -65,27 +66,32 @@ const StaffsListLayer = () => {
   };
 
   // 🔍 Search & Filter Logic
-  const filteredStaffs = useMemo(() => {
-    return staffList.filter((staff) => {
-      const name = staff?.name || "";
-      const address = staff?.address || "";
-      
-      // Get the actual project names for the search engine to work with
-      const projects = getProjectDetails(staff.projects || staff.projectId);
-      const projectNamesString = projects.map(p => p.projectName).join(" ").toLowerCase();
+// 🔍 Search & Filter Logic
+ const filteredStaffs = useMemo(() => {
+  return staffList.filter((staff) => {
+    const name = staff?.name || "";
+    const address = staff?.address || staff?.location || "";
+    const role = staff?.role || "";
+    
+    const projects = getProjectDetails(staff.projects || staff.projectId || staff.assignedStaffId);
+    const projectNamesString = projects.map(p => p.projectName).join(" ").toLowerCase();
 
-      const matchesSearch =
-        name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        address.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        projectNamesString.includes(searchTerm.toLowerCase());
+    const matchesSearch =
+      name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      address.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      role.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      projectNamesString.includes(searchTerm.toLowerCase());
 
-      const matchesProject =
-        projectFilter === "" || staff.projectType === projectFilter;
+    const matchesProject =
+      projectFilter === "" || 
+      projects.some(p => (p.id || p._id) === projectFilter);
 
-      return matchesSearch && matchesProject;
-    });
-  }, [staffList, searchTerm, projectFilter, projectMap]);
+    // ADD THIS: Role Filter Logic
+    const matchesRole = roleFilter === "" || role.toLowerCase() === roleFilter.toLowerCase();
 
+    return matchesSearch && matchesProject && matchesRole;
+  });
+}, [staffList, searchTerm, projectFilter, roleFilter, projectMap]);
   // 📄 Pagination Logic
   const totalPages = Math.ceil(filteredStaffs.length / itemsPerPage);
   const paginatedUsers = filteredStaffs.slice(
@@ -109,28 +115,42 @@ const StaffsListLayer = () => {
   return (
     <div className="card h-100 p-0 radius-12">
       <div className="card-header border-bottom bg-base py-16 px-24 d-flex align-items-center flex-wrap gap-3 justify-content-between">
-        <div className="d-flex align-items-center flex-wrap gap-3">
-          <select
-            className="form-select form-select-sm w-auto ps-12 radius-12 h-40-px"
-            value={itemsPerPage}
-            onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }}
-          >
-            {[5, 10, 15, 20].map((num) => <option key={num} value={num}>{num}</option>)}
-          </select>
+      <div className="d-flex align-items-center flex-wrap gap-3">
+  {/* Items Per Page */}
+  <select
+    className="form-select form-select-sm w-auto ps-12 radius-12 h-40-px"
+    value={itemsPerPage}
+    onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }}
+  >
+    {[5, 10, 20 , 50 , 100, 200].map((num) => <option key={num} value={num}>{num}</option>)}
+  </select>
 
-          <div className="navbar-search position-relative">
-            <input
-              type="text"
-              className="bg-base h-40-px w-auto"
-              placeholder="Search staff or project..."
-              value={searchTerm}
-              onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-            />
-            <Icon icon="ion:search-outline" className="icon position-absolute end-0 me-12 top-50 translate-middle-y" />
-          </div>
-        </div>
+  {/* NEW: Role Filter Dropdown */}
+  <select
+    className="form-select form-select-sm w-auto ps-12 radius-12 h-40-px"
+    value={roleFilter}
+    onChange={(e) => { setRoleFilter(e.target.value); setCurrentPage(1); }}
+  >
+    <option value="">All Roles</option>
+    <option value="staff">Staff</option>
+    <option value="designer">Designer</option>
+    <option value="admin">Admin</option> 
+  </select>
 
-<HasPermission permission = {"create-staff"}>
+  {/* Search Bar */}
+  <div className="navbar-search position-relative">
+    <input
+      type="text"
+      className="bg-base h-40-px w-auto"
+      placeholder="Search staff or project..."
+      value={searchTerm}
+      onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+    />
+    <Icon icon="ion:search-outline" className="icon position-absolute end-0 me-12 top-50 translate-middle-y" />
+  </div>
+</div>
+
+    <HasPermission permission = {"create-staff"}>
         <Link to="/add-staff" className="btn btn-primary text-sm btn-sm px-12 py-12 radius-8 d-flex align-items-center gap-2">
           <Icon icon="ic:baseline-plus" className="icon text-xl line-height-1" />
           Add New Staff
