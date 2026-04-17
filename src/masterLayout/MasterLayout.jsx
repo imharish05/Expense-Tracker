@@ -6,13 +6,22 @@ import HasPermission from "../components/HasPermission";
 import { usePaymentReminders } from "../hook/usePaymentReminders";
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../features/auth/authSlice";
+import { getAllProjects } from "../features/projects/projectService";
+import { allStaffFunction } from "../features/staff/staffService";
+import { allCustomerFunction } from "../features/customers/customerService";
+
 
 const MasterLayout = ({ children }) => {
   const { overdue, unpaidCompleted, totalCount } = usePaymentReminders();
   const {user} = useSelector((state) => state.auth)
 
+
+  const dispatch = useDispatch()
+
+  const [initialLoading, setInitialLoading] = useState(true);
   const [prevCount,setPrevCount] = useState(totalCount)
   const[showAlert,setShowAlert] = useState(false)
+
 
 useEffect(()=>{
   if(totalCount > prevCount){
@@ -29,6 +38,27 @@ useEffect(()=>{
       style: "currency", currency: "INR", maximumFractionDigits: 0,
     }).format(amount);
   };
+
+  useEffect(() => {
+    const fetchAllData = async () => {
+      try {
+        setInitialLoading(true);
+        // Execute all fetches in parallel
+        await Promise.all([
+          getAllProjects(dispatch),
+          allStaffFunction(dispatch),
+          allCustomerFunction(dispatch)
+        ]);
+      } catch (error) {
+        console.error("Error loading dashboard data:", error);
+      } finally {
+        // Set a slight delay for a smoother transition if needed
+        setInitialLoading(false);
+      }
+    };
+
+    fetchAllData();
+  }, [dispatch]);
 
   let [sidebarActive, seSidebarActive] = useState(false);
   let [mobileMenu, setMobileMenu] = useState(false);
@@ -130,7 +160,7 @@ const isProjectRoute =
   location.pathname.startsWith("/add-projects") ||
   location.pathname.startsWith("/projects/"); // This covers single project views
 
-  const dispatch = useDispatch()
+
   const navigate = useNavigate()
 
   const handleLogout = () =>{
@@ -563,12 +593,26 @@ const isProjectRoute =
         </div>
 
         {/* dashboard-main-body */}
-        <div className='dashboard-main-body' style = {{backgroundImage: "url('/assets/images/bg/bg_2.webp')",
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    backgroundRepeat: 'no-repeat',
-    backgroundColor : "none",
-    minHeight: '100vh'}}>{children}</div>
+       <div className='dashboard-main-body' style={{
+          backgroundImage: "url('/assets/images/bg/bg_2.webp')",
+          backgroundSize: 'cover',
+          minHeight: '100vh'
+        }}>
+          {initialLoading ? (
+            // NEW: Loader Component
+            <div className="d-flex justify-content-center align-items-center" style={{ height: '60vh' }}>
+              <div className="text-center">
+                <div className="spinner-border text-primary" role="status">
+                  <span className="visually-hidden">Loading...</span>
+                </div>
+                <h6 className="mt-3 text-secondary-light">Initializing Dashboard...</h6>
+              </div>
+            </div>
+          ) : (
+            // Render actual dashboard content
+            children
+          )}
+        </div>
 
         {/* Footer section */}
         <footer className='d-footer'>

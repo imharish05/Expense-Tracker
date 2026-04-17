@@ -5,12 +5,12 @@ import { useDispatch, useSelector } from "react-redux";
 import { toggleAssignmentFunction, updateStaffFunction } from '../features/staff/staffService';
 
 const EditStaffLayer = () => {
-    const { id } = useParams(); // This is our staffId
+    const { id } = useParams(); 
     const navigate = useNavigate();
     const dispatch = useDispatch();
 
     // Redux Data
-    const staffList = useSelector((state) => state.staffs.staffs);
+    const staffList = useSelector((state) => state.staffs.staffs) || [];
     const projectList = useSelector((state) => state.projects.projects) || [];
 
     const staffMember = useMemo(() => 
@@ -23,110 +23,89 @@ const EditStaffLayer = () => {
     const [location, setLocation] = useState(""); 
     const [email, setEmail] = useState(""); 
     const [password, setPassword] = useState("");
-    const[role,setRole] = useState("")
+    const [role, setRole] = useState("");
     const [selectedProjectIds, setSelectedProjectIds] = useState([]); 
     const [searchTerm, setSearchTerm] = useState("");
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const [status, setStatus] = useState("Active"); 
+    const [errors, setErrors] = useState({}); 
 
-    // Add these to your Form State section
-const [status, setStatus] = useState("Active"); // Added status state
-const [errors, setErrors] = useState({}); // To store individual field errors
+    useEffect(() => {
+        if (staffMember) {
+            setName(staffMember.name || "");
+            setPhone(staffMember.phone || "");
+            setLocation(staffMember.location || "");
+            setEmail(staffMember.email || "");
+            setPassword(staffMember.plainPassword || ""); 
+            setRole(staffMember.role || ""); 
+            setStatus(staffMember.status || "Active");
+            // SAFE METHOD: Ensure we always set an array
+            setSelectedProjectIds(Array.isArray(staffMember.projects) ? staffMember.projects : []);
+        }
+    }, [staffMember]);
 
-useEffect(() => {
-    if (staffMember) {
-        setName(staffMember.name || "");
-        setPhone(staffMember.phone || "");
-        setLocation(staffMember.location || "");
-        setEmail(staffMember.email || ""); // Set email
-        setPassword(staffMember.password || ""); // Set password
-        setRole(staffMember.role || ""); // Set role
-        setStatus(staffMember.status || "Active");
-        setSelectedProjectIds(staffMember.projects || []);
-    }
-}, [staffMember]);
+    const validate = () => {
+        let newErrors = {};
+        if (!name.trim()) newErrors.name = "Full name is required";
+        if (!email.trim()) {
+            newErrors.email = "Email is required";
+        } else if (!/\S+@\S+\.\S+/.test(email)) {
+            newErrors.email = "Invalid email format";
+        }
+        if (!password) {
+            newErrors.password = "Password is required";
+        } else if (password.length < 6) {
+            newErrors.password = "Password must be at least 6 characters";
+        }
+        if (!role) newErrors.role = "Please select a user role";
 
-const validate = () => {
-    let newErrors = {};
-    if (!name.trim()) newErrors.name = "Full name is required";
-    if (!email.trim()) {
-        newErrors.email = "Email is required";
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
-        newErrors.email = "Invalid email format";
-    }
-    if (!password) {
-        newErrors.password = "Password is required";
-    } else if (password.length < 6) {
-        newErrors.password = "Password must be at least 6 characters";
-    }
-    if (!role) newErrors.role = "Please select a user role";
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-};
-
-// Helper component for displaying errors
-const ErrorMsg = ({ field }) => (
-    errors[field] ? (
-        <div className="text-danger mt-4 fw-medium" style={{ fontSize: '11px' }}>
-            {errors[field]}
-        </div>
-    ) : null
-);
-
-
-
-    const filteredProjects = projectList.filter(proj => 
-        proj.projectName.toLowerCase().includes(searchTerm.toLowerCase()) && 
-        !selectedProjectIds.includes(proj.id)
-    );
-
-
-
-const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    const payload = {
-        id, // from useParams
-        name,
-        phone,
-        location,
-        email,
-        password,role,
-        projects: selectedProjectIds 
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
     };
 
+    const ErrorMsg = ({ field }) => (
+        errors[field] ? (
+            <div className="text-danger mt-4 fw-medium" style={{ fontSize: '11px' }}>
+                {errors[field]}
+            </div>
+        ) : null
+    );
 
-    // 1. Identify which projects were added or removed
-    const originalProjects = staffMember?.projects || [];
+    // SAFE METHOD: Added checks to prevent filter/includes crashes
+    const filteredProjects = projectList.filter(proj => {
+        const matchesSearch = (proj?.projectName || "").toLowerCase().includes(searchTerm.toLowerCase());
+        const safeSelectedIds = Array.isArray(selectedProjectIds) ? selectedProjectIds : [];
+        const isNotSelected = !safeSelectedIds.includes(proj.id);
+        return matchesSearch && isNotSelected;
+    });
 
-    // Added: In selectedProjectIds but not in original
-    const addedProjects = selectedProjectIds.filter(pid => !originalProjects.includes(pid));
-    
-    // Removed: In original but not in selectedProjectIds
-    const removedProjects = originalProjects.filter(pid => !selectedProjectIds.includes(pid));
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (!validate()) return;
 
-    console.log(addedProjects,removedProjects);
-    
-    // 2. Update the Staff Record
-    const success = await updateStaffFunction(dispatch, id, payload);
-    
-    console.log(success);
-    
+        // SAFE METHOD: Normalize arrays before logic
+        const currentSelections = Array.isArray(selectedProjectIds) ? selectedProjectIds : [];
+        const originalProjects = Array.isArray(staffMember?.projects) ? staffMember.projects : [];
 
-    if (success) {
-    // This will now update BOTH the staff member AND the projects themselves
-    for (const projectId of addedProjects) {
-        await toggleAssignmentFunction(dispatch, id, projectId, name, true);
-    }
+        const payload = {
+            id,
+            name,
+            phone,
+            location,
+            email,
+            plainPassword: password, 
+            password: password,
+            role,
+            projects: currentSelections 
+        };
 
-    for (const projectId of removedProjects) {
-        await toggleAssignmentFunction(dispatch, id, projectId, null, false);
-    }
-    navigate(-1);
-}
+        // SAFE METHOD: filter works because we normalized to arrays above
+        const addedProjects = currentSelections.filter(pid => !originalProjects.includes(pid));
+        const removedProjects = originalProjects.filter(pid => !currentSelections.includes(pid));
 
-};
+        const success = await updateStaffFunction(dispatch, id, payload);
+    };
 
     return (
         <div className="card h-100 p-0 radius-12">
@@ -137,105 +116,98 @@ const handleSubmit = async (e) => {
                             <div className="card-body">
                                 <h6 className="text-lg text-center text-primary-light mb-16">Edit Staff Member</h6>
                                 <form onSubmit={handleSubmit} noValidate>
-    
-    {/* Full Name */}
-    <div className="mb-20">
-        <label className="form-label fw-semibold text-primary-light text-sm mb-8">Full Name *</label>
-        <input 
-            type="text" 
-            className={`form-control radius-8 ${errors.name ? 'border-danger' : ''}`} 
-            value={name} 
-            onChange={(e) => setName(e.target.value)} 
-        />
-        <ErrorMsg field="name" />
-    </div>
+        
+                                    <div className="mb-20">
+                                        <label className="form-label fw-semibold text-primary-light text-sm mb-8">Full Name *</label>
+                                        <input 
+                                            type="text" 
+                                            className={`form-control radius-8 ${errors.name ? 'border-danger' : ''}`} 
+                                            value={name} 
+                                            onChange={(e) => setName(e.target.value)} 
+                                        />
+                                        <ErrorMsg field="name" />
+                                    </div>
 
-    {/* Email Field */}
-    <div className="mb-20">
-        <label className="form-label fw-semibold text-primary-light text-sm mb-8">Email Address *</label>
-        <input 
-            type="email" 
-            className={`form-control radius-8 ${errors.email ? 'border-danger' : ''}`} 
-            value={email} 
-            onChange={(e) => setEmail(e.target.value)} 
-            placeholder="name@company.com" 
-        />
-        <ErrorMsg field="email" />
-    </div>
+                                    <div className="mb-20">
+                                        <label className="form-label fw-semibold text-primary-light text-sm mb-8">Email Address *</label>
+                                        <input 
+                                            type="email" 
+                                            className={`form-control radius-8 ${errors.email ? 'border-danger' : ''}`} 
+                                            value={email} 
+                                            onChange={(e) => setEmail(e.target.value)} 
+                                            placeholder="name@company.com" 
+                                        />
+                                        <ErrorMsg field="email" />
+                                    </div>
 
-                                   {/* Password Field */}
-   <div className="mb-20">
-       <label className="form-label fw-semibold text-primary-light text-sm mb-8">Password *</label>
-       <div className="position-relative">
-           <input 
-               type={showPassword ? "text" : "password"} // Dynamic type
-               className={`form-control radius-8 ${errors.password ? 'border-danger' : ''}`} 
-               value={password} 
-               onChange={(e) => setPassword(e.target.value)} 
-               placeholder="Minimum 6 characters" 
-           />
-           
-           {/* Toggle Button */}
-           <button
-               type="button"
-               className="position-absolute end-0 top-50 translate-middle-y me-12 border-0 bg-transparent p-0 pt-4 d-flex align-items-center justify-content-center"
-               onClick={() => setShowPassword(!showPassword)}
-               style={{ cursor: 'pointer', zIndex: 10 }}
-           >
-               <Icon 
-                   icon={showPassword ? "lucide:eye-off" : "lucide:eye"} 
-                   className="text-primary-light text-xl" 
-               />
-           </button>
-       </div>
-       <ErrorMsg field="password" />
-   </div>
-    {/* Role Dropdown */}
-    <div className="mb-20">
-        <label className="form-label fw-semibold text-primary-light text-sm mb-8">User Role *</label>
-        <div className="position-relative">
-            <select 
-                className={`form-control radius-8 form-select appearance-none ${errors.role ? 'border-danger' : ''}`} 
-                value={role} 
-                onChange={(e) => {
-                    setRole(e.target.value);
-                    if(errors.role) setErrors(prev => ({...prev, role: null}));
-                }}
-            >
-                <option value="" disabled>Select a role</option> 
-                <option value="Staff">Staff</option>
-                <option value="Designer">Designer</option>
-            </select>
-            <div className="position-absolute end-0 top-50 translate-middle-y me-12 pt-8 pointer-events-none">
-                <Icon 
-                    icon={role === "Designer" ? "lucide:palette" : "lucide:users"} 
-                    className={`${errors.role ? 'text-danger' : 'text-primary-light'} text-lg`} 
-                />
-            </div>
-        </div>
-        <ErrorMsg field="role" />
-    </div>
+                                    <div className="mb-20">
+                                        <label className="form-label fw-semibold text-primary-light text-sm mb-8">Password *</label>
+                                        <div className="position-relative">
+                                            <input 
+                                                type={showPassword ? "text" : "password"} 
+                                                className={`form-control radius-8 ${errors.password ? 'border-danger' : ''}`} 
+                                                value={password} 
+                                                onChange={(e) => setPassword(e.target.value)} 
+                                                placeholder="Minimum 6 characters" 
+                                            />
+                                            <button
+                                                type="button"
+                                                className="position-absolute end-0 top-50 translate-middle-y me-12 border-0 bg-transparent p-0 pt-4 d-flex align-items-center justify-content-center"
+                                                onClick={() => setShowPassword(!showPassword)}
+                                                style={{ cursor: 'pointer', zIndex: 10 }}
+                                            >
+                                                <Icon 
+                                                    icon={showPassword ? "lucide:eye-off" : "lucide:eye"} 
+                                                    className="text-primary-light text-xl" 
+                                                />
+                                            </button>
+                                        </div>
+                                        <ErrorMsg field="password" />
+                                    </div>
 
-    <div className="row">
-        {/* Phone Field */}
-        <div className="col-md-6 mb-20">
-            <label className="form-label fw-semibold text-primary-light text-sm mb-8">Phone Number</label>
-            <input type="text" className="form-control radius-8" value={phone} onChange={(e) => setPhone(e.target.value)} />
-        </div>
-        {/* Location Field */}
-        <div className="col-md-6 mb-20">
-            <label className="form-label fw-semibold text-primary-light text-sm mb-8">Location</label>
-            <input type="text" className="form-control radius-8" value={location} onChange={(e) => setLocation(e.target.value)} />
-        </div>
-    </div>
+                                    <div className="mb-20">
+                                        <label className="form-label fw-semibold text-primary-light text-sm mb-8">User Role *</label>
+                                        <div className="position-relative">
+                                            <select 
+                                                className={`form-control radius-8 form-select appearance-none ${errors.role ? 'border-danger' : ''}`} 
+                                                value={role} 
+                                                onChange={(e) => {
+                                                    setRole(e.target.value);
+                                                    if(errors.role) setErrors(prev => ({...prev, role: null}));
+                                                }}
+                                            >
+                                                <option value="" disabled>Select a role</option> 
+                                                <option value="Staff">Staff</option>
+                                                <option value="Designer">Designer</option>
+                                            </select>
+                                            <div className="position-absolute end-0 top-50 translate-middle-y me-12 pt-8 pointer-events-none">
+                                                <Icon 
+                                                    icon={role === "Designer" ? "lucide:palette" : "lucide:users"} 
+                                                    className={`${errors.role ? 'text-danger' : 'text-primary-light'} text-lg`} 
+                                                />
+                                            </div>
+                                        </div>
+                                        <ErrorMsg field="role" />
+                                    </div>
 
-    {/* ... (Keep Project Selection logic same as before) ... */}
+                                    <div className="row">
+                                        <div className="col-md-6 mb-20">
+                                            <label className="form-label fw-semibold text-primary-light text-sm mb-8">Phone Number</label>
+                                            <input type="text" className="form-control radius-8" value={phone} onChange={(e) => setPhone(e.target.value)} />
+                                        </div>
+                                        <div className="col-md-6 mb-20">
+                                            <label className="form-label fw-semibold text-primary-light text-sm mb-8">Location</label>
+                                            <input type="text" className="form-control radius-8" value={location} onChange={(e) => setLocation(e.target.value)} />
+                                        </div>
+                                    </div>
 
-    <div className="d-flex align-items-center justify-content-center gap-3 mt-32">
-        <button type='button' onClick={() => navigate(-1)} className="btn border-danger text-danger px-40">Cancel</button>
-        <button type="submit" className="btn btn-primary px-40" style={{ backgroundColor: '#EA8B0C', border: 'none' }}>Save Details</button>
-    </div>
-</form>
+                                    {/* Project Selection logic goes here using filteredProjects */}
+
+                                    <div className="d-flex align-items-center justify-content-center gap-3 mt-32">
+                                        <button type='button' onClick={() => navigate(-1)} className="btn border-danger text-danger px-40">Cancel</button>
+                                        <button type="submit" className="btn btn-primary px-40" style={{ backgroundColor: '#EA8B0C', border: 'none' }}>Save Details</button>
+                                    </div>
+                                </form>
                             </div>
                         </div>
                     </div>

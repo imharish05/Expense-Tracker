@@ -68,7 +68,7 @@ const UnitCountOne = () => {
 
             {/* Total Amount */}
             <StatCard 
-                title="Total Amount" 
+                title="Total Fees" 
                 value={formatCurrency(totalAmount)} 
                 icon="solar:wallet-bold" 
                 colorClass="bg-info-main" 
@@ -86,7 +86,7 @@ const UnitCountOne = () => {
 
             {/* Pending Payments */}
             <StatCard 
-                title="Pending Payments" 
+                title="Pending Fees" 
                 value={formatCurrency(totalPendingPayments)} 
                 icon="fa6-solid:file-invoice-dollar" 
                 colorClass="bg-red" 

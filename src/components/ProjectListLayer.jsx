@@ -1,15 +1,19 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Icon } from "@iconify/react";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import Swal from "sweetalert2";
-import { deleteProjectFunction } from "../features/projects/projectService";
+import { deleteProjectFunction, getAllProjects } from "../features/projects/projectService";
 import HasPermission from "./HasPermission";
 
 const ProjectListLayer = () => {
   const navigate = useNavigate();
   
   const dispatch = useDispatch()
+
+  useEffect(() => {
+    getAllProjects(dispatch)
+  },[dispatch])
 
 
   // Initial Project  and customer Data
@@ -38,10 +42,11 @@ const ProjectListLayer = () => {
   };
 
   // Get Customer Name by ID
-  const getCustomerName = (customerId) => {
-    const customer = customers.find((c) => c.id === customerId);
-    return customer ? customer.name : "Unassigned";
-  };
+const getCustomerName = (customerId) => {
+  // Use == instead of === to handle string vs number IDs
+  const customer = customers.find((c) => c.id == customerId); 
+  return customer ? customer.name : "Unassigned";
+};
 
   const getStaffName = (staffId) => {
     const staff = staffList.find((s) => s.id == staffId)

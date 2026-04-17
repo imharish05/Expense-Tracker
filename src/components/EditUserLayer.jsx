@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../api/axios';
 import { updateStaffFunction } from '../features/staff/staffService';
+import { updateCustomerFunction } from '../features/customers/customerService';
 
     const EditUserLayer = () => {
         const navigate = useNavigate()
@@ -15,7 +16,6 @@ import { updateStaffFunction } from '../features/staff/staffService';
         const [address,setAddress] = useState("")
         const [phone,setPhone] = useState("")
         const [projectType,setProjectType] = useState("")
-        const [budget,setBudget] = useState("")
         const [status,setStatus] = useState("")
         
 
@@ -29,7 +29,6 @@ import { updateStaffFunction } from '../features/staff/staffService';
     useEffect(() => {
         if (customer) {
         setName(customer.name || "");
-        setBudget(customer.budget || "");
         setAddress(customer.address || "");
         setPhone(customer.phone || "");
         setProjectType(customer.projectType || "");
@@ -42,7 +41,7 @@ import { updateStaffFunction } from '../features/staff/staffService';
 
 
             setName("")
-            setBudget("")
+            
             setAddress("")
             setPhone("")
             setProjectType("")
@@ -55,9 +54,14 @@ import { updateStaffFunction } from '../features/staff/staffService';
             e.preventDefault()
             try{
                 const payload = {
-                   id : id ,name,address,phone,budget,projectType,status
+                   id,name,address,phone,projectType,status
                 }
-                updateStaffFunction(dispatch,id,payload)
+              const success = await updateCustomerFunction(dispatch,id,payload)
+
+              if(success){
+                navigate(-1)
+              }
+
             }
             catch(err){
                 console.log(err.message)
@@ -144,23 +148,7 @@ import { updateStaffFunction } from '../features/staff/staffService';
 </select>
                                         </div>
 
-                                        <div className="mb-20">
-                                            <label
-                                                htmlFor="name"
-                                                className="form-label fw-semibold text-primary-light text-sm mb-8"
-                                            >
-                                                Budget
-                                            </label>
-                                            <input
-                                            value={budget}
-                                            onChange={(e)=>setBudget(e.target.value)}
-                                                type="text"
-                                                className="form-control radius-8"
-                                                id="budget"
-                                                placeholder="Enter the Budget"
-                                            />
-                                        </div>
-
+                             
                                                                                 <div className="mb-20">
                                             <label
                                                 htmlFor="depart"

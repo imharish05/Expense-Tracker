@@ -1,9 +1,7 @@
 import { createSlice, current } from "@reduxjs/toolkit";
 
 const initialState = {
-  staffs: [
-   
-  ]
+  staffs: []
 };
 
 const staffSlice = createSlice({
@@ -16,14 +14,18 @@ const staffSlice = createSlice({
         addStaff : (state,action) => {
             state.staffs.push(action.payload)
         },
-        updateStaff : (state,action) => {
-            const index = state.staffs.findIndex(
-                (c) => String(c.id) === String(action.payload.id)
-            );
-            if(index !== -1){
-                state.staffs[index] = action.payload;
-            }
-        },
+        updateStaff: (state, action) => {
+    // Find the specific staff member in your local array
+    const index = state.staffs.findIndex(
+        (s) => String(s.id) === String(action.payload.id)
+    );
+
+    if (index !== -1) {
+        // Replace the old staff data with the new data from the backend
+        // This triggers React to re-render only the affected parts of the UI
+        state.staffs[index] = { ...state.staffs[index], ...action.payload };
+    }
+},
         deleteStaff : (state,action) => {
             state.staffs = state.staffs.filter(
                 (c) => String(c.id) !== String(action.payload)

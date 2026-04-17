@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from "react-redux";
 import { addStaffFunction } from '../features/staff/staffService';
-import { useId } from 'react';
 
 const AddStaffLayer = () => {
     const dispatch = useDispatch();
@@ -11,8 +10,6 @@ const AddStaffLayer = () => {
 
     const projectList = useSelector((state) => state.projects.projects) || [];
 
-    const id = useId()
-   
     // Form State
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
@@ -67,7 +64,6 @@ const validate = () => {
 
         try {
             const payload = {
-                id: id,
                 name,
                 email,
                 password,

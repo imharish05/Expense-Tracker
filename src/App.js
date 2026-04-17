@@ -28,9 +28,12 @@ import HasPermission from "./components/HasPermission";
 import ProjectReminders from "./components/ProjectRemainders";
 import NotificationAlertPage from "./pages/NotificationAlertPage";
 
+import { Toaster } from 'react-hot-toast';
+
 function App() {
   return (
     <BrowserRouter basename="/infinus">
+      <Toaster position="top-center" reverseOrder={false} />
       <RouteScrollToTop />
       <Routes>
         {/* Public Routes */}

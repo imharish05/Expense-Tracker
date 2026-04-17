@@ -3,12 +3,8 @@ import React, { useId, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {useDispatch, useSelector} from "react-redux"
 import { addNewProject } from '../features/projects/projectService';
-import { toggleAssignmentFunction } from '../features/staff/staffService';
-
 const AddProjectLayer = () => {
     
-    const id = useId()
-
     // Hooks
     const dispatch = useDispatch()
     const navigate = useNavigate()
@@ -101,41 +97,42 @@ const validate = () => {
         ) : null
     );
 
-        const handleProject= async(e) =>{
+ const handleProject = async (e) => {
+    e.preventDefault();
 
-            e.preventDefault()
+    if (!validate()) return;
 
-            if(!validate()) return;
+    try {
+        const payload = {
+            projectName,
+            location,
+            customerName,
+            customerId,
+            assignedStaffName: selectedStaffName, 
+            assignedStaffId: selectedStaffId,
+            cost,
+            projectType,
+            status: "Initialized"
+        };
 
-            try{
+        // 1. Change addNewProject to return the project data instead of just 'true'
+        const newProject = await addNewProject(dispatch, payload);
 
-                const payload = {
-                    id : id,projectName,location,customerName,customerId,staffName : selectedStaffName,staffId : selectedStaffId,cost,projectType,status : "Initialized"
-                }
-                
-            const success = await addNewProject(dispatch,payload)
-if (success) {
-           await toggleAssignmentFunction(
-                dispatch, 
-                selectedStaffId, 
-                payload.id, 
-                selectedStaffName, 
-                true
-            );
+        if (newProject) {
+
+            // Clear states
+            setProjectName("");
+            setCost("");
+            setLocation("");
+            setCustomerName("");
+            setProjectType("");
+            setCustomerId("");
+            navigate(-1);
         }
-
-            setProjectName("")
-            setCost("")
-            setLocation("")
-            setCustomerName("")
-            setProjectType("")
-            setCustomerId("")
-            navigate(-1)
-            }
-            catch(err){
-                console.log(err.message)
-            }
-        }
+    } catch (err) {
+        console.log("Component Error:", err.message);
+    }
+};
 
         return (
             <div className="card h-100 p-0 radius-12" style = {{backgroundColor: "transparent",            // Corrected from "none"
@@ -328,7 +325,7 @@ if (success) {
                                                 htmlFor="cost"
                                                 className="form-label fw-semibold text-primary-light text-sm mb-8"
                                             >
-                                                Cost
+                                                Fees
                                             </label>
                                             <input
                                             value={cost}
@@ -336,7 +333,7 @@ if (success) {
                                                 type="text"
                                                 className="form-control radius-8"
                                                 id="cost"
-                                                placeholder="Enter the Cost"
+                                                placeholder="Enter the Fees"
                                                 disabled = {customerName.length == "0" ? true : false}
                                             />
                                         </div>

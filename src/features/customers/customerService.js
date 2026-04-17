@@ -1,99 +1,73 @@
 import api from "../../api/axios";
 import { addCustomer, allCustomers, deleteCustomer, updateCustomer } from "./customerSlice";
 import Swal from "sweetalert2"; // 1. Import SweetAlert
+import { toast } from "react-hot-toast";
 
 
-export const allCustomerFunction = async(dispatch) => {
+export const addCustomerFunction = async (dispatch, payload) => {
+    const promise = api.post("/customers/add-customer", payload);
+
+    toast.promise(promise, {
+        loading: 'Saving Customer...',
+        success: 'Customer Added!',
+        error: (err) => err.response?.data?.message || 'Failed to save',
+    });
+
     try {
-        
-        // const res = await api.get("/customers")
+        const res = await promise;
+        dispatch(addCustomer(res.data.customer)); // Use the data from backend
+        return true;
+    } catch (err) {
+        return false;
+    }
+};
 
-        // const data = res.data.customers
+export const allCustomerFunction = async (dispatch) => {
+    // 1. Create a reference for the loading toast
+    const loadingToast = toast.loading("Fetching customers...");
 
-        // dispatch(allCustomers(data))
+    try {
+        const res = await api.get("/customers/all"); // Ensure this matches your route
+        const data = res.data.customers;
+
+        dispatch(allCustomers(data));
+
+        // 2. Dismiss the loading toast once data is in Redux
+        toast.dismiss(loadingToast);
 
     } catch (err) {
-        const message = err.response?.data?.message || "Unable To Add Customer";
+        const message = err.response?.data?.message || "Unable to load customer list";
 
-        Swal.fire({
-            title: '<span style="font-size: 25px">Error!</span>',
-            text : message,
-            icon :"error",
-            confirmButtonColor :"#d33",
-        })
-    }
-}
-
-export const addCustomerFunction = async(dispatch,payload) => {
-    try{
-        // const res = await api.post("/add-customer",payload)
-
-        // const data = res.data.customer
-
-        console.log(payload);
+        // 3. Update the loading toast to an error toast
+        toast.error(message, { id: loadingToast });
         
-
-        dispatch(addCustomer(payload))
-
-        Swal.fire({
-            title : '<span style="font-size: 25px">Success! </span>',
-            text : "Customer has been added Successfully",
-            icon : "success",
-            confirmButtonColor : "#ea8b0c",
-            timer : 3000
-        })
-
+        console.error("Fetch Error:", err);
     }
-    catch(err){
-        const message = err.response?.data?.message || "Unable To Add Customer";
+};
 
-        Swal.fire({
-            title: '<span style="font-size: 25px">Error!</span>',
-            text : message,
-            icon :"error",
-            confirmButtonColor :"#d33",
-        })
-    }
-}
-
-export const updateCustomerFunction = async(dispatch,id,payload) => {
-    try{
-
-        // const res = await api.patch('/update-customer/${id}',payload)
-
-        // const data = res.data.customer;
-
-        console.log(payload);
+export const updateCustomerFunction = async (dispatch, id, payload) => {
+    try {
+        const res = await api.patch(`/customers/update-customer/${id}`, payload);
+        dispatch(updateCustomer(res.data.customer));
         
-
-        dispatch(updateCustomer(payload))
-        
-
         Swal.fire({
-            title : '<span style="font-size: 25px">Success! </span>',
-            text : "Customer has been updated Successfully",
-            icon : "success",
-            confirmButtonColor : "#ea8b0c",
-            timer : 3000
-        })
+            title: "Success!",
+            text: "Customer updated successfully",
+            icon: "success",
+            timer: 2000
+        });
 
+        return true;
+    } catch (err) {
+        return false;
+        Swal.fire("Error", err.response?.data?.message || "Update failed", "error");
     }
-    catch(err){
-        const message = err.response?.data?.message || "Unable To Update Customer";
-
-        Swal.fire({
-            title : "Error!",
-            text : message,
-            icon :"error",
-            confirmButtonColor :"#d33",
-        })
-    }
-}
-
+};
 
 export const deleteCustomerFunction = async (dispatch, id) => {
     try {
-        // await api.delete(`/delete-customer/${id}`);
+        // Added the /customers/ prefix to match your other routes
+        await api.delete(`/customers/delete-customer/${id}`);
 
         dispatch(deleteCustomer(id));
 

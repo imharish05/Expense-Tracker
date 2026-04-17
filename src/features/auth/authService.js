@@ -1,53 +1,36 @@
 import api from "../../api/axios";
-import { loginStart, loginSuccess } from "./authSlice";
+import { loginStart, loginSuccess, loginFailure } from "./authSlice";
+import toast from 'react-hot-toast'; // Import toast
 
-export const loginFunction = async(dispatch,navigate,{phone,password}) => {
+export const loginFunction = async (dispatch, navigate, { phone, password }) => {
+    dispatch(loginStart());
 
-    dispatch(loginStart())
+    // Create a loading toast that we will update later
+    const loadToast = toast.loading('Logging in...');
 
-try {
-//    const res = await api.post("/login",{phone,password})
+    try {
+        const res = await api.post("/auth/login", { phone, password });
 
-//    dispatch(loginSuccess(res.data))
+        dispatch(loginSuccess(res.data));
 
-const sampleData = {
-  "success": true,
-  "token": "sample Token", 
-  "user": {
-    "id": "1",
-    "name": "Harish",
-    "email": "sample@gmail.com",
-    "role": "staff",
-"permissions" :[
-  "view-admin",
-  "view-dashboard",
-  "change-status",
-  "view-staffs",
-  "create-staff",
-  "edit-staff",
-  "delete-staff",
-  "view-customers",
-  "create-customer",
-  "edit-customer",
-  "delete-customer",
-  "view-projects",
-  "create-projects",
-  "edit-projects",
-  "delete-projects",
-  "upload-docs",
-  "manage-access",
-  "manage-payment",
-  "manage-remainders",
-  "view-reports"
-]
-  }
-}
+        // Update the existing toast to success
+        toast.success(`Welcome back, ${res.data.user.name}!`, {
+            id: loadToast,
+        });
 
-dispatch(loginSuccess(sampleData))
+        navigate("/");
 
-   navigate("/")
-    
-} catch (err) {
-    
-}
-}
+    } catch (err) {
+        const errorMessage = err.response?.data?.message || "Login failed";
+        
+        // Update the existing toast to error
+        toast.error(errorMessage, {
+            id: loadToast,
+        });
+
+        // Ensure you have a failure action to stop the loading state in Redux
+        if (typeof loginFailure === 'function') {
+            dispatch(loginFailure(errorMessage));
+        }
+    }
+};

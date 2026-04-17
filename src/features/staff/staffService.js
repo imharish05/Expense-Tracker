@@ -1,137 +1,65 @@
-
 import api from "../../api/axios";
-import { assignStaffToProject, unAssignStaffFromProject } from "../projects/projectSlice";
-import { updateStaff,addStaff,deleteStaff, assignProjectToStaff, unAssignProjectFromStaff } from "./staffSlice";
-
 import Swal from "sweetalert2";
+import { toast } from "react-hot-toast"; // 1. Import toast
+import { 
+    addStaff, updateStaff, deleteStaff, allStaffs, 
+    assignProjectToStaff, unAssignProjectFromStaff 
+} from "./staffSlice";
+import { assignStaffToProject, unAssignStaffFromProject } from "../projects/projectSlice";
+
+export const addStaffFunction = async (dispatch, payload) => {
+    // 2. Use toast.promise for automated loading/success/error states
+    const promise = api.post("/staffs/add-staff", payload);
+
+    toast.promise(promise, {
+        loading: 'Adding staff...',
+        success: 'Staff added successfully!',
+        error: (err) => err.response?.data?.message || 'Failed to add staff',
+    });
+
+    try {
+        const res = await promise;
+        dispatch(addStaff(res.data.staff));
+        return true;
+    } catch (err) {
+        return false;
+    }
+};
+
+export const allStaffFunction = async (dispatch) => {
+    try {
+        const res = await api.get("/staffs/all");
+        dispatch(allStaffs(res.data.staffs));
+    } catch (err) { 
+        toast.error("Could not fetch staff list");
+        console.log(err); 
+    }
+};
 
 export const updateStaffFunction = async (dispatch, id, payload) => {
+    const loadingToast = toast.loading("Updating details...");
+    
     try {
-        // await api.patch(`/update-staff/${id}`, payload);
-        dispatch(updateStaff(payload));
-
-        Swal.fire({
-            title: '<span style="font-size: 25px">Success!</span>',
-            text: "Staff record has been updated Successfully",
-            icon: "success",
-            confirmButtonColor: "#ea8b0c",
-            timer: 3000
-        });
-
+        const res = await api.patch(`/staffs/update/${id}`, payload);
+        dispatch(updateStaff(res.data.staff)); 
+        toast.success("Staff updated!", { id: loadingToast });
         return true;
-
-    } catch (err) {
-
-        const message = err.response?.data?.message || "Unable To Update Staff Record";
-        Swal.fire({ title: "Error!", text: message, icon: "error", confirmButtonColor: "#d33" });
-        return false;
+    } catch (err) { 
+        toast.error("Update failed", { id: loadingToast });
+        console.error("Update failed:", err);
+        return false; 
     }
 };
-
-export const allStaffFunction = async(dispatch) => {
-    try {
-        
-        // const res = await api.get("/staffs")
-
-        // const data = res.data.staffs
-
-        // dispatch(allStaffs(data))
-
-    } catch (err) {
-        const message = err.response?.data?.message || "Unable To Add Staff";
-
-        Swal.fire({
-            title : "Error!",
-            text : message,
-            icon :"error",
-            confirmButtonColor :"#d33",
-        })
-    }
-}
-
-export const addStaffFunction = async(dispatch,payload) => {
-    try{
-        // const res = await api.post("/add-staff",payload)
-
-        // const data = res.data.staff
-
-        // console.log(payload);
-        
-
-        dispatch(addStaff(payload))
-
-        Swal.fire({
-            title: '<span style="font-size: 25px">Success!</span>',
-            text : "Staff has been added Successfully",
-            icon : "success",
-            confirmButtonColor : "#ea8b0c",
-            timer : 3000
-        })
-
-    }
-    catch(err){
-        const message = err.response?.data?.message || "Unable To Add Staff";
-
-        Swal.fire({
-            title: '<span style="font-size: 25px">Error!</span>',
-            text : message,
-            icon :"error",
-            confirmButtonColor :"#d33",
-        })
-    }
-}
-
-
 
 export const deleteStaffFunction = async (dispatch, id) => {
+    // Usually, delete is preceded by a SweetAlert confirmation, 
+    // so we just show the result toast here.
     try {
-        // await api.delete(`/delete-staff/${id}`);
-
+        await api.delete(`/staffs/delete/${id}`);
         dispatch(deleteStaff(id));
-
-        Swal.fire({
-            title: '<span style="font-size: 25px">Deleted!</span>',
-            text: "Staff record has been removed.",
-            icon: "success",
-            confirmButtonColor: "#ea8b0c",
-            timer: 2000
-        });
-
-    } catch (err) {
-        const message = err.response?.data?.message || "Unable to delete staff record";
-
-        Swal.fire({
-            title: "Error!",
-            text: message,
-            icon: "error",
-            confirmButtonColor: "#d33",
-        });
+        toast.success("Staff deleted");
+    } catch (err) { 
+        toast.error("Delete failed");
+        console.log(err); 
     }
 };
-
-
-export const toggleAssignmentFunction = async (dispatch,staffId,projectId,staffName = null,isAssigning  =true) => {
-    try{
-
-        if(isAssigning){
-
-            console.log("The assigning is wporking");
-            
-
-            dispatch(assignProjectToStaff({staffId,projectId}))
-            dispatch(assignStaffToProject({staffId,projectId,staffName}))
-        return true;
-
-        }
-        else{
-            // await api.post("/staffs/unassign-project", { projectId });
-
-            dispatch(unAssignProjectFromStaff({staffId, projectId} ));
-            dispatch(unAssignStaffFromProject({projectId}))
-    }
-    }
-    catch(err){
-        const message = err.response?.data?.message || "Unable to delete staff record";
-        return false;
-    }
-}

@@ -1,123 +1,70 @@
-import Swal from "sweetalert2"
-import api from "../../api/axios"
-import { addProjects, allProjects, assignStaffToProject, deleteProject, removeStaffFromProject, updateProject } from "./projectSlice"
-import { deleteStageWithProject } from "../stages/stageService.js";
-export const getAllProjects = async(dispatch) => {
+import { toast } from 'react-hot-toast';
+import api from "../../api/axios";
+import { addProjects, allProjects, assignStaffToProject, deleteProject, updateProject } from "./projectSlice";
+import { assignProjectToStaff } from '../staff/staffSlice';
+
+export const getAllProjects = async (dispatch) => {
     try {
-        
-        // const res = await api.get("/projects")
-
-        // const data = res.data.projects
-
-        // dispatch(allProjects(data))
-
-        Swal.fire({
-                title: '<span style="font-size: 25px">Success!</span>',
-                text : "Project has been added Successfully",
-                icon : "success",
-                confirmButtonColor : "#ea8b0c",
-                timer : 3000
-            })
+        const res = await api.get("/projects/all");
+        dispatch(allProjects(res.data.projects));
     } catch (err) {
-        const message = err.response?.data?.message || "Unable To Add Customer";
-        
-                Swal.fire({
-                    title: '<span style="font-size: 25px">Error!</span>',
-                    text : message,
-                    icon :"error",
-                    confirmButtonColor :"#d33",
-            })
-    }
-}
-
-
-export const addNewProject = async(dispatch,payload) => {
-    try{
-        // const res = await api.post("/add-project",payload)
-
-        // const data = res.data.project
-
-        dispatch(addProjects(payload))
-
-        Swal.fire({
-                title: '<span style="font-size: 25px">Success!</span>',
-                text : "Project has been added Successfully",
-                icon : "success",
-                confirmButtonColor : "#ea8b0c",
-                timer : 3000
-            })
-
-            return true;
-    }
-    catch(err){
-        const message = err.response?.data?.message || "Unable To Add Project";
-        
-                Swal.fire({
-                    title: '<span style="font-size: 25px">Error!</span>',
-                    text : message,
-                    icon :"error",
-                    confirmButtonColor :"#d33",
-            })
-
-            return false;
-    }
-}
-
-export const updateProjectFunction = async(dispatch,id,payload) => {
-    try{
-        // const res = await api.patch(`/update-project/${id}`,payload)
-
-        // const data = res.data.project
-
-        dispatch(updateProject(payload))
-
-        Swal.fire({
-               title: '<span style="font-size: 25px">Success!</span>',
-                text : "Project updated Successfully",
-                icon : "success",
-                confirmButtonColor : "#ea8b0c",
-                timer : 3000
-            })
-
-            return true;
-    }
-    catch(err){
-        const message = err.response?.data?.message || "Unable To Add Customer";
-        
-                Swal.fire({
-                    title: '<span style="font-size: 25px">Error!</span>',
-                    text : message,
-                    icon :"error",
-                    confirmButtonColor :"#d33",
-            })
-
-            return false;
-    }
-}
-
-export const deleteProjectFunction = async (dispatch, id) => {
-    try {
-        // const res = await api.delete(`/delete-customer/${id}`);
-
-        dispatch(deleteProject(id));
-    
-        Swal.fire({
-            title: '<span style="font-size: 25px">Deleted!</span>',
-            text: "Project record has been removed.",
-            icon: "success",
-            confirmButtonColor: "#ea8b0c",
-            timer: 2000
-        });
-
-        
-    } catch (err) {
-        const message = err.response?.data?.message || "Unable to delete customer";
-
-        Swal.fire({
-            title: '<span style="font-size: 25px">Error!</span>',
-            text: message,
-            icon: "error",
-            confirmButtonColor: "#d33",
-        });
+        toast.error("Unable To Fetch Projects");
+        console.log(err);
     }
 };
+
+
+export const addNewProject = async (dispatch, payload) => {
+    const loadingToast = toast.loading("Saving new project...");
+    
+    try {
+        const res = await api.post("/projects/add-project", payload);
+        dispatch(addProjects(res.data.project));
+        
+        toast.success("Project added successfully! 🎉", { id: loadingToast });
+        return true;
+    } catch (err) {
+        const message = err.response?.data?.message || "Could not save project.";
+        toast.error(message, { id: loadingToast });
+        return false;
+    }
+};
+
+export const updateProjectFunction = async (dispatch, id, payload) => {
+    if (!id) {
+        toast.error("Project ID is missing!");
+        return false;
+    }
+
+    const loadingToast = toast.loading("Updating project...");
+
+    try {
+        const res = await api.patch(`/projects/update-project/${id}`, payload);
+        // Syncing with the project data returned from the server
+        dispatch(updateProject(res.data.project)); 
+        
+        toast.success("Project updated successfully!", { id: loadingToast });
+        return true;
+    } catch (err) {
+        const message = err.response?.data?.message || "Update failed.";
+        toast.error(message, { id: loadingToast });
+        return false;
+    }
+};
+
+export const deleteProjectFunction = async (dispatch, id) => {
+    const loadingToast = toast.loading("Removing project...");
+
+    try {
+        await api.delete(`/projects/delete-project/${id}`);
+        dispatch(deleteProject(id));
+        
+        toast.success("Project deleted.", { id: loadingToast });
+        return true;
+    } catch (err) {
+        toast.error("Delete failed.", { id: loadingToast });
+        console.log(err);
+        return false;
+    }
+};
+

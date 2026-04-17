@@ -81,7 +81,7 @@ const filteredUsers = useMemo(() => {
   const handleDelete = (id) => {
     Swal.fire({
       title : '<span style="font-size: 25px">Are You Sure </span>',
-      text: "You won't be able to revert this!",
+      text: "This action is permanent. Deleting this project will also remove all associated stages and customer records.",
       icon: "warning",
         showCancelButton: true,
         confirmButtonColor: "#ea8b0c", // Matching your theme
@@ -193,7 +193,6 @@ const filteredUsers = useMemo(() => {
                 <th>Phone</th>
                 <th>Address</th>
                 <th>Type</th>
-                <th>Budget</th>
                 <th>Status</th>
                 <HasPermission permission={["edit-customer","delete-customer"]} mode = "any">
                 <th className="text-center">Action</th>
@@ -213,9 +212,6 @@ const filteredUsers = useMemo(() => {
                     <td>{user.phone}</td>
                     <td>{user.address}</td>
                     <td>{user.projectType}</td>
-                    <td className="fw-medium text-primary">
-                      {formatCurrency(user.budget)}
-                    </td>
                     <td>
                       <span
                         className={`${getStatusClass(

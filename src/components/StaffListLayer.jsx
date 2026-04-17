@@ -4,8 +4,9 @@ import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { allCustomerFunction } from "../features/customers/customerService";
 import Swal from "sweetalert2";
-import { deleteStaffFunction } from "../features/staff/staffService";
+import { allStaffFunction, deleteStaffFunction } from "../features/staff/staffService";
 import HasPermission from "./HasPermission"
+import { all } from "axios";
 
 const StaffsListLayer = () => {
   const navigate = useNavigate();
@@ -14,10 +15,33 @@ const StaffsListLayer = () => {
   const staffList = useSelector((state) => state.staffs.staffs) || [];
   const projectList = useSelector((state) => state.projects.projects) || [];
 
+  const copyToClipboard = (text) => {
+  if (navigator.clipboard && window.isSecureContext) {
+    // Modern approach
+    navigator.clipboard.writeText(text);
+  } else {
+    // Fallback approach for HTTP/IP addresses
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.position = "fixed";
+    textArea.style.left = "-999999px";
+    textArea.style.top = "-999999px";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {
+      document.execCommand('copy');
+    } catch (err) {
+      console.error('Unable to copy', err);
+    }
+    document.body.removeChild(textArea);
+  }
+};
+
 
   useEffect(() => {
-    allCustomerFunction(dispatch);
-  }, [dispatch]);
+    allStaffFunction(dispatch)
+  }, []);
 
   // State Management
   const [searchTerm, setSearchTerm] = useState("");
@@ -188,7 +212,19 @@ const StaffsListLayer = () => {
                       <td>{user.name}</td>
                       <td>{user.phone}</td>
                       <td>{user.email}</td>
-                      <td>{user.password}</td>
+                      <td className="fw-medium text-primary-light">
+  <div className="d-flex align-items-center gap-2">
+    {user.plainPassword || "******"}
+    <button 
+      type="button"
+      className="border-0 bg-transparent p-0 d-flex align-items-center"
+      onClick={() => copyToClipboard(user.plainPassword)}
+      title="Copy Password"
+    >
+      <Icon icon="lucide:copy" className="text-sm text-secondary-light hover-text-primary" />
+    </button>
+  </div>
+</td>
                       <td className="text-capitalize">{user.role}</td>
                       <td>{user.location || user.address}</td>
                       <td>
@@ -262,7 +298,7 @@ const StaffsListLayer = () => {
                   );
                 })
               ) : (
-                <tr><td colSpan="6" className="text-center py-4">No Staffs found.</td></tr>
+                <tr><td colSpan="9" className="text-center py-4">No Staffs found.</td></tr>
               )}
             </tbody>
           </table>

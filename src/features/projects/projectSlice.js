@@ -1,36 +1,7 @@
 import {createSlice, current } from "@reduxjs/toolkit"
 
 const initialState = {
-    projects : [
-        {cost
-: 
-"1268565",
-customerId
-: 
-1,
-customerName
-: 
-"Kathryn Murphy",
-id
-: 
-"7a36e31a-0e09-4e60-9619-1a2793d0c223",
-location
-: 
-"coimbatore",
-projectName : "Sam homes",
-projectType: "Residential",
-status : "Initialized"},
-{
-  id: "1ba2906f-e70e-4520-b603-9c84ead1aa6f",
-  projectName: "Sampel",
-  location: "Coimbatore",
-  customerName: "Kathryn Murphy",
-  customerId: 1,
-  cost: 1500000,
-  projectType: "Residential",
-  status: "Initialized"
-}
-    ]
+    projects : []
 }
 
 const projectSlice = createSlice({

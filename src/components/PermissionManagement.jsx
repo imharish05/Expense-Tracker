@@ -99,13 +99,21 @@ const availablePermissions = [
                                             <div className="d-flex align-items-center gap-2">
                                                 <span className="text-sm fw-medium text-secondary-light">{perm.label}</span>
                                             </div>
-                                            <input
-                                                type="checkbox"
-                                                className="form-check-input border-2"
-                                                style={{ width: '18px', height: '18px' }}
-                                                checked={rolePermissions[role.id]?.includes(perm.id) || false}
-                                                onChange={() => handleToggle(role.id, perm.id)}
-                                            />
+                                           <input
+    type="checkbox"
+    className="form-check-input border-2"
+    style={{ width: '18px', height: '18px' }}
+    // Ensure admin is always checked, otherwise check the Redux state
+    checked={role.id === 'admin' ? true : (rolePermissions[role.id]?.includes(perm.id) || false)}
+    // Prevent the toggle function from firing if the role is admin
+    onChange={() => {
+        if (role.id !== 'admin') {
+            handleToggle(role.id, perm.id);
+        }
+    }}
+    // Visually and functionally disable the checkbox for the admin role
+    disabled={role.id === 'admin'}
+/>
                                         </label>
                                     ))}
                                 </div>

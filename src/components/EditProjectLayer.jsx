@@ -95,24 +95,6 @@ const handleProjectUpdate = async (e) => {
     // 3. Update the Project First
     const success = await updateProjectFunction(dispatch, id, payload);
 
-    if (success && isStaffChanged) {
-        // CASE A: Project was assigned to someone else before -> Remove it from their list
-        if (previousStaffId) {
-            await toggleAssignmentFunction(dispatch, previousStaffId, id, null, false);
-        }
-
-        // CASE B: A new staff member is selected -> Add it to their list
-        if (selectedStaffId) {
-            await toggleAssignmentFunction(
-                dispatch, 
-                selectedStaffId, // Ensure this is just the ID string/number
-                id, 
-                selectedStaffName, 
-                true
-            );
-        }
-    }
-    
     if (success) {
         navigate(-1);
     }
@@ -214,7 +196,7 @@ const handleProjectUpdate = async (e) => {
                                     </div>
 
                                     <div className="mb-20">
-                                        <label className="form-label fw-semibold text-primary-light text-sm mb-8">Cost</label>
+                                        <label className="form-label fw-semibold text-primary-light text-sm mb-8">Fees</label>
                                         <input type="text" className="form-control radius-8" value={cost} onChange={(e) => setCost(e.target.value)} />
                                     </div>
 
