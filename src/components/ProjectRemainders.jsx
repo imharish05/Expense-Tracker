@@ -26,7 +26,7 @@ const ProjectReminders = () => {
           overduePayments.push({
             projectName: projectDetails?.projectName || "Unknown Project",
             projectId: projectEntry.projectId,
-            customerName: projectDetails.customerName,
+            customerName: projectDetails?.customerName,
             balance: goal - paid,
             dueDate: stage.duration,
             ...stage
@@ -39,7 +39,7 @@ const ProjectReminders = () => {
           unpaidCompletedStages.push({
             projectName: projectDetails?.projectName || "Unknown Project",
             projectId: projectEntry.projectId,
-            customerName: projectDetails.customerName,
+            customerName: projectDetails?.customerName,
             balance: goal - paid,
             ...stage
           });
@@ -85,7 +85,7 @@ const ProjectReminders = () => {
                     <div>
                       <p className="text-xs text-primary-600 fw-bold mb-1 uppercase">{item.projectName}</p>
                       <h6 className="text-sm mb-1">{item.stage_Name}</h6>
-                      <h6 className="text-xs mb-1">{item.customerName}</h6>
+                      <h6 className="text-xs mb-1">{item?.customerName}</h6>
                       <p className="text-xs fw-bold text-danger-main mb-0">
                         Pending: {formatCurrency(item.balance)}
                       </p>

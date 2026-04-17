@@ -13051,6 +13051,7 @@ select option {
 
 .card .card-body {
   padding: 0.875rem 1.5rem;
+  background-color : "red";
   color: var(--text-secondary-light);
 }
 

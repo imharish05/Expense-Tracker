@@ -16,7 +16,7 @@ export const allCustomerFunction = async(dispatch) => {
         const message = err.response?.data?.message || "Unable To Add Customer";
 
         Swal.fire({
-            title : "Error!",
+            title: '<span style="font-size: 25px">Error!</span>',
             text : message,
             icon :"error",
             confirmButtonColor :"#d33",
@@ -48,7 +48,7 @@ export const addCustomerFunction = async(dispatch,payload) => {
         const message = err.response?.data?.message || "Unable To Add Customer";
 
         Swal.fire({
-            title : "Error!",
+            title: '<span style="font-size: 25px">Error!</span>',
             text : message,
             icon :"error",
             confirmButtonColor :"#d33",

@@ -131,9 +131,11 @@ const isProjectRoute =
   location.pathname.startsWith("/projects/"); // This covers single project views
 
   const dispatch = useDispatch()
+  const navigate = useNavigate()
 
   const handleLogout = () =>{
     dispatch(logout())
+    navigate("/sign-in")
   }
   
   return (
@@ -338,18 +340,6 @@ const isProjectRoute =
   </li>
 </HasPermission>
 
-        {/* Payments */}
-             {/* <li className="mt-3">
-              <NavLink
-                to='/invoice-list'
-                className={(navData) => (navData.isActive ? "active-page" : "")}
-              >
-                <Icon icon='hugeicons:invoice-03' className='menu-icon' />
-                <span>Payments</span>
-              </NavLink>
-            </li> */}
-
- 
 
 <HasPermission permission = {"manage-access"} mode = "any">
             <li>
@@ -364,17 +354,6 @@ const isProjectRoute =
             </li>
 </HasPermission>
 
-
-            {/* Documents */}
-             {/* <li>
-              <NavLink
-                to='/documents'
-                className={(navData) => (navData.isActive ? "active-page" : "")}
-              >
-                <Icon icon='solar:document-add-outline' className='menu-icon' />
-                <span>Upload Documents</span>
-              </NavLink>
-            </li> */}
 
             {/* Remainders and notifications */}
 
@@ -405,64 +384,6 @@ const isProjectRoute =
               </NavLink>
             </li>
                 </HasPermission>
-
-            {/* Authentication Dropdown */}
-            {/* <li className='dropdown'>
-              <Link to='#'>
-                <Icon
-                  icon='icon-park-outline:setting-two'
-                  className='menu-icon'
-                />
-                <span>Setting</span>
-              </Link>
-              <ul className='sidebar-submenu'>
-                <li>
-                  <NavLink
-                    to='/sign-in'
-                    className={(navData) =>
-                      navData.isActive ? "active-page" : ""
-                    }
-                  >
-                    <i className='ri-circle-fill circle-icon text-primary-600 w-auto' />{" "}
-                    Sign In
-                  </NavLink>
-                </li>
-                <li>
-                  <NavLink
-                    to='/sign-up'
-                    className={(navData) =>
-                      navData.isActive ? "active-page" : ""
-                    }
-                  >
-                    <i className='ri-circle-fill circle-icon text-warning-main w-auto' />{" "}
-                    Sign Up
-                  </NavLink>
-                </li>
-                <li>
-                  <NavLink
-                    to='/forgot-password'
-                    className={(navData) =>
-                      navData.isActive ? "active-page" : ""
-                    }
-                  >
-                    <i className='ri-circle-fill circle-icon text-info-main w-auto' />{" "}
-                    Forgot Password
-                  </NavLink>
-                </li>
-                                <li>
-                  <NavLink
-                    to='/company'
-                    className={(navData) =>
-                      navData.isActive ? "active-page" : ""
-                    }
-                  >
-                    <i className='ri-circle-fill circle-icon text-primary-600 w-auto' />{" "}
-                    Company
-                  </NavLink>
-                </li>
-              </ul>
-            </li> */}
-
           </ul>
         </div>
       </aside>
@@ -642,7 +563,12 @@ const isProjectRoute =
         </div>
 
         {/* dashboard-main-body */}
-        <div className='dashboard-main-body'>{children}</div>
+        <div className='dashboard-main-body' style = {{backgroundImage: "url('/assets/images/bg/bg_2.webp')",
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundRepeat: 'no-repeat',
+    backgroundColor : "none",
+    minHeight: '100vh'}}>{children}</div>
 
         {/* Footer section */}
         <footer className='d-footer'>

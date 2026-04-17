@@ -101,12 +101,13 @@ const StaffsListLayer = () => {
 
   const handleDelete = (id) => {
     Swal.fire({
-      title: "Are you sure?",
+       title: '<span style="font-size: 25px">Are You sure ?</span>',
       text: "Reverting this is not possible!",
       icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: "#ea8b0c",
       confirmButtonText: "Yes, delete it!",
+      confirmButtonColor: "#ea8b0c",
+      reverseButtons : true,
     }).then((result) => {
       if (result.isConfirmed) deleteStaffFunction(dispatch, id);
     });

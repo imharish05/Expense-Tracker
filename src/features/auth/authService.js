@@ -36,6 +36,7 @@ const sampleData = {
   "delete-projects",
   "upload-docs",
   "manage-access",
+  "manage-payment",
   "manage-remainders",
   "view-reports"
 ]

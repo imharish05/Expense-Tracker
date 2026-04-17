@@ -23,7 +23,7 @@ export const usePaymentReminders = () => {
         const reminderData = {
           projectName: projectDetails?.projectName || "Unknown Project",
           projectId: projectEntry.projectId,
-          customerName : projectDetails.customerName,
+          customerName : projectDetails?.customerName,
           balance: goal - paid,
           ...stage
         };

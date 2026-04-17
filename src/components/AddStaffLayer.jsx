@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from "react-redux";
 import { addStaffFunction } from '../features/staff/staffService';
+import { useId } from 'react';
 
 const AddStaffLayer = () => {
     const dispatch = useDispatch();
@@ -10,6 +11,8 @@ const AddStaffLayer = () => {
 
     const projectList = useSelector((state) => state.projects.projects) || [];
 
+    const id = useId()
+   
     // Form State
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
@@ -64,7 +67,7 @@ const validate = () => {
 
         try {
             const payload = {
-                id: crypto.randomUUID(),
+                id: id,
                 name,
                 email,
                 password,
@@ -91,7 +94,9 @@ const validate = () => {
     );
 
     return (
-        <div className="card h-100 p-0 radius-12">
+        <div className="card h-100 p-0 radius-12" style = {{backgroundColor: "transparent",            // Corrected from "none"
+    backdropFilter: "none",                   // Set to none for pure transparency
+}}>
             <div className="card-body p-24">
                 <div className="row justify-content-center">
                     <div className="col-xxl-6 col-xl-8 col-lg-10">

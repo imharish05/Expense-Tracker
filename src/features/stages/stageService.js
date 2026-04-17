@@ -19,7 +19,7 @@ export const individualStages = async (dispatch, projectId) => {
     } catch (err) {
         const message = err.response?.data?.message || "Unable to fetch project stages";
         Swal.fire({
-            title: "Error!",
+            title: '<span style="font-size: 25px">Error!</span>',
             text: message,
             icon: "error",
             confirmButtonColor: "#d33",
@@ -57,7 +57,7 @@ export const addStageFunction = async (dispatch, payload, projectId) => {
         }))
 
         Swal.fire({
-            title: "Success!",
+            title: '<span style="font-size: 25px">Success!</span>',
             text: "New stage has been added successfully",
             icon: "success",
             confirmButtonColor: "#ea8b0c",
@@ -65,7 +65,7 @@ export const addStageFunction = async (dispatch, payload, projectId) => {
         });
     } catch (err) {
         const message = err.response?.data?.message || "Unable to add stage";
-        Swal.fire({ title: "Error!", text: message, icon: "error", confirmButtonColor: "#d33" });
+        Swal.fire({ title: '<span style="font-size: 25px">Error!</span>', text: message, icon: "error", confirmButtonColor: "#d33" });
     }
 
     // Reponse
@@ -117,7 +117,7 @@ export const recordStagePaymentFunction = async (dispatch, payload, stageId, pro
         
 
         Swal.fire({
-            title: "Payment Recorded!",
+            title: '<span style="font-size: 25px">Payment Recorded!</span>',
             text: "The stage balance has been updated.",
             icon: "success",
             confirmButtonColor: "#ea8b0c",
@@ -127,7 +127,7 @@ export const recordStagePaymentFunction = async (dispatch, payload, stageId, pro
         return true
     } catch (err) {
         const message = err.response?.data?.message || "Unable to record payment";
-        Swal.fire({ title: "Error!", text: message, icon: "error", confirmButtonColor: "#d33" });
+        Swal.fire({ title: '<span style="font-size: 25px">Error!</span>', text: message, icon: "error", confirmButtonColor: "#d33" });
 
         return false;
     }
@@ -197,7 +197,6 @@ export const deleteStageDocumentFunction = async (dispatch, projectId, stageId) 
     return false;
   }
 };
-
 
 export const updateStageStatusFunction = async (dispatch, data, stageId, projectId) => {
   try {

@@ -45,7 +45,7 @@ const availablePermissions = [
 ];
     // 3. Load initial data on mount
     useEffect(() => {
-        // fetchPermissionsFunction(dispatch);
+        fetchPermissionsFunction(dispatch);
     }, [dispatch]);
 
     // 4. Handle Toggles via Redux Dispatch

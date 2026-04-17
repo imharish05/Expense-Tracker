@@ -88,6 +88,7 @@ const projectProgressSlice = createSlice({
       }
     },
 
+
     // --- UPDATED DOCUMENT ACTIONS ---
 
     // 1. Call this BEFORE the API request starts
@@ -132,6 +133,12 @@ updateStageStatus: (state, action) => {
   }
 },
   },
+
+  deleteProjectStages: (state, action) => {
+  const projectId = action.payload;
+  // Filter out the project entry that matches the deleted ID
+  state.stage = state.stage.filter(p => String(p.projectId) !== String(projectId));
+},
 });
 
 export const { 

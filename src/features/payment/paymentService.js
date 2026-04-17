@@ -47,7 +47,7 @@ export const stagePaymentCollection = async (dispatch, paymentData, stageId, pro
       
     //   Swal.fire({
     //     icon: "success",
-    //     title: "Payment Recorded",
+    //     title: '<span style="font-size: 25px">Payment Received!</span>',
     //     text: `Amount: ₹${paymentData.amount} processed successfully.`,
     //     timer: 2000,
     //     showConfirmButton: false,
@@ -63,7 +63,7 @@ export const stagePaymentCollection = async (dispatch, paymentData, stageId, pro
     
     Swal.fire({
       icon: "error",
-      title: "Payment Error",
+      title: '<span style="font-size: 25px">Error!</span>',
       text: message,
     });
     return false;

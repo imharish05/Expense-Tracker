@@ -1,7 +1,7 @@
 import Swal from "sweetalert2"
 import api from "../../api/axios"
 import { addProjects, allProjects, assignStaffToProject, deleteProject, removeStaffFromProject, updateProject } from "./projectSlice"
-
+import { deleteStageWithProject } from "../stages/stageService.js";
 export const getAllProjects = async(dispatch) => {
     try {
         
@@ -12,7 +12,7 @@ export const getAllProjects = async(dispatch) => {
         // dispatch(allProjects(data))
 
         Swal.fire({
-                title : "Success!",
+                title: '<span style="font-size: 25px">Success!</span>',
                 text : "Project has been added Successfully",
                 icon : "success",
                 confirmButtonColor : "#ea8b0c",
@@ -22,7 +22,7 @@ export const getAllProjects = async(dispatch) => {
         const message = err.response?.data?.message || "Unable To Add Customer";
         
                 Swal.fire({
-                    title : "Error!",
+                    title: '<span style="font-size: 25px">Error!</span>',
                     text : message,
                     icon :"error",
                     confirmButtonColor :"#d33",
@@ -40,7 +40,7 @@ export const addNewProject = async(dispatch,payload) => {
         dispatch(addProjects(payload))
 
         Swal.fire({
-                title : "Success!",
+                title: '<span style="font-size: 25px">Success!</span>',
                 text : "Project has been added Successfully",
                 icon : "success",
                 confirmButtonColor : "#ea8b0c",
@@ -53,7 +53,7 @@ export const addNewProject = async(dispatch,payload) => {
         const message = err.response?.data?.message || "Unable To Add Project";
         
                 Swal.fire({
-                    title : "Error!",
+                    title: '<span style="font-size: 25px">Error!</span>',
                     text : message,
                     icon :"error",
                     confirmButtonColor :"#d33",
@@ -72,7 +72,7 @@ export const updateProjectFunction = async(dispatch,id,payload) => {
         dispatch(updateProject(payload))
 
         Swal.fire({
-                title : "Success!",
+               title: '<span style="font-size: 25px">Success!</span>',
                 text : "Project updated Successfully",
                 icon : "success",
                 confirmButtonColor : "#ea8b0c",
@@ -85,7 +85,7 @@ export const updateProjectFunction = async(dispatch,id,payload) => {
         const message = err.response?.data?.message || "Unable To Add Customer";
         
                 Swal.fire({
-                    title : "Error!",
+                    title: '<span style="font-size: 25px">Error!</span>',
                     text : message,
                     icon :"error",
                     confirmButtonColor :"#d33",
@@ -100,20 +100,21 @@ export const deleteProjectFunction = async (dispatch, id) => {
         // const res = await api.delete(`/delete-customer/${id}`);
 
         dispatch(deleteProject(id));
-
+    
         Swal.fire({
-            title: "Deleted!",
+            title: '<span style="font-size: 25px">Deleted!</span>',
             text: "Project record has been removed.",
             icon: "success",
             confirmButtonColor: "#ea8b0c",
             timer: 2000
         });
 
+        
     } catch (err) {
         const message = err.response?.data?.message || "Unable to delete customer";
 
         Swal.fire({
-            title: "Error!",
+            title: '<span style="font-size: 25px">Error!</span>',
             text: message,
             icon: "error",
             confirmButtonColor: "#d33",

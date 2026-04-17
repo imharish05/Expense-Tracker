@@ -8,7 +8,7 @@ import { useId } from 'react';
 
 const AddUserLayer = () => {
 
-    const {id} =useId()
+    const id =useId()
     
     // Hooks
     const dispatch = useDispatch()
@@ -19,12 +19,11 @@ const AddUserLayer = () => {
         const [address,setAddress] = useState("")
         const [phone,setPhone] = useState("")
         const [projectType,setProjectType] = useState("")
-        const [budget,setBudget] = useState("")
+       
         const [errors,setErrors] = useState({})
         
         const handleCancel = () => {
             setName("")
-            setBudget("")
             setAddress("")
             setPhone("")
             setProjectType("")
@@ -78,19 +77,16 @@ const AddUserLayer = () => {
     if (!isValid) return; // Stop if there are errors
             try{
 
-                console.log(sampleId,sampleId);
-                
-
                 const payload = {
                     // Change the id
-                    id : id,name,address,phone,budget,projectType,status : "Active",role : "customer"
+                    id : id,name,address,phone,projectType,status : "Active",role : "customer"
                 }
                 setSampleId((prev) => prev +1)
                 
             addCustomerFunction(dispatch,payload)
 
             setName("")
-            setBudget("")
+            
             setAddress("")
             setPhone("")
             setProjectType("")
@@ -102,11 +98,13 @@ const AddUserLayer = () => {
         }
 
         return (
-            <div className="card h-100 p-0 radius-12">
+            <div className="card h-100 p-0 radius-12" style = {{backgroundColor: "transparent",            // Corrected from "none"
+    backdropFilter: "none",                   // Set to none for pure transparency
+}}>
                 <div className="card-body p-24">
                     <div className="row justify-content-center">
                         <div className="col-xxl-6 col-xl-8 col-lg-10">
-                            <div className="card border">
+                            <div className="card">
                                 <div className="card-body">
                                     <h6 className="text-lg text-center text-primary-light mb-16">Add New Customer</h6>
                                     <form action="#" onSubmit={(e)=>handleCustomer(e)}>
@@ -186,23 +184,7 @@ const AddUserLayer = () => {
 <ErrorMsg field={"project"}/>
                                         </div>
 
-                                        <div className="mb-20">
-                                            <label
-                                                htmlFor="name"
-                                                className="form-label fw-semibold text-primary-light text-sm mb-8"
-                                            >
-                                                Budget
-                                            </label>
-                                            <input
-                                            value={budget}
-                                            onChange={(e)=>setBudget(e.target.value)}
-                                                type="text"
-                                                className="form-control radius-8"
-                                                id="budget"
-                                                placeholder="Enter the Budget"
-                                            />
-                                        </div>
-
+    
                                         <div className="d-flex align-items-center justify-content-center gap-3">
                                             <button
                                             type='button'

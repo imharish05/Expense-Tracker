@@ -11,7 +11,7 @@ export const updateStaffFunction = async (dispatch, id, payload) => {
         dispatch(updateStaff(payload));
 
         Swal.fire({
-            title: "Success!",
+            title: '<span style="font-size: 25px">Success!</span>',
             text: "Staff record has been updated Successfully",
             icon: "success",
             confirmButtonColor: "#ea8b0c",
@@ -61,7 +61,7 @@ export const addStaffFunction = async(dispatch,payload) => {
         dispatch(addStaff(payload))
 
         Swal.fire({
-            title : "Success!",
+            title: '<span style="font-size: 25px">Success!</span>',
             text : "Staff has been added Successfully",
             icon : "success",
             confirmButtonColor : "#ea8b0c",
@@ -73,7 +73,7 @@ export const addStaffFunction = async(dispatch,payload) => {
         const message = err.response?.data?.message || "Unable To Add Staff";
 
         Swal.fire({
-            title : "Error!",
+            title: '<span style="font-size: 25px">Error!</span>',
             text : message,
             icon :"error",
             confirmButtonColor :"#d33",
@@ -90,7 +90,7 @@ export const deleteStaffFunction = async (dispatch, id) => {
         dispatch(deleteStaff(id));
 
         Swal.fire({
-            title: "Deleted!",
+            title: '<span style="font-size: 25px">Deleted!</span>',
             text: "Staff record has been removed.",
             icon: "success",
             confirmButtonColor: "#ea8b0c",
