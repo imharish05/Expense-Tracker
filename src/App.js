@@ -26,7 +26,6 @@ import StaffListPage from "./pages/StaffListPage";
 import EditStaffListPage from "./pages/EditStaffListPage";
 import PermissionPage from "./pages/PermissionPage";
 import NotificationAlertPage from "./pages/NotificationAlertPage";
-
 // Services
 import { loadUserFunction } from "./features/auth/authService";
 
