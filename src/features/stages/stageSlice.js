@@ -1,40 +1,37 @@
 import { createSlice, current } from "@reduxjs/toolkit";
 
 const initialState = {
-  stage: [
-    {
-      "projectId": "7a36e31a-0e09-4e60-9619-1a2793d0c223",
-      "stages": [
-        {
-          "id": "1",
-          "stage_Name": "Architecture Design",
-          "description": "Initial blueprints",
-          "amount": 50000,
-          "paid": 0,
-          "status": "In Progress",
-          "customer_id": 1,
-          "payment_mode" : null,
-          "payment_date" : null,
-          "payment_status" : "pending",
-          "documentPath": "dummy_path.pdf",
-          "duration" : "2026-04-14T17:06"
-        }
-      ]
-    }
-  ],
+  stage: [],
+  allStages: [],
   loading: false,
   // NEW: Specific loading state for document uploads
-  documentLoading: false 
+  documentLoading: false,
+  totalCollected: 0,
 };
 
 const projectProgressSlice = createSlice({
   name: 'projectProgress',
   initialState,
   reducers: {
-    setStages: (state, action) => {
-      state.stage = action.payload;
+    setAllStages: (state, action) => {
+  state.allStages = action.payload;
+},
+    setLoading: (state, action) => {
+      state.loading = action.payload;
     },
+    setStages: (state, action) => {
+      const existingProjectIndex = state.stage.findIndex(p => p.projectId === action.payload.projectId);
 
+      
+      if (existingProjectIndex !== -1) {
+        state.stage[existingProjectIndex].stages = action.payload.stages;
+      } else {
+        state.stage.push({ projectId : action.payload.projectId, stages:action.payload.stages });
+  }
+},
+setTotalCollected: (state, action) => {
+      state.totalCollected = action.payload;
+    },
     addStage: (state, action) => {
       const { projectId, stage } = action.payload;
       const projectProgress = state.stage.find(p => p.projectId === projectId);
@@ -142,12 +139,15 @@ updateStageStatus: (state, action) => {
 });
 
 export const { 
+  setLoading,
   addStage, 
   recordStagePayment, 
   setStages, 
   recordDocument, 
   startDocumentUpload, 
+  setTotalCollected,
   uploadDocumentError,
+  setAllStages,
   deleteDocumentSuccess,updateStageStatus
 } = projectProgressSlice.actions;
 

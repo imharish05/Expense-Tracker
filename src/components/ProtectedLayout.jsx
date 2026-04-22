@@ -1,7 +1,8 @@
-import { useDispatch, useSelector } from "react-redux";
-import { Navigate, useLocation } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
+import MasterLayout from "../masterLayout/MasterLayout";
 
-const ProtectedRoute = ({ children }) => {
+const ProtectedLayout = () => {
     const { isAuthenticated, isInitialized } = useSelector((state) => state.auth);
     const token = localStorage.getItem("token");
     const location = useLocation();
@@ -20,7 +21,7 @@ const ProtectedRoute = ({ children }) => {
         return <Navigate to="/sign-in" state={{ from: location }} replace />;
     }
 
-    return children; // ✅ This renders <MasterLayout /> which has <Outlet /> inside
+    return <MasterLayout />; // MasterLayout already has <Outlet /> inside
 };
 
-export default ProtectedRoute;
+export default ProtectedLayout;

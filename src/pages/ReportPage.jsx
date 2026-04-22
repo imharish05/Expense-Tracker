@@ -1,17 +1,17 @@
-import MasterLayout from '../masterLayout/MasterLayout';
-// 1. DELETE THIS: import { Breadcrumb } from 'react-bootstrap'
-// 2. ADD THIS (Adjust the path to where your custom Breadcrumb file is):
-import Breadcrumb from '../components/Breadcrumb'; 
-import ReportLayer from '../components/ReportLayer';
+import React from "react";
+import ReportLayer from "../components/ReportLayer";
+import Breadcrumb from "../components/Breadcrumb";
 
 const ReportPage = () => {
   return (
-    <MasterLayout>
-      {/* Now this will correctly receive the "title" prop */}
-      <Breadcrumb title="Reports" />
-      <ReportLayer />
-    </MasterLayout>
-  );
+  
+  <>
+
+  <Breadcrumb title={"Reports"}/>
+  
+  <ReportLayer />
+  </>
+);
 };
 
 export default ReportPage;

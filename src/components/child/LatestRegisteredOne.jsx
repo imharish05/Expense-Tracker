@@ -69,7 +69,7 @@ const formatDate = (dateStr) => {
                                         <tr>
                                             <th scope="col">Users</th>
                                             <th scope="col">Registered On</th>
-                                            <th scope="col">Project Type</th>
+                                            
                                             <th scope="col" className="text-center">Status</th>
                                         </tr>
                                     </thead>
@@ -86,7 +86,7 @@ const formatDate = (dateStr) => {
                                                     </div>
                                                 </td>
                                                 <td>{formatDate(customer.createdAt)}</td>
-                                                <td>{customer.projectType}</td>
+                                                
                                                 <td className="text-center">
                                                     <span className="bg-success-focus text-success-main px-24 py-4 rounded-pill fw-medium text-sm">
                                                         {customer.status}

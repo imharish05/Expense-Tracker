@@ -22,25 +22,24 @@ export const addCustomerFunction = async (dispatch, payload) => {
     }
 };
 
-export const allCustomerFunction = async (dispatch) => {
-    // 1. Create a reference for the loading toast
+// ... other imports
+
+export const allCustomerFunction = async (dispatch, page = 1, limit = 5) => {
     const loadingToast = toast.loading("Fetching customers...");
 
     try {
-        const res = await api.get("/customers/all"); // Ensure this matches your route
-        const data = res.data.customers;
+        // Use backticks `` for template literals to inject variables
+        const res = await api.get(`/customers/all?page=${page}&limit=${limit}`); 
+        
+        // We dispatch the whole data object which now contains { customers, totalPages, totalItems }
+        dispatch(allCustomers(res.data)); 
 
-        dispatch(allCustomers(data));
-
-        // 2. Dismiss the loading toast once data is in Redux
         toast.dismiss(loadingToast);
+        return res.data.totalPages; // Useful for local state if needed
 
     } catch (err) {
         const message = err.response?.data?.message || "Unable to load customer list";
-
-        // 3. Update the loading toast to an error toast
         toast.error(message, { id: loadingToast });
-        
         console.error("Fetch Error:", err);
     }
 };

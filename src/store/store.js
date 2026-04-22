@@ -6,6 +6,7 @@ import stageReducer from "../features/stages/stageSlice.js"
 import permissionReducer from "../features/permissions/permissionSlice.js"
 import authSlice from "../features/auth/authSlice.js"
 import paymentReducer from "../features/payment/paymentSlice.js"
+import notificationReducer from "../features/notification/notificationSlice.js"
 
 export const store = configureStore({
     reducer : {
@@ -16,5 +17,6 @@ export const store = configureStore({
         stages : stageReducer,
         permissions : permissionReducer,
         payments : paymentReducer,
+        notification : notificationReducer,
     }
 })

@@ -2,136 +2,119 @@ import React, { useState, useMemo, useEffect } from "react";
 import { Icon } from "@iconify/react";
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { allCustomerFunction } from "../features/customers/customerService";
-import Swal from "sweetalert2";
 import { allStaffFunction, deleteStaffFunction } from "../features/staff/staffService";
-import HasPermission from "./HasPermission"
-import { all } from "axios";
+import Swal from "sweetalert2";
+import HasPermission from "./HasPermission";
 
 const StaffsListLayer = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
+  // Get data and pagination from Redux
   const staffList = useSelector((state) => state.staffs.staffs) || [];
+  const serverTotalPages = useSelector((state) => state.staffs.totalPages) || 1;
   const projectList = useSelector((state) => state.projects.projects) || [];
 
-  const copyToClipboard = (text) => {
-  if (navigator.clipboard && window.isSecureContext) {
-    // Modern approach
-    navigator.clipboard.writeText(text);
-  } else {
-    // Fallback approach for HTTP/IP addresses
-    const textArea = document.createElement("textarea");
-    textArea.value = text;
-    textArea.style.position = "fixed";
-    textArea.style.left = "-999999px";
-    textArea.style.top = "-999999px";
-    document.body.appendChild(textArea);
-    textArea.focus();
-    textArea.select();
-    try {
-      document.execCommand('copy');
-    } catch (err) {
-      console.error('Unable to copy', err);
-    }
-    document.body.removeChild(textArea);
-  }
-};
-
-
-  useEffect(() => {
-    allStaffFunction(dispatch)
-  }, []);
-
-  // State Management
   const [searchTerm, setSearchTerm] = useState("");
-  const [projectFilter, setProjectFilter] = useState("");
   const [itemsPerPage, setItemsPerPage] = useState(5);
   const [currentPage, setCurrentPage] = useState(1);
   const [roleFilter, setRoleFilter] = useState("");
+  const [projectFilter, setProjectFilter] = useState("");
 
-  // --- 🛠️ 1. CREATE A PROJECT LOOKUP MAP ---
-  // This turns [{id: 1, projectName: 'A'}] into { "1": {projectName: 'A'} }
-  // This makes looking up project details much faster.
-  const projectMap = useMemo(() => {
-    const map = {};
-    projectList.forEach((proj) => {
-      map[proj.id || proj._id] = proj;
-    });
-    return map;
-  }, [projectList]);
-
-
-  // --- 🛠️ 2. HELPER TO COLLECT PROJECT DETAILS ---
-  const getProjectDetails = (projectData) => {
-    if (!projectData) return [];
-    
-    let ids = [];
-    if (Array.isArray(projectData)) {
-      ids = projectData;
-    } else if (typeof projectData === "string") {
-      try {
-        const parsed = JSON.parse(projectData);
-        ids = Array.isArray(parsed) ? parsed : [parsed];
-      } catch {
-        ids = projectData.split(",").map(id => id.trim());
-      }
+  const copyToClipboard = (text) => {
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text);
     } else {
-      ids = [projectData];
+      const textArea = document.createElement("textarea");
+      textArea.value = text;
+      textArea.style.position = "fixed";
+      textArea.style.left = "-999999px";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      try { document.execCommand('copy'); } catch (err) { console.error('Unable to copy', err); }
+      document.body.removeChild(textArea);
     }
-    return ids.map(id => projectMap[id]).filter(Boolean);
   };
 
-  // Status Badge Styling
-  const getStatusClass = (status) => {
-    return status === "Active" 
-      ? "bg-success-focus text-success-600 border border-success-main" 
-      : "bg-neutral-200 text-neutral-600 border border-neutral-400";
-  };
+  // Trigger fetch when page or limit changes
+  useEffect(() => {
+    allStaffFunction(dispatch, currentPage, itemsPerPage);
+  }, [dispatch, currentPage, itemsPerPage]);
 
-  // 🔍 Search & Filter Logic
-// 🔍 Search & Filter Logic
- const filteredStaffs = useMemo(() => {
-  return staffList.filter((staff) => {
-    const name = staff?.name || "";
-    const address = staff?.address || staff?.location || "";
-    const role = staff?.role || "";
-    
-    const projects = getProjectDetails(staff.projects || staff.projectId || staff.assignedStaffId);
-    const projectNamesString = projects.map(p => p.projectName).join(" ").toLowerCase();
-
-    const matchesSearch =
-      name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      address.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      role.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      projectNamesString.includes(searchTerm.toLowerCase());
-
-    const matchesProject =
-      projectFilter === "" || 
-      projects.some(p => (p.id || p._id) === projectFilter);
-
-    // ADD THIS: Role Filter Logic
-    const matchesRole = roleFilter === "" || role.toLowerCase() === roleFilter.toLowerCase();
-
-    return matchesSearch && matchesProject && matchesRole;
+const projectMap = useMemo(() => {
+  const map = {};
+  projectList.forEach((proj) => {
+    const id = String(proj.id || proj._id); // Force to string
+    map[id] = proj;
   });
-}, [staffList, searchTerm, projectFilter, roleFilter, projectMap]);
-  // 📄 Pagination Logic
-  const totalPages = Math.ceil(filteredStaffs.length / itemsPerPage);
-  const paginatedUsers = filteredStaffs.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  return map;
+  
+}, [projectList]);
+
+// Update your detail fetcher to use string IDs
+const getProjectDetails = (projectData) => {
+  if (!projectData) return [];
+
+  let ids = [];
+
+  try {
+    // If it's a string that starts with "[", it needs parsing
+    if (typeof projectData === 'string' && projectData.startsWith('[')) {
+      ids = JSON.parse(projectData);
+    } 
+    // If it's already an array, but the first element is a stringified array
+    else if (Array.isArray(projectData) && typeof projectData[0] === 'string' && projectData[0].startsWith('[')) {
+      ids = JSON.parse(projectData[0]);
+    }
+    // Standard array or single ID
+    else {
+      ids = Array.isArray(projectData) ? projectData : [projectData];
+    }
+  } catch (error) {
+    console.error("Parsing error:", error);
+    ids = Array.isArray(projectData) ? projectData : [projectData];
+  }
+
+  // Ensure 'ids' is an array before mapping
+  const finalIds = Array.isArray(ids) ? ids : [ids];
+
+  return finalIds
+    .map(id => projectMap[String(id).trim()])
+    .filter(Boolean);
+};
+
+
+  const filteredStaffs = useMemo(() => {
+    return staffList.filter((staff) => {
+      const name = staff?.name || "";
+      const address = staff?.address || staff?.location || "";
+      const role = staff?.role || "";
+      const projects = getProjectDetails(staff.projects || staff.projectId);
+      const projectNamesString = projects.map(p => p.projectName).join(" ").toLowerCase();
+
+      const matchesSearch =
+        name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        address.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        role.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        projectNamesString.includes(searchTerm.toLowerCase());
+
+      const matchesRole = roleFilter === "" || role.toLowerCase() === roleFilter.toLowerCase();
+      const matchesProject = projectFilter === "" || projects.some(p => (p.id || p._id) === projectFilter);
+
+      return matchesSearch && matchesRole && matchesProject;
+    });
+  }, [staffList, searchTerm, roleFilter, projectFilter, projectMap]);
 
   const handleDelete = (id) => {
     Swal.fire({
-       title: '<span style="font-size: 25px">Are You sure ?</span>',
+      title: '<span style="font-size: 25px">Are You sure ?</span>',
       text: "Reverting this is not possible!",
       icon: "warning",
       showCancelButton: true,
       confirmButtonText: "Yes, delete it!",
       confirmButtonColor: "#ea8b0c",
-      reverseButtons : true,
+      reverseButtons: true,
     }).then((result) => {
       if (result.isConfirmed) deleteStaffFunction(dispatch, id);
     });
@@ -140,46 +123,43 @@ const StaffsListLayer = () => {
   return (
     <div className="card h-100 p-0 radius-12">
       <div className="card-header border-bottom bg-base py-16 px-24 d-flex align-items-center flex-wrap gap-3 justify-content-between">
-      <div className="d-flex align-items-center flex-wrap gap-3">
-  {/* Items Per Page */}
-  <select
-    className="form-select form-select-sm w-auto ps-12 radius-12 h-40-px"
-    value={itemsPerPage}
-    onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }}
-  >
-    {[5, 10, 20 , 50 , 100, 200].map((num) => <option key={num} value={num}>{num}</option>)}
-  </select>
+        <div className="d-flex align-items-center flex-wrap gap-3">
+          <select
+            className="form-select form-select-sm w-auto ps-12 radius-12 h-40-px"
+            value={itemsPerPage}
+            onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }}
+          >
+            {[5, 10, 20, 50, 100].map((num) => <option key={num} value={num}>{num}</option>)}
+          </select>
 
-  {/* NEW: Role Filter Dropdown */}
-  <select
-    className="form-select form-select-sm w-auto ps-12 radius-12 h-40-px"
-    value={roleFilter}
-    onChange={(e) => { setRoleFilter(e.target.value); setCurrentPage(1); }}
-  >
-    <option value="">All Roles</option>
-    <option value="staff">Staff</option>
-    <option value="designer">Designer</option>
-    <option value="admin">Admin</option> 
-  </select>
+          <select
+            className="form-select form-select-sm w-auto ps-12 radius-12 h-40-px"
+            value={roleFilter}
+            onChange={(e) => { setRoleFilter(e.target.value); setCurrentPage(1); }}
+          >
+            <option value="">All Roles</option>
+            <option value="staff">Staff</option>
+            <option value="designer">Designer</option>
+            <option value="admin">Admin</option>
+          </select>
 
-  {/* Search Bar */}
-  <div className="navbar-search position-relative">
-    <input
-      type="text"
-      className="bg-base h-40-px w-auto"
-      placeholder="Search staff or project..."
-      value={searchTerm}
-      onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-    />
-    <Icon icon="ion:search-outline" className="icon position-absolute end-0 me-12 top-50 translate-middle-y" />
-  </div>
-</div>
+          <div className="navbar-search position-relative">
+            <input
+              type="text"
+              className="bg-base h-40-px w-auto"
+              placeholder="Search..."
+              value={searchTerm}
+              onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+            />
+            <Icon icon="ion:search-outline" className="icon position-absolute end-0 me-12 top-50 translate-middle-y" />
+          </div>
+        </div>
 
-    <HasPermission permission = {"create-staff"}>
-        <Link to="/add-staff" className="btn btn-primary text-sm btn-sm px-12 py-12 radius-8 d-flex align-items-center gap-2">
-          <Icon icon="ic:baseline-plus" className="icon text-xl line-height-1" />
-          Add New Staff
-        </Link>
+        <HasPermission permission={"create-staff"}>
+          <Link to="/add-staff" className="btn btn-primary text-sm btn-sm px-12 py-12 radius-8 d-flex align-items-center gap-2">
+            <Icon icon="ic:baseline-plus" className="icon text-xl line-height-1" />
+            Add New Staff
+          </Link>
         </HasPermission>
       </div>
 
@@ -196,38 +176,40 @@ const StaffsListLayer = () => {
                 <th>Role</th>
                 <th>Location</th>
                 <th>Project Details</th>
-              
-                {<HasPermission permission = {["edit-staff","delete-staff"]} mode = "any"><th className="text-center">Action</th></HasPermission>}
+                <HasPermission permission={["edit-staff", "delete-staff"]} mode="any">
+                  <th className="text-center">Action</th>
+                </HasPermission>
               </tr>
             </thead>
             <tbody>
-              {paginatedUsers.length > 0 ? (
-                paginatedUsers.map((user, index) => {
-                  // Collect the projects for this specific user
-                  const userProjects = getProjectDetails(user.projects || user.projectId);
+              {filteredStaffs.length > 0 ? (
+                filteredStaffs.map((user, index) => {
 
+                  const userProjects = getProjectDetails(user.projects || user.projectId);
+          
+                  console.log(userProjects);
+                  
                   return (
                     <tr key={user.id}>
-                      <td>{String((currentPage - 1) * itemsPerPage + index + 1).padStart(2, "0")}</td>
-                      <td>{user.name}</td>
-                      <td>{user.phone}</td>
+                      <td className="text-capitalize">{String((currentPage - 1) * itemsPerPage + index + 1).padStart(2, "0")}</td>
+                      <td className="text-capitalize">{user.name}</td>
+                      <td className="text-capitalize">{user.phone}</td>
                       <td>{user.email}</td>
-                      <td className="fw-medium text-primary-light">
-  <div className="d-flex align-items-center gap-2">
-    {user.plainPassword || "******"}
-    <button 
-      type="button"
-      className="border-0 bg-transparent p-0 d-flex align-items-center"
-      onClick={() => copyToClipboard(user.plainPassword)}
-      title="Copy Password"
-    >
-      <Icon icon="lucide:copy" className="text-sm text-secondary-light hover-text-primary" />
-    </button>
-  </div>
-</td>
-                      <td className="text-capitalize">{user.role}</td>
-                      <td>{user.location || user.address}</td>
                       <td>
+                        <div className="d-flex align-items-center gap-2">
+                          {user.plainPassword || "******"}
+                          <button
+                            type="button"
+                            className="border-0 bg-transparent p-0"
+                            onClick={() => copyToClipboard(user.plainPassword)}
+                          >
+                            <Icon icon="lucide:copy" className="text-sm text-secondary-light hover-text-primary" />
+                          </button>
+                        </div>
+                      </td>
+                      <td className="text-capitalize">{user.role}</td>
+                      <td className="text-capitalize">{user.location || user.address}</td>
+                                          <td>
 <div className="d-flex flex-wrap gap-2">
   {userProjects.length > 0 ? (
     userProjects.map((p, idx) => (
@@ -276,23 +258,21 @@ const StaffsListLayer = () => {
   )}
 </div>
                       </td>
-                      <HasPermission permission = {["edit-staff","delete-staff"]} mode = "any">
-                      <td className="text-center">
-                        <div className="d-flex align-items-center gap-10 justify-content-center">
-                          <HasPermission permission={"edit-staff"}>
-
-                          <button onClick={() => navigate(`/edit-staff/${user.id}`)} className="bg-success-focus text-success-600 w-40-px h-40-px d-flex justify-content-center align-items-center rounded-circle border-0">
-                            <Icon icon="lucide:edit" />
-                          </button>
-                          </HasPermission>
-                          <HasPermission permission={"delete-staff"}>
-
-                          <button onClick={() => handleDelete(user.id)} className="bg-danger-focus text-danger-600 w-40-px h-40-px d-flex justify-content-center align-items-center rounded-circle border-0">
-                            <Icon icon="fluent:delete-24-regular" />
-                          </button>
-                          </HasPermission>
-                        </div>
-                      </td>
+                      <HasPermission permission={["edit-staff", "delete-staff"]} mode="any">
+                        <td className="text-center">
+                          <div className="d-flex align-items-center gap-10 justify-content-center">
+                            <HasPermission permission={"edit-staff"}>
+                              <button onClick={() => navigate(`/edit-staff/${user.id}`)} className="bg-success-focus text-success-600 w-40-px h-40-px d-flex justify-content-center align-items-center rounded-circle border-0">
+                                <Icon icon="lucide:edit" />
+                              </button>
+                            </HasPermission>
+                            <HasPermission permission={"delete-staff"}>
+                              <button onClick={() => handleDelete(user.id)} className="bg-danger-focus text-danger-600 w-40-px h-40-px d-flex justify-content-center align-items-center rounded-circle border-0">
+                                <Icon icon="fluent:delete-24-regular" />
+                              </button>
+                            </HasPermission>
+                          </div>
+                        </td>
                       </HasPermission>
                     </tr>
                   );
@@ -303,6 +283,35 @@ const StaffsListLayer = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination Buttons */}
+        {serverTotalPages > 1 && (
+          <div className="d-flex justify-content-end align-items-center gap-2 mt-4">
+            <button
+              className="btn btn-sm btn-light"
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage((prev) => prev - 1)}
+            >
+              Previous
+            </button>
+            {[...Array(serverTotalPages)].map((_, i) => (
+              <button
+                key={i}
+                className={`btn btn-sm ${currentPage === i + 1 ? "btn-primary" : "btn-light"}`}
+                onClick={() => setCurrentPage(i + 1)}
+              >
+                {i + 1}
+              </button>
+            ))}
+            <button
+              className="btn btn-sm btn-light"
+              disabled={currentPage === serverTotalPages}
+              onClick={() => setCurrentPage((prev) => prev + 1)}
+            >
+              Next
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

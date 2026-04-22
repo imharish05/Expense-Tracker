@@ -1,18 +1,20 @@
+import { useEffect } from "react";
+import { useDispatch } from "react-redux";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { Toaster } from 'react-hot-toast';
+
+// Layout & Components
+import ProtectedLayout from "./components/ProtectedLayout";
+import HasPermission from "./components/HasPermission";
+import RouteScrollToTop from "./helper/RouteScrollToTop";
+
+// Pages
 import HomePageOne from "./pages/HomePageOne";
-import EmailPage from "./pages/EmailPage";
 import AddUserPage from "./pages/AddUserPage";
-import AssignRolePage from "./pages/AssignRolePage";
-import CompanyPage from "./pages/CompanyPage";
 import ErrorPage from "./pages/ErrorPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
-import NotificationPage from "./pages/NotificationPage";
 import SignInPage from "./pages/SignInPage";
 import UsersListPage from "./pages/UsersListPage";
-import ViewDetailsPage from "./pages/ViewDetailsPage";
-import ViewProfilePage from "./pages/ViewProfilePage";
-import RouteScrollToTop from "./helper/RouteScrollToTop";
-import DocumentUpload from "./pages/DocumentUpload";
 import ReportPage from "./pages/ReportPage";
 import ProjectListPage from "./pages/ProjectListPage";
 import EditUserPageList from "./pages/EditUserListPage";
@@ -23,69 +25,50 @@ import EditProjectPage from "./pages/EditProjectPage";
 import StaffListPage from "./pages/StaffListPage";
 import EditStaffListPage from "./pages/EditStaffListPage";
 import PermissionPage from "./pages/PermissionPage";
-import ProtectedRoute from "./components/ProtectedRoute";
-import HasPermission from "./components/HasPermission";
-import ProjectReminders from "./components/ProjectRemainders";
 import NotificationAlertPage from "./pages/NotificationAlertPage";
 
-import { Toaster } from 'react-hot-toast';
+// Services
+import { loadUserFunction } from "./features/auth/authService";
 
 function App() {
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      loadUserFunction(dispatch);
+    } else {
+      dispatch({ type: 'auth/setInitialized' });
+    }
+  }, [dispatch]);
+
   return (
-    <BrowserRouter basename="/infinus">
+    <BrowserRouter basename="infinus">
       <Toaster position="top-center" reverseOrder={false} />
       <RouteScrollToTop />
       <Routes>
         {/* Public Routes */}
-        <Route exact path='/sign-in' element={<SignInPage />} />
-        <Route exact path='/forgot-password' element={<ForgotPasswordPage />} />
-        <Route exact path='*' element={<ErrorPage />} />
+        <Route path='/sign-in' element={<SignInPage />} />
+        <Route path='/forgot-password' element={<ForgotPasswordPage />} />
+        <Route path='*' element={<ErrorPage />} />
 
-        {/* Protected Dashboard */}
-        <Route exact path='/' element={
-          <ProtectedRoute>
-            <HasPermission permission="view-admin">
-              <HomePageOne />
-            </HasPermission>
-          </ProtectedRoute>
-        } />
-
-        {/* Projects */}
-        <Route path='/projects-list' element={<ProtectedRoute><HasPermission permission="view-projects"><ProjectListPage /></HasPermission></ProtectedRoute>} />
-        <Route path='/add-projects' element={<ProtectedRoute><HasPermission permission="create-projects"><AddProjectPage /></HasPermission></ProtectedRoute>} />
-        <Route path='/edit-project/:id' element={<ProtectedRoute><HasPermission permission="edit-projects"><EditProjectPage /></HasPermission></ProtectedRoute>} />
-        <Route path='/projects/:id' element={<ProtectedRoute><HasPermission permission="view-projects"><SingleProjectPage /></HasPermission></ProtectedRoute>} />
-        
-        {/* Customers */}
-        <Route path='/customers-list' element={
-          // <ProtectedRoute>
-            <HasPermission permission="view-customers"><UsersListPage />
-            </HasPermission>
-            
-        // </ProtectedRoute>
-        } />
-        <Route path='/add-customer' element={<ProtectedRoute><HasPermission permission="create-customer"><AddUserPage /></HasPermission></ProtectedRoute>} />
-        <Route path='/edit-customer/:id' element={<ProtectedRoute><HasPermission permission="edit-customer"><EditUserPageList /></HasPermission></ProtectedRoute>} />
-
-        {/* Staff */}
-        <Route path='/staff-list' element={<ProtectedRoute><HasPermission permission="view-staffs"><StaffListPage /></HasPermission></ProtectedRoute>} />
-        <Route path='/add-staff' element={<ProtectedRoute><HasPermission permission="create-staff"><AddStaffPage /></HasPermission></ProtectedRoute>} />
-        <Route path='/edit-staff/:id' element={<ProtectedRoute><HasPermission permission="edit-staff"><EditStaffListPage /></HasPermission></ProtectedRoute>} />
-
-        {/* Role & Access */}
-        <Route path='/role-access' element={<ProtectedRoute><HasPermission permission="manage-access"><PermissionPage /></HasPermission></ProtectedRoute>} />
-
-        {/* Misc */}
-        <Route path='/remainders' element={<ProtectedRoute><HasPermission permission="manage-remainders"><NotificationAlertPage /></HasPermission></ProtectedRoute>} />
-        
-        {/* FIXED LINE 69 BELOW */}
-        <Route path='/reports' element={<ProtectedRoute><HasPermission permission="view-reports"><ReportPage /></HasPermission></ProtectedRoute>} />
-        
-        <Route path='/documents' element={<ProtectedRoute><HasPermission permission="view-documents"><DocumentUpload /></HasPermission></ProtectedRoute>} />
-        <Route path='/view-details' element={<ProtectedRoute><ViewDetailsPage /></ProtectedRoute>} />
-        <Route path='/view-profile' element={<ProtectedRoute><ViewProfilePage /></ProtectedRoute>} />
-        <Route path='/company' element={<ProtectedRoute><CompanyPage /></ProtectedRoute>} />
-        <Route path='/email' element={<ProtectedRoute><EmailPage /></ProtectedRoute>} />
+        {/* Protected Routes */}
+        <Route element={<ProtectedLayout />}>
+          <Route path='/' element={<HasPermission permission="view-admin"><HomePageOne /></HasPermission>} />
+          <Route path='/projects-list' element={<HasPermission permission="view-projects"><ProjectListPage /></HasPermission>} />
+          <Route path='/add-projects' element={<HasPermission permission="create-projects"><AddProjectPage /></HasPermission>} />
+          <Route path='/edit-project/:id' element={<HasPermission permission="edit-projects"><EditProjectPage /></HasPermission>} />
+          <Route path='/projects/:id' element={<HasPermission permission="view-projects"><SingleProjectPage /></HasPermission>} />
+          <Route path='/customers-list' element={<HasPermission permission="view-customers"><UsersListPage /></HasPermission>} />
+          <Route path='/add-customer' element={<HasPermission permission="create-customer"><AddUserPage /></HasPermission>} />
+          <Route path='/edit-customer/:id' element={<HasPermission permission="edit-customer"><EditUserPageList /></HasPermission>} />
+          <Route path='/staff-list' element={<HasPermission permission="view-staffs"><StaffListPage /></HasPermission>} />
+          <Route path='/add-staff' element={<HasPermission permission="create-staff"><AddStaffPage /></HasPermission>} />
+          <Route path='/edit-staff/:id' element={<HasPermission permission="edit-staff"><EditStaffListPage /></HasPermission>} />
+          <Route path='/role-access' element={<HasPermission permission="manage-access"><PermissionPage /></HasPermission>} />
+          <Route path='/remainders' element={<HasPermission permission="manage-remainders"><NotificationAlertPage /></HasPermission>} />
+          <Route path='/reports' element={<HasPermission permission="view-reports"><ReportPage /></HasPermission>} />
+        </Route>
       </Routes>
     </BrowserRouter>
   );

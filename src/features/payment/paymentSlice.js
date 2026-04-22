@@ -11,9 +11,10 @@ const paymentSlice = createSlice({
   name: "payments",
   initialState,
   reducers: {
-    allRecords : (state,action) => {
-        state.payments.push(action.payload)
-    },
+    allRecords: (state, action) => {
+    state.payments = action.payload; 
+    state.isLoading = false;
+},
     recordPaymentStart: (state) => {
       state.isLoading = true;
     },

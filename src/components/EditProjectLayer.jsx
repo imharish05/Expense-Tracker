@@ -3,14 +3,12 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from "react-redux";
 import { updateProjectFunction } from '../features/projects/projectService';
-import { toggleAssignmentFunction } from '../features/staff/staffService';
+import Swal from 'sweetalert2'; // Added Swal import
 
 const EditProjectLayer = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const dispatch = useDispatch();
-
-
 
     // Project State
     const [projectName, setProjectName] = useState("");
@@ -20,6 +18,9 @@ const EditProjectLayer = () => {
     const [projectType, setProjectType] = useState("");
     const [cost, setCost] = useState("");
     const [status, setStatus] = useState("");
+    
+    // Project Types State (Synced with AddProjectLayer logic)
+    const [customProjectTypes, setCustomProjectTypes] = useState(["Residential", "Commercial", "Industrial"]);
 
     // Search/Dropdown States
     const [searchTerm, setSearchTerm] = useState("");
@@ -50,8 +51,33 @@ const EditProjectLayer = () => {
             setSelectedStaffId(project.assignedStaffId || "");
             setSelectedStaffName(project.assignedStaffName || "");
             setStaffSearchTerm(project.assignedStaffName || "");
+
+            // If the current project type isn't in our default list, add it to custom types
+            if (project.projectType && !customProjectTypes.includes(project.projectType)) {
+                setCustomProjectTypes(prev => [...prev, project.projectType]);
+            }
         }
     }, [project]);
+
+    // New Type Handler
+    const handleAddNewType = async () => {
+        const { value: newType } = await Swal.fire({
+            title: 'Add New Project Type',
+            input: 'text',
+            inputLabel: 'Type Name',
+            inputPlaceholder: 'e.g. Industrial, Renovation...',
+            showCancelButton: true,
+            inputValidator: (value) => {
+                if (!value) return 'You need to write something!';
+                if (customProjectTypes.includes(value)) return 'This type already exists!';
+            }
+        });
+
+        if (newType) {
+            setCustomProjectTypes(prev => [...prev, newType]);
+            setProjectType(newType); 
+        }
+    };
 
     // Filtering Logic
     const filteredCustomers = useMemo(() => {
@@ -68,37 +94,26 @@ const EditProjectLayer = () => {
         );
     }, [staffList, staffSearchTerm]);
 
-const handleProjectUpdate = async (e) => {
-    e.preventDefault();
+    const handleProjectUpdate = async (e) => {
+        e.preventDefault();
+        const payload = {
+            id,
+            projectName,
+            location,
+            customerName,
+            customerId,
+            assignedStaffId: selectedStaffId || null,
+            assignedStaffName: selectedStaffName || null,
+            cost,
+            projectType,
+            status
+        };
 
-    // 1. Prepare the payload for the Project Slice
-    const payload = {
-        id,
-        projectName,
-        location,
-        customerName,
-        customerId,
-        assignedStaffId: selectedStaffId || null,
-        assignedStaffName: selectedStaffName || null,
-        cost,
-        projectType,
-        status
+        const success = await updateProjectFunction(dispatch, id, payload);
+        if (success) {
+            navigate(-1);
+        }
     };
-
-    // 2. Identify the Previous and Current State
-    // project.assignedStaffId comes from the original Redux state
-    const previousStaffId = project?.assignedStaffId;
-    
-    // Check if the staff actually changed
-    const isStaffChanged = String(previousStaffId) !== String(selectedStaffId);
-
-    // 3. Update the Project First
-    const success = await updateProjectFunction(dispatch, id, payload);
-
-    if (success) {
-        navigate(-1);
-    }
-};
 
     return (
         <div className="card h-100 p-0 radius-12">
@@ -166,7 +181,6 @@ const handleProjectUpdate = async (e) => {
                                         )}
                                     </div>
 
-                                    {/* PROJECT DETAILS */}
                                     <div className="mb-20">
                                         <label className="form-label fw-semibold text-primary-light text-sm mb-8">Project Name *</label>
                                         <input type="text" className="form-control radius-8" required value={projectName} onChange={(e) => setProjectName(e.target.value)} />
@@ -179,10 +193,23 @@ const handleProjectUpdate = async (e) => {
 
                                     <div className="row mb-20">
                                         <div className="col-sm-6">
-                                            <label className="form-label fw-semibold text-primary-light text-sm mb-8">Type *</label>
+                                            {/* UPDATED PROJECT TYPE WITH PLUS BUTTON */}
+                                            <div className="d-flex align-items-center justify-content-between mb-8">
+                                                <label className="form-label fw-semibold text-primary-light text-sm mb-0">Type *</label>
+                                                <button 
+                                                    type="button"
+                                                    onClick={handleAddNewType}
+                                                    className="btn btn-sm btn-outline-primary-600 radius-4 p-0 d-flex align-items-center justify-content-center"
+                                                    style={{ width: '24px', height: '24px' }}
+                                                >
+                                                    <Icon icon="ic:baseline-plus" width="16" height="16" />
+                                                </button>
+                                            </div>
                                             <select className="form-control radius-8 form-select" value={projectType} onChange={(e) => setProjectType(e.target.value)} required>
-                                                <option value="Residential">Residential</option>
-                                                <option value="Commercial">Commercial</option>
+                                                <option value="" disabled>Select Type</option>
+                                                {customProjectTypes.map((type) => (
+                                                    <option key={type} value={type}>{type}</option>
+                                                ))}
                                             </select>
                                         </div>
                                         <div className="col-sm-6">
@@ -200,7 +227,6 @@ const handleProjectUpdate = async (e) => {
                                         <input type="text" className="form-control radius-8" value={cost} onChange={(e) => setCost(e.target.value)} />
                                     </div>
 
-                                    {/* BUTTONS */}
                                     <div className="d-flex align-items-center justify-content-center gap-3">
                                         <button type='button' onClick={() => navigate(-1)} className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-56 py-11 radius-8">Cancel</button>
                                         <button type="submit" className="btn btn-primary border border-primary-600 text-md px-56 py-12 radius-8">Save Changes</button>

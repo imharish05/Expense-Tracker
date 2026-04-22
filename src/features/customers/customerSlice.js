@@ -1,15 +1,20 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
-    customers : []
+    customers : [],
+    totalPages: 1,
+    totalItems: 0,
 }
 
 const customerSlice = createSlice({
     name : "Customers",
     initialState,
     reducers : {
-        allCustomers : (state,action) => {
-            state.customers = action.payload;
+        allCustomers: (state, action) => {
+            // Update the list AND the pagination metadata
+            state.customers = action.payload.customers;
+            state.totalPages = action.payload.totalPages;
+            state.totalItems = action.payload.totalItems;
         },
         addCustomer : (state,action) => {
             state.customers.push(action.payload)

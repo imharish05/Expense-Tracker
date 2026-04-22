@@ -1,16 +1,20 @@
 import {createSlice, current } from "@reduxjs/toolkit"
 
 const initialState = {
-    projects : []
+    projects : [],
+    totalPages: 1,
+    totalItems: 0
 }
 
 const projectSlice = createSlice({
     name : "Projects",
     initialState,
     reducers : {
-        allProjects : (state,action) => {
-            state.projects = action.payload
-        },
+       allProjects: (state, action) => {
+    state.projects = action.payload.projects;
+    state.totalPages = action.payload.totalPages;
+    state.totalItems = action.payload.totalItems;
+},
         addProjects : (state,action) => {
              state.projects.push(action.payload)
         },

@@ -25,11 +25,11 @@ export const addStaffFunction = async (dispatch, payload) => {
         return false;
     }
 };
-
-export const allStaffFunction = async (dispatch) => {
+export const allStaffFunction = async (dispatch, page = 1, limit = 5) => {
     try {
-        const res = await api.get("/staffs/all");
-        dispatch(allStaffs(res.data.staffs));
+        const res = await api.get(`/staffs/all?page=${page}&limit=${limit}`);
+        // Dispatch the whole data object to the slice
+        dispatch(allStaffs(res.data));
     } catch (err) { 
         toast.error("Could not fetch staff list");
         console.log(err); 

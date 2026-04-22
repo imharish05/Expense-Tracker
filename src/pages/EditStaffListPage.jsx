@@ -1,21 +1,12 @@
-import MasterLayout from "../masterLayout/MasterLayout";
+import React from "react";
 import Breadcrumb from "../components/Breadcrumb";
 import EditStaffLayer from "../components/EditStaffLayer";
-
 
 const EditStaffListPage = () => {
   return (
     <>
-      {/* MasterLayout */}
-      <MasterLayout>
-
-        {/* Breadcrumb */}
-        <Breadcrumb title="Edit Staff" />
-
-        {/* AddUserLayer */}
-        <EditStaffLayer />
-
-      </MasterLayout>
+      <Breadcrumb title="Edit Staff" />
+      <EditStaffLayer />
     </>
   );
 };

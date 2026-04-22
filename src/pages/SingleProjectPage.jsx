@@ -1,25 +1,8 @@
-import MasterLayout from "../masterLayout/MasterLayout";
-import Breadcrumb from "../components/Breadcrumb";
+import React from "react";
 import SingleProjectLayer from "../components/SingleProjectLayer";
 
-
 const SingleProjectPage = () => {
-  return (
-    <>
-
-      {/* MasterLayout */}
-      <MasterLayout>
-
-        {/* Breadcrumb */}
-        <Breadcrumb title="Project Details" />
-
-        {/* UsersListLayer */}
-        <SingleProjectLayer />
-
-      </MasterLayout>
-
-    </>
-  );
+  return <SingleProjectLayer />;
 };
 
-export default SingleProjectPage; 
+export default SingleProjectPage;

@@ -1,5 +1,5 @@
 import api from "../../api/axios";
-import { loginStart, loginSuccess, loginFailure } from "./authSlice";
+import { loginStart, loginSuccess, loginFailure, logout } from "./authSlice";
 import toast from 'react-hot-toast'; // Import toast
 
 export const loginFunction = async (dispatch, navigate, { phone, password }) => {
@@ -32,5 +32,20 @@ export const loginFunction = async (dispatch, navigate, { phone, password }) => 
         if (typeof loginFailure === 'function') {
             dispatch(loginFailure(errorMessage));
         }
+    }
+};
+
+
+export const loadUserFunction = async (dispatch) => {
+    try {
+        const res = await api.get("/auth/me"); 
+        
+        // Pass both user and the existing token back to the reducer
+        dispatch(loginSuccess({ 
+            user: res.data.user, 
+            token: localStorage.getItem("token") 
+        }));
+    } catch (err) {
+        dispatch(logout());
     }
 };

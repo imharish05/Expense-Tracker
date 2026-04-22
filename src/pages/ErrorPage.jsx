@@ -1,25 +1,9 @@
-import React from "react";
-import MasterLayout from "../masterLayout/MasterLayout";
-import Breadcrumb from "../components/Breadcrumb";
-import ErrorLayer from "../components/ErrorLayer";
-
+import React from 'react'
 
 const ErrorPage = () => {
   return (
-    <>
-      {/* MasterLayout */}
-      <MasterLayout>
+    <div>ErrorPage</div>
+  )
+}
 
-        {/* Breadcrumb */}
-        <Breadcrumb title="404" />
-
-        {/* ErrorLayer */}
-        <ErrorLayer />
-
-
-      </MasterLayout>
-    </>
-  );
-};
-
-export default ErrorPage;
+export default ErrorPage

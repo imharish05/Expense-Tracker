@@ -15,7 +15,7 @@ import { updateCustomerFunction } from '../features/customers/customerService';
         const [name,setName] = useState("")
         const [address,setAddress] = useState("")
         const [phone,setPhone] = useState("")
-        const [projectType,setProjectType] = useState("")
+        
         const [status,setStatus] = useState("")
         
 
@@ -31,7 +31,6 @@ import { updateCustomerFunction } from '../features/customers/customerService';
         setName(customer.name || "");
         setAddress(customer.address || "");
         setPhone(customer.phone || "");
-        setProjectType(customer.projectType || "");
         setStatus(customer.status || "");
     }
 
@@ -44,7 +43,7 @@ import { updateCustomerFunction } from '../features/customers/customerService';
             
             setAddress("")
             setPhone("")
-            setProjectType("")
+            
             navigate(-1)
         }
 
@@ -54,7 +53,7 @@ import { updateCustomerFunction } from '../features/customers/customerService';
             e.preventDefault()
             try{
                 const payload = {
-                   id,name,address,phone,projectType,status
+                   id,name,address,phone,status
                 }
               const success = await updateCustomerFunction(dispatch,id,payload)
 
@@ -127,27 +126,6 @@ import { updateCustomerFunction } from '../features/customers/customerService';
                                                 placeholder="Enter phone number"
                                             />
                                         </div>
-                                        <div className="mb-20">
-                                            <label
-                                                htmlFor="depart"
-                                                className="form-label fw-semibold text-primary-light text-sm mb-8"
-                                            >
-                                                Project Type
-                                                <span className="text-danger-600">*</span>{" "}
-                                            </label>
-                                            <select
-    className="form-control radius-8 form-select"
-    id="depart"
-    value={projectType || "Select the project type"} 
-    onChange={(e)=>setProjectType(e.target.value)}
-    required
->
-    <option value="Select the project type" disabled>Select the project type</option>
-    <option value="Residential">Residential</option>
-    <option value="Commercial">Commercial</option>
-</select>
-                                        </div>
-
                              
                                                                                 <div className="mb-20">
                                             <label

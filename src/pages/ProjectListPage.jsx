@@ -1,26 +1,19 @@
 import React from "react";
-import MasterLayout from "../masterLayout/MasterLayout";
-import Breadcrumb from "../components/Breadcrumb";
 import ProjectListLayer from "../components/ProjectListLayer";
-
+import Breadcrumb from "../components/Breadcrumb";
 
 const ProjectListPage = () => {
   return (
+  
     <>
-
-      {/* MasterLayout */}
-      <MasterLayout>
-
-        {/* Breadcrumb */}
-        <Breadcrumb title="Projects List" />
-
-        {/* UsersListLayer */}
-        <ProjectListLayer />
-
-      </MasterLayout>
-
+    
+    <Breadcrumb title={"Project List"}/>
+  
+  <ProjectListLayer />
+    
     </>
-  );
+
+);
 };
 
-export default ProjectListPage; 
+export default ProjectListPage;

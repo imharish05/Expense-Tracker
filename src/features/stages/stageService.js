@@ -1,21 +1,25 @@
 import Swal from "sweetalert2";
 import api from "../../api/axios";
-import { setStages, addStage, recordStagePayment, recordDocument, startDocumentUpload, uploadDocumentError, deleteDocumentSuccess, updateStageStatus } from "./stageSlice";
+import { 
+    setStages, addStage, recordStagePayment, recordDocument, 
+    startDocumentUpload, uploadDocumentError, deleteDocumentSuccess, 
+    updateStageStatus, 
+    setLoading,
+    setTotalCollected,
+    setAllStages
+} from "./stageSlice";
+import { toast } from "react-hot-toast"; // 1. Import toast
 
-/**
- * Fetch all stages for a specific project
- */
 /**
  * Fetch stages for one specific project
  */
 export const individualStages = async (dispatch, projectId) => {
+    dispatch(setLoading(true));
     try {
-        // GET /stages/project/7a36e31a...
         const res = await api.get(`/stages/project/${projectId}`);
-        
-        // We dispatch the array of stages directly
-        dispatch(setStages(res.data.stages));
 
+        // Sync Redux with the actual DB data
+        dispatch(setStages(res.data));
     } catch (err) {
         const message = err.response?.data?.message || "Unable to fetch project stages";
         Swal.fire({
@@ -25,201 +29,148 @@ export const individualStages = async (dispatch, projectId) => {
             confirmButtonColor: "#d33",
         });
     }
-
-    // Response 
-
-//     {
-//   "projects": [
-//     {
-//       "projectId": "7a36e31a-0e09-4e60-9619-1a2793d0c223",
-//       "stages": [
-//         { "id": "1", "stage_Name": "Architecture", "amount": 50000, "paid": 25000 }
-//       ]
-//     }
-//   ]
-// }
-};
-
-export const addStageFunction = async (dispatch, payload, projectId) => {
-    try {
-        // const res = await api.post(`/stages/add-stage/${projectId}`, payload);
-        
-        // We pass an object containing the project ID and the new stage data to the reducer
-        // dispatch(addStage({ 
-        //     projectId, 
-        //     stage: res.data.stage 
-        // }));
-
-
-        dispatch(addStage({
-            projectId,
-            stage : payload
-        }))
-
-        Swal.fire({
-            title: '<span style="font-size: 25px">Success!</span>',
-            text: "New stage has been added successfully",
-            icon: "success",
-            confirmButtonColor: "#ea8b0c",
-            timer: 2000
-        });
-    } catch (err) {
-        const message = err.response?.data?.message || "Unable to add stage";
-        Swal.fire({ title: '<span style="font-size: 25px">Error!</span>', text: message, icon: "error", confirmButtonColor: "#d33" });
+    finally {
+        dispatch(setLoading(false)); // STOP
     }
-
-    // Reponse
-
-//     {
-//   "message": "Stage created",
-//   "stage": {
-//     "id": "2",
-//     "stage_Name": "Foundation Work",
-//     "description": "Cementing the base",
-//     "amount": 150000,
-//     "paid": 0,
-//     "status": "Pending",
-//     "projectId": "7a36e31a-0e09-4e60-9619-1a2793d0c223"
-//   }
-// }
 };
 
 /**
- * Record a payment for a specific stage
+ * Add a new stage to the database and update Redux
  */
-export const recordStagePaymentFunction = async (dispatch, payload, stageId, projectId) => {
-
-    console.log(payload);
-    
-
+export const addStageFunction = async (dispatch, payload, projectId) => {
+    const loadingToast = toast.loading("Adding new stage...");
     try {
-        // const res = await api.put(`/stages/record-payment/${stageId}`, payload);
-        // const data = res.data.stage;
-
-        // Ensure the reducer knows which project AND which stage to update
-        // dispatch(recordStagePayment({ 
-        //     projectId,
-        //     stageId: data.id, 
-        //     paid: data.paid,
-        //     status: data.status 
-        // }));
-
-         dispatch(recordStagePayment({ 
-            projectId,
-            stageId: stageId, 
-            paid: payload.amount,
-            status: "completed",
-            payment_date : payload.payment_date,
-            payment_mode:payload.payment_mode,
-            payment_status:payload.payment_status
+        const res = await api.post(`/stages/add-stage/${projectId}`, payload);
+        
+        dispatch(addStage({ 
+            projectId, 
+            stage: res.data.stage 
         }));
 
-        
-
-        Swal.fire({
-            title: '<span style="font-size: 25px">Payment Recorded!</span>',
-            text: "The stage balance has been updated.",
-            icon: "success",
-            confirmButtonColor: "#ea8b0c",
-            timer: 2000
-        });
-
-        return true
+        toast.success("Stage added successfully!", { id: loadingToast });
+        return true;
     } catch (err) {
-        const message = err.response?.data?.message || "Unable to record payment";
-        Swal.fire({ title: '<span style="font-size: 25px">Error!</span>', text: message, icon: "error", confirmButtonColor: "#d33" });
-
+        const message = err.response?.data?.message || "Unable to add stage";
+        toast.error(message, { id: loadingToast });
         return false;
     }
+};
+/**
+ * Record payment and update stage status in DB and Redux
+ */
+export const recordStagePaymentFunction = async (dispatch, payload, stageId, projectId) => {
+    const loadingToast = toast.loading("Recording payment...");
+    try {
+        const res = await api.put(`/stages/record-payment/${stageId}`, payload);
+        const data = res.data.stage;
 
-    // Response 
-//     {
-//   "message": "Payment recorded",
-//   "stage": {
-//     "id": "1",
-//     "paid": 35000,
-//     "status": "In Progress"
-//   }
-// }
+        dispatch(recordStagePayment({ 
+            projectId,
+            stageId: data.id, 
+            paid: data.paid,
+            status: data.status,
+            payment_date: data.payment_date,
+            payment_mode: data.payment_mode,
+            payment_status: data.payment_status
+        }));
+
+        toast.success("Payment balance updated!", { id: loadingToast });
+        return true;
+    } catch (err) {
+        const message = err.response?.data?.message || "Unable to record payment";
+        toast.error(message, { id: loadingToast });
+        return false;
+    }
 };
 
-
+/**
+ * Upload CAD/PDF/Images to the server and update Redux path
+ */
 export const recordDocumentFunction = async (dispatch, projectId, stageId, customerId, formData) => {
-  // Trigger loading UI
-  dispatch(startDocumentUpload());
+    // 1. Show the loading toast
+ 
+    dispatch(startDocumentUpload());
 
-  try {
-    // const response = await axios.post(`/api/upload`, formData);
-    
-    // // Update data and stop loading
-    // dispatch(recordDocument({
-    //   projectId,
-    //   stageId,
-    //   data: response.data // Assuming this contains { file_path: "..." }
-    // }));
-
-        const file = formData.get("document"); 
+    try {
+        // 2. Make sure the headers are set for multipart
+        const res = await api.post(`/stages/upload-document/${stageId}`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
         
         dispatch(recordDocument({
             projectId,
             stageId,
-            data: { 
-                file_path: file ? `uploads/${file.name}` : "dummy_path.pdf" 
-            }
+            data: { file_path: res.data.file_path } 
         }));
-    
-    return true;
-  } catch (error) {
-    dispatch(uploadDocumentError());
-    console.error("Upload failed", error);
-    return false;
-  }
+
+        return true;
+    } catch (error) {
+        dispatch(uploadDocumentError());
+        const message = error.response?.data?.message || "Upload failed"
+        return false;
+    }
 };
-
-
+/**
+ * Delete document from server and clear path in Redux
+ */
 export const deleteStageDocumentFunction = async (dispatch, projectId, stageId) => {
-  try {
-    // Replace with your actual API endpoint
-    // Assuming the backend needs projectId and stageId to locate the files
-    // const response = await api.delete(`/projects/${projectId}/stages/${stageId}/documents`);
-    
-    // if (response.status === 200) {
-    //   dispatch(deleteDocumentSuccess({ projectId, stageId }));
-    //   return true;
-    // }
-
-    dispatch(deleteDocumentSuccess({projectId,stageId}))
-
-    return true;
-  } catch (error) {
-    console.error("Error deleting document:", error);
-    Swal.fire("Error", "Failed to delete files from server.", "error");
-    return false;
-  }
+    const loadingToast = toast.loading("Deleting document...");
+    try {
+        await api.delete(`/stages/delete-document/${stageId}`);
+        dispatch(deleteDocumentSuccess({ projectId, stageId }));
+        
+        toast.success("Document deleted!", { id: loadingToast });
+        return true;
+    } catch (error) {
+        toast.error("Failed to delete file.", { id: loadingToast });
+        return false;
+    }
 };
 
+/**
+ * Update the status of a stage manually
+ */
 export const updateStageStatusFunction = async (dispatch, data, stageId, projectId) => {
+    const loadingToast = toast.loading("Updating status...");
+    try {
+        const res = await api.patch(`/stages/update-status/${stageId}`, data);
+
+        dispatch(updateStageStatus({ 
+            projectId, 
+            stageId, 
+            status: res.data.status 
+        }));
+
+        toast.success("Status updated!", { id: loadingToast });
+        return true;
+    } catch (error) {
+        toast.error("Status update failed.", { id: loadingToast });
+        return false;
+    }
+};
+
+
+export const fetchTotalCollectedAmount = async (dispatch) => {
   try {
-    // 1. API Call to your backend
-    // const response = await axios.patch(`/api/stages/update-status/${stageId}`, data);
-
-    // if (response.status === 200) {
-    //   dispatch(updateStageStatus({ 
-    //     projectId, 
-    //     stageId, 
-    //     status: data.status 
-    //   }));
-    
-
-  dispatch(updateStageStatus({ 
-        projectId, 
-        stageId, 
-        status: data.status
-      }));
-
-      return true;
+    const response = await api.get("/stages/total-paid"); // Matches the route we created
+    if (response.data.success) {
+      dispatch(setTotalCollected(response.data.totalCollected));
+      return response.data.totalCollected;
+    }
   } catch (error) {
-    console.error("Status update failed", error);
-    return false;
+    console.error("Error fetching total collected:", error);
+    return 0;
   }
 };
+
+// stageActions.js
+export const fetchAllStagesForStats = async (dispatch) => {
+    try {
+        const res = await api.get("/stages/all-stages");
+        // We'll create a new reducer 'setAllStages' for this
+        dispatch(setAllStages(res.data.stages));
+    } catch (err) {
+        console.error("Chart data fetch failed", err);
+    }
+};
+

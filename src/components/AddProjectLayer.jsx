@@ -3,7 +3,9 @@ import React, { useId, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {useDispatch, useSelector} from "react-redux"
 import { addNewProject } from '../features/projects/projectService';
+import Swal from 'sweetalert2';
 const AddProjectLayer = () => {
+
     
     // Hooks
     const dispatch = useDispatch()
@@ -17,6 +19,28 @@ const AddProjectLayer = () => {
         const [projectType,setProjectType] = useState("")
         const [cost,setCost] = useState("")
         const [errors,setErrors] = useState({})
+        // Add this near your other useState hooks
+        const [customProjectTypes, setCustomProjectTypes] = useState(["Residential", "Commercial","Industrial"]);
+
+
+const handleAddNewType = async () => {
+    const { value: newType } = await Swal.fire({
+        title: 'Add New Project Type',
+        input: 'text',
+        inputLabel: 'Type Name',
+        inputPlaceholder: 'e.g. Industrial, Renovation...',
+        showCancelButton: true,
+        inputValidator: (value) => {
+            if (!value) return 'You need to write something!';
+            if (customProjectTypes.includes(value)) return 'This type already exists!';
+        }
+    });
+
+    if (newType) {
+        setCustomProjectTypes(prev => [...prev, newType]);
+        setProjectType(newType); // Automatically select the newly created type
+    }
+};
         
         const handleCancel = () => {
             setProjectName("")
@@ -83,8 +107,8 @@ const validate = () => {
     
     // 4. Project Type Check
     if (!projectType || projectType === "Select the project type") {
-        newErrors.projectType = "Please select the project type";
-    }
+    newErrors.projectType = "Please select the project type";
+}
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -99,6 +123,7 @@ const validate = () => {
 
  const handleProject = async (e) => {
     e.preventDefault();
+
 
     if (!validate()) return;
 
@@ -115,11 +140,13 @@ const validate = () => {
             status: "Initialized"
         };
 
+        console.log(projectType);
+        
+
         // 1. Change addNewProject to return the project data instead of just 'true'
-        const newProject = await addNewProject(dispatch, payload);
+        const newProject = await addNewProject(dispatch, payload,navigate);
 
         if (newProject) {
-
             // Clear states
             setProjectName("");
             setCost("");
@@ -294,29 +321,41 @@ const validate = () => {
                                         </div>
 
                                         {/* For Project Type */}
-                                        <div className="mb-20">
-                                            <label
-                                                htmlFor="depart"
-                                                className="form-label fw-semibold text-primary-light text-sm mb-8"
-                                            >
-                                                Project Type
-                                                <span className="text-danger-600">*</span>{" "}
-                                            </label>
-                                            <select
-                                            disabled = {customerName.length == "0" ? true : false}                               
-    className="form-control radius-8 form-select"
-    id="depart"
-    value={projectType || "Select the project type"} 
-    onChange={(e)=>setProjectType(e.target.value)}
-    required
->
-    <option value="Select the project type" disabled>Select the project type</option>
-    <option value="Residential">Residential</option>
-    <option value="Commercial">Commercial</option>
-</select>
-<ErrorMsg field={"projectType"}/>
-                                        </div>
+{/* For Project Type */}
+<div className="mb-20">
+    <div className="d-flex align-items-center justify-content-between mb-8">
+        <label htmlFor="depart" className="form-label fw-semibold text-primary-light text-sm mb-0">
+            Project Type <span className="text-danger-600">*</span>
+        </label>
+        
+        {/* PLUS ICON BUTTON */}
+        <button 
+            type="button"
+            onClick={handleAddNewType}
+            className="btn btn-sm btn-outline-primary-600 radius-4 p-0 d-flex align-items-center justify-content-center"
+            style={{ width: '24px', height: '24px' }}
+            title="Add custom type"
+            disabled={customerName.length === 0}
+        >
+            <Icon icon="ic:baseline-plus" width="16" height="16" />
+        </button>
+    </div>
 
+    <select
+        disabled={customerName.length === 0}
+        className="form-control radius-8 form-select"
+        id="depart"
+        value={projectType || "Select the project type"}
+        onChange={(e) => setProjectType(e.target.value)}
+        required
+    >
+        <option value="Select the project type" disabled>Select the project type</option>
+        {customProjectTypes.map((type) => (
+            <option key={type} value={type}>{type}</option>
+        ))}
+    </select>
+    <ErrorMsg field={"projectType"} />
+</div>
 
 
 {/* For cost */}

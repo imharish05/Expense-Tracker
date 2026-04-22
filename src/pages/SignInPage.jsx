@@ -2,14 +2,7 @@ import React from "react";
 import SignInLayer from "../components/SignInLayer";
 
 const SignInPage = () => {
-  return (
-    <>
-
-      {/* SignInLayer */}
-      <SignInLayer />
-
-    </>
-  );
+  return <SignInLayer />;
 };
 
-export default SignInPage; 
+export default SignInPage;

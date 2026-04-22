@@ -1,12 +1,22 @@
 import { Icon } from '@iconify/react';
-import { useMemo } from 'react';
-import { useSelector } from "react-redux";
+import { useEffect, useMemo } from 'react';
+import { useDispatch, useSelector } from "react-redux";
+import { fetchTotalCollectedAmount } from '../../features/stages/stageService';
 
 const UnitCountOne = () => {
     // Defaulting to empty arrays ensures .length and .reduce don't crash on initial load
     const { customers = [] } = useSelector((state) => state.customers);
     const { projects = [] } = useSelector((state) => state.projects);
     const { payments = [] } = useSelector((state) => state.payments);
+
+
+    const dispatch = useDispatch()
+
+    useEffect(() => {
+    fetchTotalCollectedAmount(dispatch);
+  }, [dispatch])
+
+  const {totalCollected : paidAmount} = useSelector((state) => state.stages)
 
     // 1. Count Completed Projects
     const completedProjectsCount = useMemo(() => {
@@ -18,10 +28,6 @@ const UnitCountOne = () => {
         return projects.reduce((acc, curr) => acc + (Number(curr.cost) || 0), 0);
     }, [projects]);
 
-    // 3. Calculate Total Collected (Fixed the dependency array syntax here)
-    const paidAmount = useMemo(() => {
-        return payments.reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0);
-    }, [payments]);
 
     // 4. Calculate Pending Balance
     const totalPendingPayments = useMemo(() => {

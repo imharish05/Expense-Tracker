@@ -3,7 +3,7 @@ const useReactApexChart = (data = [], labels = []) => {
     const chartSeries = [
         {
             name: 'Payments Received',
-            data: data // This now uses the array passed from the component
+            data: data
         }
     ];
 

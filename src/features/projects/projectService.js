@@ -3,19 +3,21 @@ import api from "../../api/axios";
 import { addProjects, allProjects, assignStaffToProject, deleteProject, updateProject } from "./projectSlice";
 import { assignProjectToStaff } from '../staff/staffSlice';
 
-export const getAllProjects = async (dispatch) => {
+export const getAllProjects = async (dispatch, page = 1, limit = 5) => {
     try {
-        const res = await api.get("/projects/all");
-        dispatch(allProjects(res.data.projects));
+        const res = await api.get(`/projects/all?page=${page}&limit=${limit}`);
+        // Dispatch the entire data object (projects + pagination metadata)
+        dispatch(allProjects(res.data));
     } catch (err) {
         toast.error("Unable To Fetch Projects");
         console.log(err);
     }
 };
-
-
 export const addNewProject = async (dispatch, payload) => {
     const loadingToast = toast.loading("Saving new project...");
+
+    console.log(payload);
+    
     
     try {
         const res = await api.post("/projects/add-project", payload);

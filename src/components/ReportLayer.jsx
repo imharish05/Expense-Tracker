@@ -31,28 +31,28 @@ const ReportLayer = () => {
   }, [projects, projectSearchTerm]);
 
   // Transform and Filter Logic
-  const reportData = useMemo(() => {
-    return payments
-      .map((pay) => ({
-        ...pay,
-        // Format date for filtering (YYYY-MM-DD)
-        formattedDate: pay.paymentDate ? pay.paymentDate.split("T")[0] : "",
-      }))
-      .filter((item) => {
-        const matchesSearch = 
-          item.customerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          item.projectName?.toLowerCase().includes(searchTerm.toLowerCase());
-        
-        const matchesProject = selectedProjectId === "" || item.projectId === selectedProjectId;
-        
-        const matchesDate = 
-          (!startDate || item.formattedDate >= startDate) && 
-          (!endDate || item.formattedDate <= endDate);
+// Transform and Filter Logic
+const reportData = useMemo(() => {
+  return payments
+    .map((pay) => ({
+      ...pay,
+      // CHANGE pay.paymentDate TO pay.payment_date
+      formattedDate: pay.payment_date ? pay.payment_date.split("T")[0] : "",
+    }))
+    .filter((item) => {
+      const matchesSearch = 
+        (item.customerName?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (item.projectName?.toLowerCase().includes(searchTerm.toLowerCase()));
+      
+      const matchesProject = selectedProjectId === "" || item.projectId === selectedProjectId;
+      
+      const matchesDate = 
+        (!startDate || item.formattedDate >= startDate) && 
+        (!endDate || item.formattedDate <= endDate);
 
-        return matchesSearch && matchesProject && matchesDate;
-      });
-  }, [payments, searchTerm, selectedProjectId, startDate, endDate]);
-
+      return matchesSearch && matchesProject && matchesDate;
+    });
+}, [payments, searchTerm, selectedProjectId, startDate, endDate]);
   const paginatedData = useMemo(() => {
     return reportData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
   }, [reportData, currentPage, itemsPerPage]);
@@ -194,9 +194,9 @@ const ReportLayer = () => {
                     <td>
                      <Link to={`/projects/${item.projectId}?mode=view`}>
                       <span className={`px-12 py-4 radius-4 fw-bold text-xxs text-uppercase border ${
-                        item.status === 'paid' ? 'bg-success-50 text-success-600 border-success-100' : 'bg-warning-50 text-warning-600 border-warning-100'
+                        item.payment_status === 'paid' ? 'bg-success-50 text-success-600 border-success-100' : 'bg-warning-50 text-warning-600 border-warning-100'
                       }`}>
-                        {item.status}
+                        {item.payment_status}
                       </span>
                         </Link>
                     </td>

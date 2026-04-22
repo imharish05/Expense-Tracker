@@ -18,7 +18,6 @@ const AddUserLayer = () => {
         const [name,setName] = useState("")
         const [address,setAddress] = useState("")
         const [phone,setPhone] = useState("")
-        const [projectType,setProjectType] = useState("")
        
         const [errors,setErrors] = useState({})
         
@@ -26,7 +25,8 @@ const AddUserLayer = () => {
             setName("")
             setAddress("")
             setPhone("")
-            setProjectType("")
+            
+        
             navigate(-1)
         }
 
@@ -53,9 +53,6 @@ const AddUserLayer = () => {
         newErrors.phone = "Phone number must be 10 digits";
     }
 
-    if (!projectType || projectType === "Select the project type") {
-        newErrors.project = "Project type is required";
-    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -79,7 +76,7 @@ const AddUserLayer = () => {
 
                 const payload = {
                     // Change the id
-                    id : id,name,address,phone,projectType,status : "Active",role : "customer"
+                    id : id,name,address,phone,status : "Active",role : "customer"
                 }
                 setSampleId((prev) => prev +1)
                 
@@ -89,7 +86,6 @@ const AddUserLayer = () => {
             
             setAddress("")
             setPhone("")
-            setProjectType("")
             navigate(-1)
             }
             catch(err){
@@ -161,29 +157,6 @@ const AddUserLayer = () => {
                                             />
                                             <ErrorMsg field={"phone"}/>
                                         </div>
-                                        <div className="mb-20">
-                                            <label
-                                                htmlFor="depart"
-                                                className="form-label fw-semibold text-primary-light text-sm mb-8"
-                                            >
-                                                Project Type
-                                                <span className="text-danger-600">*</span>{" "}
-                                            </label>
-                                            <select
-    className="form-control radius-8 form-select"
-    id="depart"
-    value={projectType || "Select the project type"} 
-    onChange={(e)=>setProjectType(e.target.value)}
-    required
->
-    <option value="Select the project type" disabled>Select the project type</option>
-    <option value="Residential">Residential</option>
-    <option value="Commercial">Commercial</option>
-</select>
-
-<ErrorMsg field={"project"}/>
-                                        </div>
-
     
                                         <div className="d-flex align-items-center justify-content-center gap-3">
                                             <button

@@ -8,30 +8,27 @@ import HasPermission from "./HasPermission";
 
 const ProjectListLayer = () => {
   const navigate = useNavigate();
-  
-  const dispatch = useDispatch()
+  const dispatch = useDispatch();
 
-  useEffect(() => {
-    getAllProjects(dispatch)
-  },[dispatch])
+  // 1. Redux Selectors
+  const customers = useSelector((state) => state.customers.customers);
+  const projectList = useSelector((state) => state.projects.projects);
+  const serverTotalPages = useSelector((state) => state.projects.totalPages); // From Redux
+  const staffList = useSelector((state) => state.staffs.staffs);
+  const { user } = useSelector((state) => state.auth);
+  const hasPermission = user?.permissions || [];
 
-
-  // Initial Project  and customer Data
-  const customers = useSelector((state) => state.customers.customers)
-  const projectList = useSelector((state) =>  state.projects.projects)
-  const staffList = useSelector((state) => state.staffs.staffs)
-  const {user} = useSelector((state) => state.auth)
-
-  const hasPermission = user?.permissions || []
-
-
-  // State Management
+  // 2. Local State
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [itemsPerPage, setItemsPerPage] = useState(5);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Format Currency (INR)
+  // 3. Fetch Data Effect
+  useEffect(() => {
+    getAllProjects(dispatch, currentPage, itemsPerPage);
+  }, [dispatch, currentPage, itemsPerPage]);
+
   const formatCurrency = (amount) => {
     if (amount == null) return "—";
     return new Intl.NumberFormat("en-IN", {
@@ -41,119 +38,74 @@ const ProjectListLayer = () => {
     }).format(amount);
   };
 
-  // Get Customer Name by ID
-const getCustomerName = (customerId) => {
-  // Use == instead of === to handle string vs number IDs
-  const customer = customers.find((c) => c.id == customerId); 
-  return customer ? customer.name : "Unassigned";
-};
+  const getCustomerName = (customerId) => {
+    if (!customers || customers.length === 0) return "Loading...";
+    const customer = customers.find((c) => Number(c.id) === Number(customerId));
+    return customer ? customer.name : "Unassigned";
+  };
 
   const getStaffName = (staffId) => {
-    const staff = staffList.find((s) => s.id == staffId)
-    return staff ? staff.name : "Unassigned"
-  }
+    const staff = staffList.find((s) => s.id == staffId);
+    return staff ? staff.name : "Unassigned";
+  };
 
-  // Status Badge Styling
   const getStatusClass = (status) => {
     switch (status) {
-      case "Initialized":
-        return "bg-info-focus text-info-600 border border-info-main";
-      case "In Progress":
-        return "bg-warning-focus text-warning-600 border border-warning-main";
-      case "Completed":
-        return "bg-success-focus text-success-600 border border-success-main";
-      case "On Hold":
-        return "bg-neutral-200 text-neutral-600 border border-neutral-400";
-      default:
-        return "bg-neutral-200 text-neutral-600 border border-neutral-400";
+      case "Initialized": return "bg-info-focus text-info-600 border border-info-main";
+      case "In Progress": return "bg-warning-focus text-warning-600 border border-warning-main";
+      case "Completed": return "bg-success-focus text-success-600 border border-success-main";
+      case "On Hold": return "bg-neutral-200 text-neutral-600 border border-neutral-400";
+      default: return "bg-neutral-200 text-neutral-600 border border-neutral-400";
     }
   };
 
-  // 🔍 Search & Filter Logic
-const filteredProjects = useMemo(() => {
-    // 1. Use projectList (the Redux source) directly to ensure UI updates after delete
+  // 4. Client-side Search/Filter
+  const filteredProjects = useMemo(() => {
     return (projectList || []).filter((project) => {
-        
-        // 2. Safe Property Extraction: Fallback to "" if data is missing
-        const name = project?.projectName || ""; 
-        const location = project?.location || "";
-        
-        // 3. Safe Customer Name Extraction
-        const customerResult = getCustomerName(project?.customerId);
-        const customerName = customerResult || ""; 
-        const staffResult = getStaffName(project?.staffId)
-        const staffName = staffResult || ""
+      const name = project?.projectName || "";
+      const location = project?.location || "";
+      const customerName = getCustomerName(project?.customerId) || "";
+      const staffName = getStaffName(project?.assignedStaffId) || "";
 
-        // 4. Safe Search matching (Pre-calculate search for performance)
-        const search = (searchTerm || "").toLowerCase();
-        
-        const matchesSearch =
-            name.toLowerCase().includes(search) ||
-            location.toLowerCase().includes(search) ||
-            customerName.toLowerCase().includes(search) || 
-            staffName.toLowerCase().includes(search);
+      const search = searchTerm.toLowerCase();
+      const matchesSearch =
+        name.toLowerCase().includes(search) ||
+        location.toLowerCase().includes(search) ||
+        customerName.toLowerCase().includes(search) ||
+        staffName.toLowerCase().includes(search);
 
-        // 5. Safe Status matching
-        const status = project?.status || "";
-        const matchesStatus = statusFilter === "" || status === statusFilter;
+      const matchesStatus = statusFilter === "" || project?.status === statusFilter;
 
-        return matchesSearch && matchesStatus;
+      return matchesSearch && matchesStatus;
     });
-    
-    // 6. Ensure projectList is in dependencies so deletion triggers a refresh
-}, [projectList, searchTerm, statusFilter, customers,staffList]);
+  }, [projectList, searchTerm, statusFilter, customers, staffList]);
 
-
-  // 📄 Pagination Logic
-  const totalPages = Math.ceil(filteredProjects.length / itemsPerPage);
-  const paginatedProjects = filteredProjects.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-
-  );
-
-  // 👁️ View and ✏️ Edit Navigation
   const handleView = (id) => navigate(`/projects/${id}`);
   const handleEdit = (id) => navigate(`/edit-project/${id}`);
 
-    const handleDelete = (id) => {
+  const handleDelete = (id) => {
     Swal.fire({
-       title: '<span style="font-size: 25px">Are You sure ?</span>',
+      title: '<span style="font-size: 25px">Are You sure ?</span>',
       text: "You won't be able to revert this!",
       icon: "warning",
-        showCancelButton: true,
-        confirmButtonColor: "#ea8b0c", // Matching your theme
-        cancelButtonColor: "#d33",
-        confirmButtonText: "Yes, delete it!",
-        cancelButtonText: "No, cancel",
-        reverseButtons: true // Places 'Confirm' on the right
+      showCancelButton: true,
+      confirmButtonColor: "#ea8b0c",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, delete it!",
+      cancelButtonText: "No, cancel",
+      reverseButtons: true
     }).then((result) => {
-        if (result.isConfirmed) {
-            deleteProjectFunction(dispatch, id);
-        } else if (result.dismiss === Swal.DismissReason.cancel) {
-            Swal.fire({
-                title: "Cancelled",
-                text: "The customer record is safe :)",
-                icon: "info",
-                confirmButtonColor: "#ea8b0c",
-                timer: 1500
-            });
-        }
+      if (result.isConfirmed) {
+        deleteProjectFunction(dispatch, id);
+      }
     });
-};
-
-
+  };
 
   return (
     <div className="card h-100 p-0 radius-12">
-      {/* Header */}
       <div className="card-header border-bottom bg-base py-16 px-24 d-flex align-items-center flex-wrap gap-3 justify-content-between">
         <div className="d-flex align-items-center flex-wrap gap-3">
-          <span className="text-md fw-medium text-secondary-light mb-0">
-            Show
-          </span>
-
-          {/* Items Per Page */}
+          <span className="text-md fw-medium text-secondary-light mb-0">Show</span>
           <select
             className="form-select form-select-sm w-auto ps-12 radius-12 h-40-px"
             value={itemsPerPage}
@@ -162,39 +114,26 @@ const filteredProjects = useMemo(() => {
               setCurrentPage(1);
             }}
           >
-            {[5, 10, 20 , 50 , 100, 200].map((num) => (
-              <option key={num} value={num}>
-                {num}
-              </option>
+            {[5, 10, 20, 50, 100].map((num) => (
+              <option key={num} value={num}>{num}</option>
             ))}
           </select>
 
-          {/* Search */}
           <div className="navbar-search position-relative">
             <input
               type="text"
               className="bg-base h-40-px w-auto"
               placeholder="Search..."
               value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setCurrentPage(1);
-              }}
+              onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
             />
-            <Icon
-              icon="ion:search-outline"
-              className="icon position-absolute end-0 me-12 top-50 translate-middle-y"
-            />
+            <Icon icon="ion:search-outline" className="icon position-absolute end-0 me-12 top-50 translate-middle-y" />
           </div>
 
-          {/* Status Filter */}
           <select
             className="form-select form-select-sm w-auto ps-12 radius-12 h-40-px"
             value={statusFilter}
-            onChange={(e) => {
-              setStatusFilter(e.target.value);
-              setCurrentPage(1);
-            }}
+            onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
           >
             <option value="">All Status</option>
             <option value="Initialized">Initialized</option>
@@ -204,24 +143,14 @@ const filteredProjects = useMemo(() => {
           </select>
         </div>
 
-        {/* Add Project */}
-
         <HasPermission permission={"create-projects"}>
-
-        <Link
-          to="/add-projects"
-          className="btn btn-primary text-sm btn-sm px-12 py-12 radius-8 d-flex align-items-center gap-2"
-          >
-          <Icon
-            icon="ic:baseline-plus"
-            className="icon text-xl line-height-1"
-            />
-          Add New Project
-        </Link>
+          <Link to="/add-projects" className="btn btn-primary text-sm btn-sm px-12 py-12 radius-8 d-flex align-items-center gap-2">
+            <Icon icon="ic:baseline-plus" className="icon text-xl line-height-1" />
+            Add New Project
+          </Link>
         </HasPermission>
       </div>
 
-      {/* Table */}
       <div className="card-body p-24">
         <div className="table-responsive scroll-sm">
           <table className="table bordered-table sm-table mb-0">
@@ -232,120 +161,69 @@ const filteredProjects = useMemo(() => {
                 <th>Assigned To</th>
                 <th>Customer</th>
                 <th>Location</th>
-                <th>Total Cost</th>
+                <th>Project Type</th>
+                <th>Total Fees</th>
                 <th>Status</th>
-                
-                {<HasPermission permission={["edit-projects","delete-projects","view-projects"]} mode="any">
-                <th className="text-center">Action</th>
-                  </HasPermission>}
+                <HasPermission permission={["edit-projects", "delete-projects", "view-projects"]} mode="any">
+                  <th className="text-center">Action</th>
+                </HasPermission>
               </tr>
             </thead>
             <tbody>
-              {paginatedProjects.length > 0 ? (
-                paginatedProjects.map((project, index) => (
+              {filteredProjects.length > 0 ? (
+                filteredProjects.map((project, index) => (
                   <tr key={project.id}>
+                    <td>{String((currentPage - 1) * itemsPerPage + index + 1).padStart(2, "0")}</td>
                     <td>
-                      {String(
-                        (currentPage - 1) * itemsPerPage + index + 1
-                      ).padStart(2, "0")}
+                      <HasPermission permission={"upload-docs"}>
+                        <Link to={`/projects/${project.id}`} className="text-primary-600 text-hover-underline text-capitalize">
+                          {project.projectName}
+                        </Link>
+                      </HasPermission>
+                      {!hasPermission.includes("upload-docs") && project.projectName}
                     </td>
-                   <td>
-
-                  <HasPermission permission={"upload-docs"}>
-                    {console.log(HasPermission)}
-                    
-    <Link 
-      to={`/projects/${project.id}`} 
-      className="text-primary-600 text-hover-underline"
-      style={{ cursor: 'pointer' }}
-      id="projectLink"
-    >
-      {project.projectName}
-    </Link>
-                     </HasPermission>
-                     {
-                      !hasPermission.includes("upload-docs") && (
-                        <td>{project.projectName}</td>
-                      )
-                     }
-                     
-  </td>
-                    <td>{getStaffName(project.assignedStaffId)}</td>
-                    <td>{getCustomerName(project.customerId)}</td>
-                    <td>{project.location}</td>
-                    <td className="fw-medium text-primary">
-                      {formatCurrency(project.cost)}
-                    </td>
+                    <td className="text-capitalize">{getStaffName(project.assignedStaffId)}</td>
+                    <td className="text-capitalize">{getCustomerName(project.customerId)}</td>
+                    <td className="text-capitalize ">{project.location}</td>
+                    <td className="fw-medium text-primary text-capitalize">{project.projectType}</td>
+                    <td className="fw-medium text-primary">{formatCurrency(project.cost)}</td>
                     <td>
-                      <span
-                        className={`${getStatusClass(
-                          project.status
-                        )} px-12 py-4 radius-4 fw-medium text-sm`}
-                      >
+                      <span className={`${getStatusClass(project.status)} px-12 py-4 radius-4 fw-medium text-sm text-capitalize`}>
                         {project.status}
                       </span>
                     </td>
-
- {<HasPermission permission={["edit-projects","delete-projects","upload-docs"]} mode="any">
-                    <td className="text-center">
-                      <div className="d-flex align-items-center gap-10 justify-content-center">
-                        <HasPermission permission={"upload-docs"}>
-                        <button
-                          type="button"
-                          onClick={() => handleView(project.id)}
-                          className="bg-info-focus bg-hover-info-200 text-info-600 fw-medium w-40-px h-40-px d-flex justify-content-center align-items-center rounded-circle"
-                          >
-                          <Icon
-                            icon="majesticons:eye-line"
-                            className="icon text-xl"
-                            />
-                        </button>
-                            
-                        </HasPermission>
-
-<HasPermission permission={"edit-projects"}>
-
-                        <button
-                          type="button"
-                          onClick={() => handleEdit(project.id)}
-                          className="bg-success-focus text-success-600 bg-hover-success-200 fw-medium w-40-px h-40-px d-flex justify-content-center align-items-center rounded-circle"
-                          >
-                          <Icon icon="lucide:edit" className="menu-icon" />
-                        </button>
+                    <HasPermission permission={["edit-projects", "delete-projects", "upload-docs"]} mode="any">
+                      <td className="text-center">
+                        <div className="d-flex align-items-center gap-10 justify-content-center">
+                          <HasPermission permission={"upload-docs"}>
+                            <button onClick={() => handleView(project.id)} className="bg-info-focus text-info-600 w-40-px h-40-px d-flex justify-content-center align-items-center rounded-circle border-0">
+                              <Icon icon="majesticons:eye-line" className="text-xl" />
+                            </button>
                           </HasPermission>
-
+                          <HasPermission permission={"edit-projects"}>
+                            <button onClick={() => handleEdit(project.id)} className="bg-success-focus text-success-600 w-40-px h-40-px d-flex justify-content-center align-items-center rounded-circle border-0">
+                              <Icon icon="lucide:edit" />
+                            </button>
+                          </HasPermission>
                           <HasPermission permission={"delete-projects"}>
-
-
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(project.id)}
-                          className="remove-item-btn bg-danger-focus bg-hover-danger-200 text-danger-600 fw-medium w-40-px h-40-px d-flex justify-content-center align-items-center rounded-circle"
-                          >
-                          <Icon
-                            icon="fluent:delete-24-regular"
-                            className="menu-icon"
-                            />
-                        </button>
-                            </HasPermission>
-                      </div>
-                    </td>
-                    </HasPermission>}
+                            <button onClick={() => handleDelete(project.id)} className="bg-danger-focus text-danger-600 w-40-px h-40-px d-flex justify-content-center align-items-center rounded-circle border-0">
+                              <Icon icon="fluent:delete-24-regular" />
+                            </button>
+                          </HasPermission>
+                        </div>
+                      </td>
+                    </HasPermission>
                   </tr>
                 ))
               ) : (
-                <tr>
-                  <td colSpan="7" className="text-center py-4">
-                    No projects found.
-                  </td>
-                </tr>
+                <tr><td colSpan="8" className="text-center py-4">No projects found.</td></tr>
               )}
             </tbody>
           </table>
         </div>
 
-        {/* Pagination */}
-        {totalPages > 1 && (
+        {/* Server-Side Pagination Buttons */}
+        {serverTotalPages > 1 && (
           <div className="d-flex justify-content-end align-items-center gap-2 mt-4">
             <button
               className="btn btn-sm btn-light"
@@ -354,22 +232,18 @@ const filteredProjects = useMemo(() => {
             >
               Previous
             </button>
-
-            {[...Array(totalPages)].map((_, i) => (
+            {[...Array(serverTotalPages)].map((_, i) => (
               <button
                 key={i}
-                className={`btn btn-sm ${
-                  currentPage === i + 1 ? "btn-primary" : "btn-light"
-                }`}
+                className={`btn btn-sm ${currentPage === i + 1 ? "btn-primary" : "btn-light"}`}
                 onClick={() => setCurrentPage(i + 1)}
               >
                 {i + 1}
               </button>
             ))}
-
             <button
               className="btn btn-sm btn-light"
-              disabled={currentPage === totalPages}
+              disabled={currentPage === serverTotalPages}
               onClick={() => setCurrentPage((prev) => prev + 1)}
             >
               Next

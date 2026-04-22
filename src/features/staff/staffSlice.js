@@ -1,31 +1,46 @@
 import { createSlice, current } from "@reduxjs/toolkit";
 
 const initialState = {
-  staffs: []
+  staffs: [],
+  totalPages : 1,
+  totalItems : 0
 };
 
 const staffSlice = createSlice({
     name : "Staffs",
     initialState,
     reducers : {
-        allStaffs : (state,action) => {
-            state.staffs = action.payload;
-        },
+        allStaffs: (state, action) => {
+      // Map through incoming staffs and parse the projects string if it exists
+      state.staffs = action.payload.staffs.map((staff) => ({
+        ...staff,
+        projects: typeof staff.projects === 'string' 
+          ? JSON.parse(staff.projects) 
+          : (staff.projects || [])
+      }));
+      state.totalPages = action.payload.totalPages;
+      state.totalItems = action.payload.totalItems;
+    },
+
+    updateStaff: (state, action) => {
+      const index = state.staffs.findIndex(
+        (s) => String(s.id) === String(action.payload.id)
+      );
+
+      if (index !== -1) {
+        // Also parse the projects for single updates
+        const updatedStaff = {
+          ...action.payload,
+          projects: typeof action.payload.projects === 'string' 
+            ? JSON.parse(action.payload.projects) 
+            : (action.payload.projects || [])
+        };
+        state.staffs[index] = { ...state.staffs[index], ...updatedStaff };
+      }
+    },
         addStaff : (state,action) => {
             state.staffs.push(action.payload)
         },
-        updateStaff: (state, action) => {
-    // Find the specific staff member in your local array
-    const index = state.staffs.findIndex(
-        (s) => String(s.id) === String(action.payload.id)
-    );
-
-    if (index !== -1) {
-        // Replace the old staff data with the new data from the backend
-        // This triggers React to re-render only the affected parts of the UI
-        state.staffs[index] = { ...state.staffs[index], ...action.payload };
-    }
-},
         deleteStaff : (state,action) => {
             state.staffs = state.staffs.filter(
                 (c) => String(c.id) !== String(action.payload)

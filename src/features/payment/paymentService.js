@@ -1,5 +1,6 @@
 
 import api from "../../api/axios";
+import { setTotalCollected } from "../stages/stageSlice";
 import { 
     allRecords,
   recordPaymentStart, 
@@ -8,64 +9,44 @@ import {
 } from "./paymentSlice";
 import Swal from "sweetalert2";
 
-// Replace with your actual API base URL
-const API_URL = "/api/payments"; 
-
-// export const allPaymentRecords = async(dispatch) => {
-//     try {
-//         const res = await api.get("/payments")
-//         const data = res.data;
-//         dispatch(allRecords(data))
-
-//     } catch (err) {
-        
-//     }
-// }
 
 export const stagePaymentCollection = async (dispatch, paymentData, stageId, projectId) => {
     dispatch(recordPaymentStart());
+
+    console.log(paymentData);
+    
+
     try {
-        const payload = {
-        
-    projectId,
-      stageId,
-      budget : paymentData.budget,
-      stage_amount : paymentData.stage_amount,
-      amount: paymentData.amount,
-      paymentMode: paymentData.payment_mode,
-      paymentDate: paymentData.payment_date,
-      status: paymentData.payment_status,
-      customerId: paymentData.customerId,
-      customerName: paymentData.customerName,
-      projectName: paymentData.projectName,
-    };
-    
-    // const response = await axios.post(`${API_URL}/record`, payload);
+        // paymentData now includes payment_status and stage_amount from the frontend
+        const response = await api.post("/payments/record", {
+            ...paymentData,
+            stageId,
+            projectId
+        });
 
-    // if (response.data) {
-    //   dispatch(recordPaymentSuccess(response.data));
-      
-    //   Swal.fire({
-    //     icon: "success",
-    //     title: '<span style="font-size: 25px">Payment Received!</span>',
-    //     text: `Amount: ₹${paymentData.amount} processed successfully.`,
-    //     timer: 2000,
-    //     showConfirmButton: false,
-    //   });
-// }
-
-    dispatch(recordPaymentSuccess(payload))
-      return true;
+        if (response.data) {
+            dispatch(recordPaymentSuccess(response.data));
+            return true;
+        }
+    } catch (error) {
+        const message = error.response?.data?.message || "Failed to record payment";
+        dispatch(recordPaymentFailure(message));
+        return false;
     }
-  catch (error) {
-    const message = error.response?.data?.message || "Failed to record payment";
-    dispatch(recordPaymentFailure(message));
-    
-    Swal.fire({
-      icon: "error",
-      title: '<span style="font-size: 25px">Error!</span>',
-      text: message,
-    });
-    return false;
-  }
+};
+
+export const fetchAllPayments = async (dispatch) => {
+    dispatch(recordPaymentStart()); // Reuse the start action for loading state
+    try {
+        const response = await api.get("/payments/all"); // Ensure this matches your backend route
+
+        if (response.data) {
+            dispatch(allRecords(response.data));
+            return true;
+        }
+    } catch (error) {
+        const message = error.response?.data?.message || "Failed to fetch payment records";
+        dispatch(recordPaymentFailure(message));
+        return false;
+    }
 };

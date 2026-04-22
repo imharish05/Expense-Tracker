@@ -1,38 +1,54 @@
+// usePaymentReminders.js
 import { useMemo } from "react";
 import { useSelector } from "react-redux";
 
-export const usePaymentReminders = () => {
+
+// usePaymentReminders.js
+export const usePaymentReminders = (socketNotifications = []) => {
   const projects = useSelector((state) => state.projects.projects) || [];
   const allStages = useSelector((state) => state.stages.stage) || [];
-  
 
   return useMemo(() => {
+    // 1. Calculate Active Socket Notifications first
+    // This ensures even if projects aren't loaded, we show the socket alerts
+    const activeSocketNotifications = socketNotifications.filter(note => {
+      if (allStages.length === 0) return true; // Keep them if stages aren't loaded yet
+      const relatedStage = allStages.find(s => s.projectId === note.projectId);
+      if (!relatedStage) return true;
+      return Number(relatedStage.paid) < Number(relatedStage.amount);
+    });
+
     const overdue = [];
     const unpaidCompleted = [];
     const today = new Date();
 
-    allStages.forEach((projectEntry) => {
-      const projectDetails = projects.find(p => (p.id || p._id) === projectEntry.projectId);
-      projectEntry.stages.forEach((stage) => {
-        const goal = Number(stage.amount) || 0;
-        const paid = Number(stage.paid) || 0;
-        const isFullyPaid = paid >= goal;
-        const hasDeadlinePassed = stage.duration && new Date(stage.duration) < today;
+    // 2. Only process stages if they exist
+    if (allStages.length > 0) {
+      allStages.forEach((stage) => {
+        const projectDetails = projects.find(p => (p.id || p._id) === stage.projectId);
+        const isFullyPaid = Number(stage.paid) >= Number(stage.amount);
 
-
-        const reminderData = {
-          projectName: projectDetails?.projectName || "Unknown Project",
-          projectId: projectEntry.projectId,
-          customerName : projectDetails?.customerName,
-          balance: goal - paid,
-          ...stage
-        };
-
-        if (hasDeadlinePassed && !isFullyPaid) overdue.push(reminderData);
-        if (stage.status === "Completed" && !isFullyPaid) unpaidCompleted.push(reminderData);
+        if (!isFullyPaid) {
+          const reminderData = { 
+            projectName: projectDetails?.projectName || "Unknown Project", 
+            ...stage 
+          };
+          if (stage.duration && new Date(stage.duration) < today) overdue.push(reminderData);
+          if (stage.status === "Completed") unpaidCompleted.push(reminderData);
+        }
       });
-    });
+    }
 
-    return { overdue, unpaidCompleted, totalCount: overdue.length + unpaidCompleted.length };
-  }, [allStages, projects]);
+    console.log( activeSocketNotifications.length ,"This is the total count");
+    
+
+    // 3. Return the combined count
+    return { 
+      overdue, 
+      unpaidCompleted, 
+      socketNotifications: activeSocketNotifications,
+      totalCount: overdue.length + unpaidCompleted.length + activeSocketNotifications.length 
+    };
+    // Ensure all dependencies are here
+  }, [allStages, projects, socketNotifications]);
 };

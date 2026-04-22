@@ -1,26 +1,17 @@
 import React from "react";
-import MasterLayout from "../masterLayout/MasterLayout";
+import StaffListLayer from "../components/StaffListLayer";
 import Breadcrumb from "../components/Breadcrumb";
-import StaffsListLayer from "../components/StaffListLayer";
-
 
 const StaffListPage = () => {
+
   return (
-    <>
-
-      {/* MasterLayout */}
-      <MasterLayout>
-
-        {/* Breadcrumb */}
-        <Breadcrumb title="Users Grid" />
-
-        {/* UsersListLayer */}
-        <StaffsListLayer />
-
-      </MasterLayout>
-
-    </>
-  );
+  
+  <>
+  <Breadcrumb title={"Staff List"}/>
+  
+  <StaffListLayer />
+  </>
+);
 };
 
-export default StaffListPage; 
+export default StaffListPage;
