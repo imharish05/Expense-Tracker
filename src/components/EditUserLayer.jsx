@@ -86,14 +86,23 @@ const EditUserLayer = () => {
         }
     };
 
+    // Style object to force transparency
+    const transparentStyle = {
+        backgroundColor: "transparent",
+        border: "none",
+        boxShadow: "none",
+        backdropFilter: "none"
+    };
+
     return (
-        <div className="card h-100 p-0 radius-12" style={{ backgroundColor: "transparent", backdropFilter: "none" }}>
+        <div className="card h-100 p-0 radius-12" style={transparentStyle}>
             <div className="card-body p-24">
                 <div className="row justify-content-center">
                     <div className="col-xxl-6 col-xl-8 col-lg-10">
+                        {/* We add the style here as well to kill the inner white box */}
                         <div className="card">
                             <div className="card-body">
-                                <h6 className="text-lg text-center text-primary-light mb-16">Edit Customer</h6>
+                                <h6 className="text-lg text-center text-primary-light mb-16 py-3">Edit Customer</h6>
                                 <form onSubmit={handleCustomerEdit} noValidate>
                                     
                                     {/* Name Field */}

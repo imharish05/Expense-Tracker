@@ -203,15 +203,7 @@ const UsersListLayer = () => {
               ) : (
                 <tr>
                   <td colSpan="6" className="text-center py-80">
-                    <div className="d-flex flex-column align-items-center">
-                      <div className="bg-neutral-50 p-24 radius-circle mb-16">
-                        <Icon icon="solar:users-group-two-rounded-bold-duotone" className="text-neutral-300" width="60" />
-                      </div>
-                      <h6 className="text-secondary-light">No Customers Assigned</h6>
-                      <p className="text-sm text-neutral-400" style={{maxWidth: '300px'}}>
-                        Your account currently has no customers linked to your assigned projects.
-                      </p>
-                    </div>
+                   No customers Found.
                   </td>
                 </tr>
               )}

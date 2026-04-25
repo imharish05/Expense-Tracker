@@ -580,7 +580,7 @@ const handleFileDownload = async (cleanPath, fileName, baseUrl, token) => {
                                 </HasPermission>
                                 <HasPermission permission={"upload-docs"}>
                                   {!isReadOnly && (
-                                    <button onClick={() => clearFileSelection(stage.id)} className="btn btn-danger-100 text-danger-600 btn-sm p-4">
+                                    <button onClick={() => clearFileSelection(stage.id)} className="d-flex align-items-center justify-content-center btn btn-danger-100 text-danger-600 btn-sm p-4">
                                       <Icon icon="ic:round-close" />
                                     </button>
                                   )}

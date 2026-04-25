@@ -156,14 +156,21 @@ const EditProjectLayer = () => {
         }
     };
 
+        const transparentStyle = {
+        backgroundColor: "transparent",
+        border: "none",
+        boxShadow: "none",
+        backdropFilter: "none"
+    };
+
     return (
-        <div className="card h-100 p-0 radius-12">
+        <div className="card h-100 p-0 radius-12" style = {transparentStyle}>
             <div className="card-body p-24">
                 <div className="row justify-content-center">
                     <div className="col-xxl-6 col-xl-8 col-lg-10">
                         <div className="card border">
                             <div className="card-body">
-                                <h6 className="text-lg text-center text-primary-light mb-16">Edit Project</h6>
+                                <h6 className="text-lg text-center text-primary-light mb-16 py-3">Edit Project</h6>
                                 <form onSubmit={handleProjectUpdate}>
 
                                     {/* CUSTOMER SEARCH */}
@@ -202,6 +209,14 @@ const EditProjectLayer = () => {
                                         )}
                                     </div>
 
+
+                                                                            {/* Project Name */}
+                                    <div className="mb-20">
+                                        <label className="form-label fw-semibold text-primary-light text-sm mb-8">Project Name <span className="text-danger-600">*</span></label>
+                                        <input type="text" className="form-control radius-8" value={projectName} onChange={(e) => setProjectName(e.target.value)} />
+                                        <ErrorMsg field="projectName" />
+                                    </div>
+
                                     {/* STAFF SEARCH */}
                                     <div className="mb-20 position-relative">
                                         <label className="form-label fw-semibold text-primary-light text-sm mb-8">Assign Staff <span className="text-danger-600"><span className="text-danger-600">*</span></span></label>
@@ -228,7 +243,7 @@ const EditProjectLayer = () => {
                                                         onMouseDown={() => {
                                                             setSelectedStaffId(staff.id || staff._id);
                                                             setSelectedStaffName(staff.name);
-                                                            setStaffSearchTerm(`${staff.name} (${staff.role})`);
+                                                            setStaffSearchTerm(`${staff.name}`);
                                                         }}>
                                                         <div>
                                                             <div className="d-flex justify-content-between align-items-center">
@@ -243,18 +258,17 @@ const EditProjectLayer = () => {
                                         )}
                                     </div>
 
-                                    <div className="mb-20">
-                                        <label className="form-label fw-semibold text-primary-light text-sm mb-8">Project Name <span className="text-danger-600">*</span></label>
-                                        <input type="text" className="form-control radius-8" value={projectName} onChange={(e) => setProjectName(e.target.value)} />
-                                        <ErrorMsg field="projectName" />
-                                    </div>
+                                    
+                                    
 
+                                    {/* Location */}
                                     <div className="mb-20">
                                         <label className="form-label fw-semibold text-primary-light text-sm mb-8">Location <span className="text-danger-600">*</span></label>
                                         <input type="text" className="form-control radius-8" value={location} onChange={(e) => setLocation(e.target.value)} />
                                         <ErrorMsg field="location" />
                                     </div>
 
+                                        {/* Project type */}
                                     <div className="row mb-20">
                                         <div className="col-sm-6">
                                             <div className="d-flex align-items-center justify-content-between mb-8">
@@ -287,6 +301,7 @@ const EditProjectLayer = () => {
                                         </div>
                                     </div>
 
+                                                {/* Fees */}
                                     <div className="mb-20">
                                         <label className="form-label fw-semibold text-primary-light text-sm mb-8">Fees <span className="text-danger-600">*</span></label>
                                         <input type="text" className="form-control radius-8" value={cost} onChange={(e) => setCost(e.target.value)} />

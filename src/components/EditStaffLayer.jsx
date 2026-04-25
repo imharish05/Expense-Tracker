@@ -123,14 +123,23 @@ const EditStaffLayer = () => {
         if (success) navigate("/staff-list");
     };
 
+
+    // For style
+        const transparentStyle = {
+        backgroundColor: "transparent",
+        border: "none",
+        boxShadow: "none",
+        backdropFilter: "none"
+    };
+
     return (
-        <div className="card h-100 p-0 radius-12">
+        <div className="card h-100 p-0 radius-12" style = {transparentStyle}>
             <div className="card-body p-24">
                 <div className="row justify-content-center">
                     <div className="col-xxl-6 col-xl-8 col-lg-10">
                         <div className="card border">
                             <div className="card-body">
-                                <h6 className="text-lg text-center text-primary-light mb-16">Edit Staff Member</h6>
+                                <h6 className="text-lg text-center text-primary-light mb-16 py-3">Edit Staff Member</h6>
                                 <form onSubmit={handleSubmit} noValidate>
         
                                     <div className="mb-20">

@@ -236,9 +236,29 @@ const validate = () => {
 </div>
 
 
-                                        {/* For staff */}
+                                        {/* For Project Name */}
+                                        <div className="mb-20">
+                                            <label
+                                                htmlFor="projectName"
+                                                className="form-label fw-semibold text-primary-light text-sm mb-8"
+                                            >
+                                                Project Name <span className="text-danger-600">*</span>
+                                            </label>
+                                            
+                                            <input
+                                                type="text"
+                                                className="form-control radius-8"
+                                                id="projectName"
+                                                
+                                                value={projectName}
+                                                onChange={(e) => setProjectName(e.target.value)}
+                                                placeholder="Enter Project Name"
+                                                disabled = {customerName.length == "0" ? true : false}
+                                            />
+                                              <ErrorMsg field={"projectName"}/>
+                                        </div>
 
-                                        {/* SEARCHABLE STAFF DROPDOWN */}
+                                                                                {/* SEARCHABLE STAFF DROPDOWN */}
 
 <div className="mb-20 position-relative">
     <label className="form-label fw-semibold text-primary-light text-sm mb-8">
@@ -301,32 +321,6 @@ const validate = () => {
         </ul>
     )}
 </div>
-
-
-
-                                        {/* For Project Name */}
-                                        <div className="mb-20">
-                                            <label
-                                                htmlFor="projectName"
-                                                className="form-label fw-semibold text-primary-light text-sm mb-8"
-                                            >
-                                                Project Name <span className="text-danger-600">*</span>
-                                            </label>
-                                            
-                                            <input
-                                                type="text"
-                                                className="form-control radius-8"
-                                                id="projectName"
-                                                
-                                                value={projectName}
-                                                onChange={(e) => setProjectName(e.target.value)}
-                                                placeholder="Enter Project Name"
-                                                disabled = {customerName.length == "0" ? true : false}
-                                            />
-                                              <ErrorMsg field={"projectName"}/>
-                                        </div>
-
-                                        {/* For Project Type */}
 {/* For Project Type */}
 <div className="mb-20">
     <div className="d-flex align-items-center justify-content-between mb-8">
@@ -362,6 +356,11 @@ const validate = () => {
     </select>
     <ErrorMsg field={"projectType"} />
 </div>
+
+
+
+                                        {/* For staff */}
+
 
                         {/* For location  */}
                         

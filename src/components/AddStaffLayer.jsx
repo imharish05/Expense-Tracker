@@ -148,7 +148,7 @@ if (!phone.trim()) {
             onClick={() => setShowPassword(!showPassword)}
             style={{ cursor: 'pointer', zIndex: 10 }}
         >
-            <Icon 
+            <Icon tabIndex = "0"
                 icon={showPassword ? "lucide:eye-off" : "lucide:eye"} 
                 className="text-primary-light text-xl" 
             />
