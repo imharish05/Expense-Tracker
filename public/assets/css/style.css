@@ -15716,3 +15716,14 @@ td.fc-header-center {
   }
 
 
+.swal-preview-popup {
+  border-radius: 12px !important;
+  overflow: hidden !important;
+}
+
+.swal-preview-close {
+  font-size: 30px !important;
+  top: 10px !important;
+  right: 50px !important;
+  color: #666 !important;
+}

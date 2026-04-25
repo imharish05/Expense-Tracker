@@ -117,14 +117,14 @@ if (!phone.trim()) {
                                     
                                     {/* Name Field */}
                                     <div className="mb-20">
-                                        <label className="form-label fw-semibold text-primary-light text-sm mb-8">Full Name *</label>
+                                        <label className="form-label fw-semibold text-primary-light text-sm mb-8">Full Name <span className="text-danger-600">*</span></label>
                                         <input type="text" className={`form-control radius-8 ${errors.name ? 'border-danger' : ''}`} value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter Full Name" />
                                         <ErrorMsg field="name" />
                                     </div>
 
                                     {/* Email Field */}
                                     <div className="mb-20">
-                                        <label className="form-label fw-semibold text-primary-light text-sm mb-8">Email Address *</label>
+                                        <label className="form-label fw-semibold text-primary-light text-sm mb-8">Email Address <span className="text-danger-600">*</span></label>
                                         <input type="email" className={`form-control radius-8 ${errors.email ? 'border-danger' : ''}`} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@company.com" />
                                         <ErrorMsg field="email" />
                                     </div>
@@ -132,7 +132,7 @@ if (!phone.trim()) {
                             
                                    {/* Password Field */}
 <div className="mb-20">
-    <label className="form-label fw-semibold text-primary-light text-sm mb-8">Password *</label>
+    <label className="form-label fw-semibold text-primary-light text-sm mb-8">Password <span className="text-danger-600">*</span></label>
     <div className="position-relative">
         <input 
             type={showPassword ? "text" : "password"} // Dynamic type
@@ -160,7 +160,7 @@ if (!phone.trim()) {
                                     <div className="row">
                                         {/* Phone Field */}
                                         <div className="col-md-6 mb-20">
-                                            <label className="form-label fw-semibold text-primary-light text-sm mb-8">Phone Number *</label>
+                                            <label className="form-label fw-semibold text-primary-light text-sm mb-8">Phone Number <span className="text-danger-600">*</span></label>
                                             <input type="tel" className={`form-control radius-8 ${errors.phone ? 'border-danger' : ''}`} value={phone} onChange={(e) => handlePhoneChange(e)} placeholder="Phone number" />
                                             <ErrorMsg field="phone" />
                                         </div>
@@ -174,7 +174,7 @@ if (!phone.trim()) {
                                     {/* Role Selection */}
 <div className="mb-20">
     <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-        User Role *
+        User Role <span className="text-danger-600">*</span>
     </label>
     <div className="position-relative">
         <select 
@@ -205,6 +205,7 @@ if (!phone.trim()) {
         />
     )}
 </div>
+
     </div>
     
     {/* Error Message */}

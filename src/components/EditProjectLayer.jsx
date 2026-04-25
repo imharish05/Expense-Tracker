@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from "react-redux";
 import { updateProjectFunction } from '../features/projects/projectService';
-import Swal from 'sweetalert2'; // Added Swal import
+import Swal from 'sweetalert2';
 
 const EditProjectLayer = () => {
     const { id } = useParams();
@@ -19,7 +19,7 @@ const EditProjectLayer = () => {
     const [cost, setCost] = useState("");
     const [status, setStatus] = useState("");
     
-    // Project Types State (Synced with AddProjectLayer logic)
+    // Project Types State 
     const [customProjectTypes, setCustomProjectTypes] = useState(["Residential", "Commercial", "Industrial"]);
 
     // Search/Dropdown States
@@ -29,6 +29,7 @@ const EditProjectLayer = () => {
     const [isStaffDropdownOpen, setIsStaffDropdownOpen] = useState(false);
     const [selectedStaffId, setSelectedStaffId] = useState("");
     const [selectedStaffName, setSelectedStaffName] = useState("");
+    const [errors, setErrors] = useState({});
 
     // Selectors
     const projectList = useSelector((state) => state.projects.projects);
@@ -52,17 +53,56 @@ const EditProjectLayer = () => {
             setSelectedStaffName(project.assignedStaffName || "");
             setStaffSearchTerm(project.assignedStaffName || "");
 
-            // If the current project type isn't in our default list, add it to custom types
             if (project.projectType && !customProjectTypes.includes(project.projectType)) {
                 setCustomProjectTypes(prev => [...prev, project.projectType]);
             }
         }
     }, [project]);
 
-    // New Type Handler
+    const validate = () => {
+        const newErrors = {};
+
+        if (!projectName.trim()) {
+            newErrors.projectName = "Project Name is Required";
+        }
+        
+        if (!customerId) {
+            newErrors.customerName = "Please select a customer from the list";
+        }
+
+        if (!selectedStaffId) {
+            newErrors.selectStaff = "Please select a staff / designer";
+        }
+        
+        if (!projectType || projectType === "Select Type" || projectType === "Select the project type") {
+            newErrors.projectType = "Please select the project type";
+        }
+
+        if (!location || !location.trim()) {
+            newErrors.location = "Please enter the location";
+        }
+
+        if (!cost) {
+            newErrors.fees = "Please enter the fees";
+        } else if (isNaN(cost) || Number(cost) <= 0) {
+            newErrors.fees = "Please enter a valid amount greater than 0";
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
+    const ErrorMsg = ({ field }) => (
+        errors[field] ? (
+            <div className="text-danger mt-1 fw-medium" style={{ fontSize: '11px' }}>
+                {errors[field]}
+            </div>
+        ) : null
+    );
+
     const handleAddNewType = async () => {
         const { value: newType } = await Swal.fire({
-            title: '<span style="font-size: 25px">Add New stage</span>',
+            title: '<span style="font-size: 25px">Add New Type</span>',
             input: 'text',
             inputLabel: 'Type Name',
             inputPlaceholder: 'e.g. Industrial, Renovation...',
@@ -79,7 +119,6 @@ const EditProjectLayer = () => {
         }
     };
 
-    // Filtering Logic
     const filteredCustomers = useMemo(() => {
         return customersList.filter(c => 
             (c.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -96,6 +135,8 @@ const EditProjectLayer = () => {
 
     const handleProjectUpdate = async (e) => {
         e.preventDefault();
+        if (!validate()) return;
+
         const payload = {
             id,
             projectName,
@@ -127,15 +168,23 @@ const EditProjectLayer = () => {
 
                                     {/* CUSTOMER SEARCH */}
                                     <div className="mb-20 position-relative">
-                                        <label className="form-label fw-semibold text-primary-light text-sm mb-8">Select Customer *</label>
+                                        <label className="form-label fw-semibold text-primary-light text-sm mb-8">Select Customer <span className="text-danger-600">*</span></label>
                                         <input
                                             type="text"
                                             className="form-control radius-8"
                                             value={searchTerm}
                                             onFocus={() => setIsDropdownOpen(true)}
                                             onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
-                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                            onChange={(e) => {
+                                                setSearchTerm(e.target.value);
+                                                // Reset ID if input is cleared
+                                                if (!e.target.value.trim()) {
+                                                    setCustomerId("");
+                                                    setCustomerName("");
+                                                }
+                                            }}
                                         />
+                                        <ErrorMsg field="customerName" />
                                         {isDropdownOpen && (
                                             <ul className="position-absolute w-100 mt-1 bg-white radius-8 shadow-lg z-3 overflow-auto" style={{ maxHeight: '200px', border: "1px solid #ddd", listStyle: 'none', padding: 0 }}>
                                                 {filteredCustomers.map(customer => (
@@ -155,15 +204,23 @@ const EditProjectLayer = () => {
 
                                     {/* STAFF SEARCH */}
                                     <div className="mb-20 position-relative">
-                                        <label className="form-label fw-semibold text-primary-light text-sm mb-8">Assign Staff *</label>
+                                        <label className="form-label fw-semibold text-primary-light text-sm mb-8">Assign Staff <span className="text-danger-600"><span className="text-danger-600">*</span></span></label>
                                         <input
                                             type="text"
                                             className="form-control radius-8"
                                             value={staffSearchTerm}
                                             onFocus={() => setIsStaffDropdownOpen(true)}
                                             onBlur={() => setTimeout(() => setIsStaffDropdownOpen(false), 200)}
-                                            onChange={(e) => setStaffSearchTerm(e.target.value)}
+                                            onChange={(e) => {
+                                                setStaffSearchTerm(e.target.value);
+                                                // Reset ID if input is cleared
+                                                if (!e.target.value.trim()) {
+                                                    setSelectedStaffId("");
+                                                    setSelectedStaffName("");
+                                                }
+                                            }}
                                         />
+                                        <ErrorMsg field="selectStaff" />
                                         {isStaffDropdownOpen && (
                                             <ul className="position-absolute w-100 mt-1 bg-white radius-8 shadow-lg z-3 overflow-auto" style={{ maxHeight: '200px', border: "1px solid #ddd", listStyle: 'none', padding: 0 }}>
                                                 {filteredStaff.map(staff => (
@@ -171,10 +228,15 @@ const EditProjectLayer = () => {
                                                         onMouseDown={() => {
                                                             setSelectedStaffId(staff.id || staff._id);
                                                             setSelectedStaffName(staff.name);
-                                                            setStaffSearchTerm(staff.name);
+                                                            setStaffSearchTerm(`${staff.name} (${staff.role})`);
                                                         }}>
-                                                        <div className="fw-medium">{staff.name}</div>
-                                                        <small>{staff?.location || staff?.address}</small>
+                                                        <div>
+                                                            <div className="d-flex justify-content-between align-items-center">
+                                                                <span className="fw-medium text-primary-light">{staff.name}</span>
+                                                                <span className="text-xs text-muted" style={{ fontStyle: 'italic' }}>{staff.role}</span>
+                                                            </div>
+                                                            <small>{staff?.location || staff?.address}</small>
+                                                        </div>
                                                     </li>
                                                 ))}
                                             </ul>
@@ -182,20 +244,21 @@ const EditProjectLayer = () => {
                                     </div>
 
                                     <div className="mb-20">
-                                        <label className="form-label fw-semibold text-primary-light text-sm mb-8">Project Name *</label>
-                                        <input type="text" className="form-control radius-8" required value={projectName} onChange={(e) => setProjectName(e.target.value)} />
+                                        <label className="form-label fw-semibold text-primary-light text-sm mb-8">Project Name <span className="text-danger-600">*</span></label>
+                                        <input type="text" className="form-control radius-8" value={projectName} onChange={(e) => setProjectName(e.target.value)} />
+                                        <ErrorMsg field="projectName" />
                                     </div>
 
                                     <div className="mb-20">
-                                        <label className="form-label fw-semibold text-primary-light text-sm mb-8">Location</label>
+                                        <label className="form-label fw-semibold text-primary-light text-sm mb-8">Location <span className="text-danger-600">*</span></label>
                                         <input type="text" className="form-control radius-8" value={location} onChange={(e) => setLocation(e.target.value)} />
+                                        <ErrorMsg field="location" />
                                     </div>
 
                                     <div className="row mb-20">
                                         <div className="col-sm-6">
-                                            {/* UPDATED PROJECT TYPE WITH PLUS BUTTON */}
                                             <div className="d-flex align-items-center justify-content-between mb-8">
-                                                <label className="form-label fw-semibold text-primary-light text-sm mb-0">Type *</label>
+                                                <label className="form-label fw-semibold text-primary-light text-sm mb-0">Type <span className="text-danger-600">*</span></label>
                                                 <button 
                                                     type="button"
                                                     onClick={handleAddNewType}
@@ -205,16 +268,17 @@ const EditProjectLayer = () => {
                                                     <Icon icon="ic:baseline-plus" width="16" height="16" />
                                                 </button>
                                             </div>
-                                            <select className="form-control radius-8 form-select" value={projectType} onChange={(e) => setProjectType(e.target.value)} required>
+                                            <select className="form-control radius-8 form-select" value={projectType} onChange={(e) => setProjectType(e.target.value)} >
                                                 <option value="" disabled>Select Type</option>
                                                 {customProjectTypes.map((type) => (
                                                     <option key={type} value={type}>{type}</option>
                                                 ))}
                                             </select>
+                                            <ErrorMsg field="projectType" />
                                         </div>
                                         <div className="col-sm-6">
-                                            <label className="form-label fw-semibold text-primary-light text-sm mb-8">Status *</label>
-                                            <select className="form-control radius-8 form-select" value={status} onChange={(e) => setStatus(e.target.value)} required>
+                                            <label className="form-label fw-semibold text-primary-light text-sm mb-8">Status <span className="text-danger-600">*</span></label>
+                                            <select className="form-control radius-8 form-select" value={status} onChange={(e) => setStatus(e.target.value)} >
                                                 <option value="Initialized">Initialized</option>
                                                 <option value="In Progress">In Progress</option>
                                                 <option value="Completed">Completed</option>
@@ -224,8 +288,9 @@ const EditProjectLayer = () => {
                                     </div>
 
                                     <div className="mb-20">
-                                        <label className="form-label fw-semibold text-primary-light text-sm mb-8">Fees</label>
+                                        <label className="form-label fw-semibold text-primary-light text-sm mb-8">Fees <span className="text-danger-600">*</span></label>
                                         <input type="text" className="form-control radius-8" value={cost} onChange={(e) => setCost(e.target.value)} />
+                                        <ErrorMsg field="fees" />
                                     </div>
 
                                     <div className="d-flex align-items-center justify-content-center gap-3">

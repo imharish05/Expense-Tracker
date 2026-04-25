@@ -11,6 +11,7 @@ import { clearNotifications, updatePaymentReminders } from "../features/notifica
 import { fetchPaymentReminders } from "../features/notification/notificationService";
 import { fetchAllPayments } from "../features/payment/paymentService";
 import { fetchAllStagesForStats } from "../features/stages/stageService";
+import api from ".././api/axios.js"
 
 const MasterLayout = () => {
   const dispatch = useDispatch();
@@ -123,6 +124,33 @@ const MasterLayout = () => {
     };
     fetchAllData();
   }, []);
+
+
+  // For email
+
+  const isFirstRender = useRef(true);
+
+  useEffect(() => {
+    // Skip the very first render — we only want to fire on NEW notifications
+    if (isFirstRender.current) {
+        isFirstRender.current = false;
+        prevCountRef.current = totalCount; // sync the ref on mount
+        return;
+    }
+
+    // Only fire if count went UP (new alerts arrived)
+    if (totalCount > prevCountRef.current) {
+        const stagesToNotify = [
+            ...overdue.map(s => ({ ...s, type: 'overdue' })),
+            ...unpaidCompleted.map(s => ({ ...s, type: 'unpaid' })),
+        ];
+        if (stagesToNotify.length > 0) {
+            api.post('/notify/email', { stages: stagesToNotify })
+                .then(res => console.log(`✉️ Email triggered for ${res.data.sent} stage(s)`))
+                .catch(err => console.error('Email trigger failed:', err));
+        }
+    }
+}, [totalCount]);
 
   // Sidebar dropdown logic
   useEffect(() => {

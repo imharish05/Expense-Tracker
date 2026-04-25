@@ -46,7 +46,7 @@ function App() {
   
 
   return (
-    <BrowserRouter basename="infinus">
+    <BrowserRouter>
       <Toaster position="top-center" reverseOrder={false} />
       <RouteScrollToTop />
       <Routes>

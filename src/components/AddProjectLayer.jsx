@@ -67,6 +67,7 @@ const [staffSearchTerm, setStaffSearchTerm] = useState("");
 const [isStaffDropdownOpen, setIsStaffDropdownOpen] = useState(false);
 const [selectedStaffId, setSelectedStaffId] = useState("");
 const [selectedStaffName, setSelectedStaffName] = useState("");
+const [selectedStaffRole, setSelectedStaffRole] = useState("");
 
 // Filter list based on search term for dropdown
 const filteredCustomers = customersList.filter(customer => {
@@ -94,8 +95,7 @@ const validate = () => {
         newErrors.projectName = "Project Name is Required";
     }
     
-    // 2. Customer Check
-    // Check customerId instead of customerName to ensure a selection was actually made from the list
+    // 2. Customer Check (Ensures ID is present from selection)
     if (!customerId) {
         newErrors.customerName = "Please select a customer from the list";
     }
@@ -106,13 +106,26 @@ const validate = () => {
     }
     
     // 4. Project Type Check
-    if (!projectType || projectType === "Select the project type") {
-    newErrors.projectType = "Please select the project type";
-}
+    if (!projectType || projectType === "Select Type" || projectType === "Select the project type") {
+        newErrors.projectType = "Please select the project type";
+    }
+
+    // 5. Location Check
+    if (!location || !location.trim()) {
+        newErrors.location = "Please enter the location";
+    }
+
+    // 6. Fees (Cost) Check
+    if (!cost) {
+        newErrors.fees = "Please enter the fees";
+    } else if (isNaN(cost) || Number(cost) <= 0) {
+        newErrors.fees = "Please enter a valid amount greater than 0";
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
 };
+
             const ErrorMsg = ({ field }) => (
         errors[field] ? (
             <div className="text-danger mt-4 fw-medium" style={{ fontSize: '11px' }}>
@@ -140,8 +153,6 @@ const validate = () => {
             status: "Initialized"
         };
 
-        console.log(projectType);
-        
 
         // 1. Change addNewProject to return the project data instead of just 'true'
         const newProject = await addNewProject(dispatch, payload,navigate);
@@ -154,7 +165,7 @@ const validate = () => {
             setCustomerName("");
             setProjectType("");
             setCustomerId("");
-            navigate(-1);
+            navigate("/projects-list");
         }
     } catch (err) {
         console.log("Component Error:", err.message);
@@ -225,6 +236,74 @@ const validate = () => {
 </div>
 
 
+                                        {/* For staff */}
+
+                                        {/* SEARCHABLE STAFF DROPDOWN */}
+
+<div className="mb-20 position-relative">
+    <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+        Assign Staff / Designer <span className="text-danger-600">*</span>
+    </label>
+    
+    <div className="input-group">
+        <input
+            type="text"
+            className="form-control radius-8"
+            placeholder="Search staff by name or role..." 
+            value={staffSearchTerm}
+            onFocus={() => setIsStaffDropdownOpen(true)}
+            onBlur={() => setTimeout(() => setIsStaffDropdownOpen(false), 200)}
+            onChange={(e) => {
+                setStaffSearchTerm(e.target.value);
+                setIsStaffDropdownOpen(true);
+            }}
+            disabled={customerName.length === 0}
+        />
+    </div>
+    <ErrorMsg field={"selectStaff"}></ErrorMsg>
+
+    {isStaffDropdownOpen && (
+        <ul className="position-absolute w-100 mt-1 bg-white radius-8 shadow-lg z-3 overflow-auto" 
+            style={{ maxHeight: '200px', listStyle: 'none', padding: 0, border: "1px solid #e5e7eb" }}>
+            {filteredStaff.length > 0 ? (
+                filteredStaff.map((staff) => (
+                    <li 
+                        key={staff.id || staff._id}
+                        className="p-10 border-bottom cursor-pointer hover-bg-primary-50"
+                        onMouseDown={(e) => {
+                            e.preventDefault(); 
+                            // 1. Store only the data your backend needs
+                            setSelectedStaffId(staff.id || staff._id);
+                            setSelectedStaffName(staff.name);
+                            
+                            // 2. Display Name + Role in the input for user clarity
+                            setStaffSearchTerm(`${staff.name}`);
+                            
+                            setIsStaffDropdownOpen(false);
+                        }}
+                    >
+                        {/* 3. Show the role in the list so users pick the right person */}
+                        <div >
+                            <div className="d-flex justify-content-between align-items-center">
+                            <span className="fw-medium text-primary-light">{staff.name}</span>
+                            <span className="text-xs text-muted" style={{ fontStyle: 'italic' }}>
+                                {staff.role}
+                            </span>
+                             </div>
+
+                            <small>{staff?.location || staff?.address}</small>
+                        </div>
+                    </li>
+                ))
+            ) : (
+                <li className="p-10 text-center text-gray-400">No staff found</li>
+            )}
+        </ul>
+    )}
+</div>
+
+
+
                                         {/* For Project Name */}
                                         <div className="mb-20">
                                             <label
@@ -245,79 +324,6 @@ const validate = () => {
                                                 disabled = {customerName.length == "0" ? true : false}
                                             />
                                               <ErrorMsg field={"projectName"}/>
-                                        </div>
-
-                                        {/* For staff */}
-
-                                        {/* SEARCHABLE STAFF DROPDOWN */}
-<div className="mb-20 position-relative">
-    <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-        Assign Staff / Designer <span className="text-danger-600">*</span>
-    </label>
-    
-    <div className="input-group">
-        <input
-            type="text"
-            className="form-control radius-8"
-            placeholder="Search staff by name or role..."
-            value={staffSearchTerm}
-            onFocus={() => setIsStaffDropdownOpen(true)}
-            onBlur={() => setTimeout(() => setIsStaffDropdownOpen(false), 200)} // Small delay to allow click
-            onChange={(e) => {
-                setStaffSearchTerm(e.target.value);
-                setIsStaffDropdownOpen(true);
-            }}
-            disabled={customerName.length === 0}
-        />
-
-    </div>
-        <ErrorMsg field={"selectStaff"}></ErrorMsg>
-
-    {isStaffDropdownOpen && (
-        <ul className="position-absolute w-100 mt-1 bg-white radius-8 shadow-lg z-3 overflow-auto" 
-            style={{ maxHeight: '200px', listStyle: 'none', padding: 0, border: "1px solid #e5e7eb" }}>
-            {filteredStaff.length > 0 ? (
-                filteredStaff.map((staff) => (
-                    <li 
-                        key={staff.id || staff._id}
-                        className="p-10 border-bottom cursor-pointer hover-bg-primary-50"
-                        onMouseDown={(e) => {
-                            e.preventDefault(); 
-                            setSelectedStaffId(staff.id);
-                            setSelectedStaffName(staff.name);
-                            setStaffSearchTerm(staff.name);
-                            setIsStaffDropdownOpen(false);
-                        }}
-                    >
-                        <div className="fw-medium text-primary-light">{staff.name}</div>
-                        <small className="text-gray-500">{staff?.address || staff?.location}</small>
-                    </li>
-                ))
-            ) : (
-                <li className="p-10 text-center text-gray-400">No staff found</li>
-            )}
-        </ul>
-    )}
-</div>
-
-
-                        {/* For location  */}
-                                        <div className="mb-20">
-                                            <label
-                                                htmlFor="location"
-                                                className="form-label fw-semibold text-primary-light text-sm mb-8"
-                                            >
-                                                Location
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={location}
-                                                onChange={(e) => setLocation(e.target.value)}
-                                                className="form-control radius-8"
-                                                id="location"
-                                                placeholder="Enter location"
-                                                disabled = {customerName.length == "0" ? true : false}
-                                            />
                                         </div>
 
                                         {/* For Project Type */}
@@ -357,6 +363,28 @@ const validate = () => {
     <ErrorMsg field={"projectType"} />
 </div>
 
+                        {/* For location  */}
+                        
+                                        <div className="mb-20">
+                                            <label
+                                                htmlFor="location"
+                                                className="form-label fw-semibold text-primary-light text-sm mb-8"
+                                            >
+                                                Location<span className="text-danger-600">*</span>
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={location}
+                                                onChange={(e) => setLocation(e.target.value)}
+                                                className="form-control radius-8"
+                                                id="location"
+                                                placeholder="Enter location"
+                                                disabled = {customerName.length == "0" ? true : false}
+                                            />
+
+                                             <ErrorMsg field={"location"}/>
+                                        </div>
+
 
 {/* For cost */}
                                         <div className="mb-20">
@@ -364,7 +392,7 @@ const validate = () => {
                                                 htmlFor="cost"
                                                 className="form-label fw-semibold text-primary-light text-sm mb-8"
                                             >
-                                                Fees
+                                                Fees<span className="text-danger-600">*</span>
                                             </label>
                                             <input
                                             value={cost}
@@ -375,6 +403,9 @@ const validate = () => {
                                                 placeholder="Enter the Fees"
                                                 disabled = {customerName.length == "0" ? true : false}
                                             />
+
+
+                                            <ErrorMsg field={"fees"}/>
                                         </div>
 
 

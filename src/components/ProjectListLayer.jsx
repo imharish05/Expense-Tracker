@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from "react-redux";
 import Swal from "sweetalert2";
 import { deleteProjectFunction, getAllProjects } from "../features/projects/projectService";
 import HasPermission from "./HasPermission";
+import {fetchAllPayments} from "../features/payment/paymentService.js"
 
 const ProjectListLayer = () => {
   const navigate = useNavigate();
@@ -113,6 +114,7 @@ const ProjectListLayer = () => {
       reverseButtons: true
     }).then((result) => {
       if (result.isConfirmed) {
+        fetchAllPayments(dispatch)
         deleteProjectFunction(dispatch, id);
       }
     });

@@ -104,7 +104,8 @@ export const recordStagePaymentFunction = async (dispatch, payload, stageId, pro
 export const recordDocumentFunction = async (dispatch, projectId, stageId, customerId, formData) => {
     dispatch(startDocumentUpload());
     try {
-        const res = await api.post(`/stages/upload-document/${stageId}`, formData, {
+        // ✅ Pass both projectId and stageId in the URL
+        const res = await api.post(`/stages/upload-document/${projectId}/${stageId}`, formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
         });
         dispatch(recordDocument({
@@ -118,7 +119,6 @@ export const recordDocumentFunction = async (dispatch, projectId, stageId, custo
         return false;
     }
 };
-
 /**
  * Delete document from server and clear path in Redux
  */
@@ -138,8 +138,8 @@ export const deleteStageDocumentFunction = async (dispatch, projectId, stageId) 
 /**
  * Update the status of a stage manually
  */
-export const updateStageStatusFunction = async (dispatch, data, stageId, projectId) => {
-    const loadingToast = toast.loading("Updating status...");
+export const updateStageStatusFunction = async (dispatch, data, stageId, projectId, silent = false) => {
+    const loadingToast = silent ? null : toast.loading("Updating status...");
     try {
         const res = await api.patch(`/stages/update-status/${stageId}`, data);
 
@@ -149,9 +149,9 @@ export const updateStageStatusFunction = async (dispatch, data, stageId, project
             status: res.data.status 
         }));
 
-        toast.success("Status updated!", { id: loadingToast });
+        // ✅ Only show toast if not silent
+        if (!silent) toast.success("Status updated!", { id: loadingToast });
 
-        // 👇 ADD THIS BLOCK — fires notification when stage is manually set to Completed but unpaid
         if (res.data.reminder) {
             dispatch(addSocketNotification({
                 id: `stage-${stageId}-${Date.now()}`,
@@ -161,11 +161,10 @@ export const updateStageStatusFunction = async (dispatch, data, stageId, project
                 timestamp: new Date().toISOString(),
             }));
         }
-        // 👆 END OF NEW BLOCK
 
         return true;
     } catch (error) {
-        toast.error("Status update failed.", { id: loadingToast });
+        if (!silent) toast.error("Status update failed.", { id: loadingToast });
         return false;
     }
 };

@@ -134,7 +134,7 @@ const EditStaffLayer = () => {
                                 <form onSubmit={handleSubmit} noValidate>
         
                                     <div className="mb-20">
-                                        <label className="form-label fw-semibold text-primary-light text-sm mb-8">Full Name *</label>
+                                        <label className="form-label fw-semibold text-primary-light text-sm mb-8">Full Name <span className="text-danger-600">*</span></label>
                                         <input 
                                             type="text" 
                                             className={`form-control radius-8 ${errors.name ? 'border-danger' : ''}`} 
@@ -145,7 +145,7 @@ const EditStaffLayer = () => {
                                     </div>
 
                                     <div className="mb-20">
-                                        <label className="form-label fw-semibold text-primary-light text-sm mb-8">Email Address *</label>
+                                        <label className="form-label fw-semibold text-primary-light text-sm mb-8">Email Address <span className="text-danger-600">*</span></label>
                                         <input 
                                             type="email" 
                                             className={`form-control radius-8 ${errors.email ? 'border-danger' : ''}`} 
@@ -157,7 +157,7 @@ const EditStaffLayer = () => {
                                     </div>
 
                                     <div className="mb-20">
-                                        <label className="form-label fw-semibold text-primary-light text-sm mb-8">Password *</label>
+                                        <label className="form-label fw-semibold text-primary-light text-sm mb-8">Password <span className="text-danger-600">*</span></label>
                                         <div className="position-relative">
                                             <input 
                                                 type={showPassword ? "text" : "password"} 
@@ -182,7 +182,7 @@ const EditStaffLayer = () => {
                                     </div>
 
                                     <div className="mb-20">
-                                        <label className="form-label fw-semibold text-primary-light text-sm mb-8">User Role *</label>
+                                        <label className="form-label fw-semibold text-primary-light text-sm mb-8">User Role <span className="text-danger-600">*</span></label>
                                         <div className="position-relative">
                                             <select 
                                                 className={`form-control radius-8 form-select appearance-none ${errors.role ? 'border-danger' : ''}`} 
@@ -208,7 +208,7 @@ const EditStaffLayer = () => {
 
                                     <div className="row">
                                         <div className="col-md-6 mb-20">
-                                            <label className="form-label fw-semibold text-primary-light text-sm mb-8">Phone Number *</label>
+                                            <label className="form-label fw-semibold text-primary-light text-sm mb-8">Phone Number <span className="text-danger-600">*</span></label>
                                             <input 
                                                 type="tel" 
                                                 className={`form-control radius-8 ${errors.phone ? 'border-danger' : ''}`} 
