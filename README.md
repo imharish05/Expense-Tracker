@@ -1,401 +1,435 @@
-# Amount Manager - Frontend
+# Financial Management System
 
-A modern, responsive React dashboard for the Amount Manager project management system. Built with React 18, Redux Toolkit, Bootstrap 5, and ApexCharts for comprehensive data visualization.
+A comprehensive full-stack application for managing financial operations, user authentication, expense tracking, and treasury management through an intuitive web-based interface.
 
-## 🎯 Project Overview
+## 📦 Project Structure
 
-The Amount Manager frontend provides a complete user interface for:
-- Project management and tracking
-- Staff directory and assignments
-- Payment processing and tracking
-- Customer relationship management
-- Role-based permission management
-- Real-time notifications and reminders
-- Document and file management
-- Interactive dashboards and reports
+```
+├── Frontend/                # Client-side application
+│   ├── public/
+│   │   ├── assets/         # Static resources (CSS, images, fonts)
+│   │   └── index.html      # Main HTML file
+│   ├── src/
+│   │   ├── components/     # Reusable UI components
+│   │   ├── pages/          # Page components
+│   │   ├── features/       # Feature modules (auth, expense)
+│   │   ├── store/          # State management
+│   │   └── api/            # API client configuration
+│   └── package.json
+│
+├── Backend/                # Server-side application
+│   ├── config/            # Configuration files (database setup)
+│   ├── controllers/       # Request handlers
+│   ├── middleware/        # Custom middleware functions
+│   ├── models/            # Data models
+│   ├── routes/            # API route definitions
+│   ├── server.js          # Entry point
+│   └── package.json
+│
+└── README.md              # This file
+```
 
-## 📋 Prerequisites
+## 🎯 Core Features
 
-- **Node.js**: v14+ (v16+ recommended)
-- **npm**: v6+
-- **Backend API**: Running on `http://localhost:5000`
+### 🔐 Authentication & Authorization
+- User account creation and registration
+- Secure login and session management
+- Protected route middleware
+- User role management
 
-## 🚀 Quick Start
+### 💼 Financial Tracking
+- Expense logging and categorization
+- Transaction history
+- Expense reports and analytics
+- Budget organization
 
-### 1. Installation
+### 💰 Treasury Management
+- Financial overview dashboard
+- Asset tracking
+- Financial summaries
+- Data visualization
+
+### 📊 Reporting & Analytics
+- Record and track payments
+- Automated payment reminders
+- Payment history and reports
+- Financial analytics
+
+### 📋 Customer Management
+- Maintain customer database
+- Link customers to projects
+- Store contact information
+- Communication history
+
+### 🔐 Security & Access Control
+- Token-based authentication
+- Role-based access control (RBAC)
+- Permission management
+- Secure file uploads
+- Password encryption
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+Before you begin, ensure you have the following installed:
+
+- **Runtime Environment** v14+
+- **Package Manager** v6+
+- **Relational Database** v5.7+
+- **Version Control** (optional)
+
+### Installation Steps
+
+#### 1. Clone or Download the Repository
+
+```bash
+cd "Amount Manager"
+```
+
+#### 2. Backend Setup
+
+```bash
+cd Backend
+npm install
+```
+
+Create `.env` file:
+
+```env
+PORT=5000
+ENVIRONMENT=development
+
+# Database Configuration
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=your_password
+DB_NAME=financial_system
+DB_TYPE=relational
+
+# Authentication
+AUTH_SECRET=your_secret_key
+AUTH_EXPIRY=7d
+
+# Email Configuration
+EMAIL_SERVICE=your_service
+EMAIL_HOST=your_email_host
+EMAIL_PORT=587
+EMAIL_ADDRESS=your_email@example.com
+EMAIL_PASSWORD=your_app_password
+```
+
+Create database:
+
+```sql
+CREATE DATABASE financial_system;
+```
+
+Start server:
+
+```bash
+npm run dev
+```
+
+Server will run on: `http://localhost:5000`
+
+#### 3. Client Setup
+
+Open a new terminal and navigate to the client:
 
 ```bash
 cd Frontend
 npm install
 ```
 
-### 2. Environment Configuration
-
-Create a `.env` file in the Frontend directory:
+Create `.env` file:
 
 ```env
 REACT_APP_API_URL=http://localhost:5000/api
 REACT_APP_ENVIRONMENT=development
 ```
 
-### 3. Start Development Server
+Start client:
 
 ```bash
 npm start
 ```
 
-The app will open automatically at `http://localhost:3000`
+Client will open at: `http://localhost:3000`
 
-### 4. Build for Production
+## 🏗️ Architecture
+
+### Client Architecture
+- **Framework**: Modern component-based framework
+- **State Management**: Centralized store management
+- **Routing**: Client-side routing
+- **HTTP Client**: HTTP request library
+- **UI Framework**: CSS framework
+- **Visualization**: Charting library
+- **Build Tool**: Module bundler
+
+### Server Architecture
+- **Runtime**: Server-side JavaScript environment
+- **Framework**: Web application framework
+- **ORM**: Object-relational mapper
+- **Database**: Relational database system
+- **Authentication**: Token-based authentication
+- **File Handling**: Multipart form data processor
+- **Task Scheduling**: Cron job scheduler
+- **Communications**: Email service integration
+
+## 📡 Architecture
+
+```
+Client (Web Application)
+    ↓ (HTTP/REST)
+API Server (Web Framework)
+    ↓ (ORM)
+Database
+    ↓
+File Storage
+```
+
+## 🔄 Data Flow
+
+1. **User Interaction**: User interacts with client interface
+2. **State Management**: State management system captures action
+3. **API Call**: HTTP request sent to server
+4. **Server Processing**: Server processes the request
+5. **Database Operation**: Database is queried or updated
+6. **Response**: Server returns data response
+7. **State Update**: Client state management updates
+8. **UI Render**: Client interface updates with new data
+
+## 📋 API Endpoints
+
+### Authentication (`/api/auth`)
+- `POST /auth/signup` - Register new user
+- `POST /auth/login` - User login
+- `POST /auth/logout` - User logout
+
+### Expenses (`/api/expenses`)
+- `GET /expenses` - List all expenses
+- `POST /expenses` - Create expense
+- `GET /expenses/:id` - Get expense details
+- `PATCH /expenses/:id` - Update expense
+- `DELETE /expenses/:id` - Delete expense
+
+### Treasury (`/api/treasury`)
+- `GET /treasury` - Financial overview
+- `POST /treasury` - Add treasury record
+- `GET /treasury/:id` - Get treasury details
+- `PATCH /treasury/:id` - Update treasury
+- `DELETE /treasury/:id` - Delete treasury
+
+## 🔑 Default User Roles
+
+- **Administrator**: Full system access
+- **Manager**: Administrative operations
+- **User**: Standard operations
+- **Viewer**: Read-only access
+
+## 🗄️ Database Schema
+
+### Key Tables
+
+**User Accounts**
+- Authentication and user data
+- Credentials and profile information
+
+**Financial Records**
+- Transaction data storage
+- Amount and category tracking
+
+**Treasury Data**
+- Asset information
+- Financial summaries
+
+**User Permissions**
+- Access control mappings
+- Authorization matrix
+
+## 🔐 Security Measures
+
+1. **Authentication**
+   - Token-based authorization with expiration
+   - Refresh token mechanism
+   - Secure password hashing
+
+2. **Authorization**
+   - Role-based access control
+   - Protected endpoints
+   - Permission verification
+
+3. **Data Security**
+   - Input validation
+   - Injection prevention via ORM
+   - Cross-site scripting protection via framework
+
+4. **File Security**
+   - Upload validation
+   - Size restrictions
+   - Type verification
+
+5. **API Security**
+   - Cross-origin resource sharing
+   - Rate limiting (recommended)
+   - HTTPS in production
+
+## 📈 Deployment
+
+### Server Deployment (Production)
 
 ```bash
+cd Backend
+npm run build  # If available
+npm start      # Run production server
+```
+
+Recommended hosting options:
+- Platform as a Service (PaaS)
+- Infrastructure as a Service (IaaS)
+- Virtual Private Servers (VPS)
+- Containerized services
+
+### Client Deployment (Production)
+
+```bash
+cd Frontend
 npm run build
 ```
 
-Optimized production build will be created in the `build/` folder.
+Deploy the `build/` folder to:
+- Static hosting services
+- Content delivery networks
+- Cloud storage with hosting
+- Web hosting providers
+- Containerized services
 
-## 📁 Project Structure
+## 🛠️ Development Tools
 
-```
-Frontend/
-├── public/
-│   ├── index.html              # Main HTML file
-│   ├── robots.txt              # SEO robots file
-│   ├── _redirects              # Netlify redirects
-│   └── assets/
-│       ├── css/                # Global stylesheets
-│       ├── fonts/              # Custom fonts
-│       ├── images/             # Static images
-│       ├── webfonts/           # Web fonts
-│       └── favicon/            # App icons
-├── src/
-│   ├── App.js                  # Main App component
-│   ├── index.js                # React entry point
-│   ├── api/
-│   │   └── axios.js            # Axios configuration
-│   ├── components/             # Reusable components
-│   │   ├── DashBoardLayerOne.jsx    # Dashboard
-│   │   ├── ProjectListLayer.jsx     # Project listing
-│   │   ├── StaffListLayer.jsx       # Staff directory
-│   │   ├── PermissionManagement.jsx # Permissions
-│   │   ├── ReportLayer.jsx          # Reports
-│   │   ├── ProtectedRoute.jsx       # Route protection
-│   │   ├── SignInLayer.jsx          # Login page
-│   │   ├── SignUpLayer.jsx          # Registration
-│   │   ├── AddProjectLayer.jsx      # Project creation
-│   │   ├── EditProjectLayer.jsx     # Project editing
-│   │   ├── AddStaffLayer.jsx        # Staff creation
-│   │   ├── EditStaffLayer.jsx       # Staff editing
-│   │   ├── DocumentUploadModal.jsx  # File uploads
-│   │   ├── ProjectRemainders.jsx    # Reminders
-│   │   ├── ErrorLayer.jsx           # Error handling
-│   │   ├── AccessDeniedLayer.jsx    # Access control
+### Recommended Tools
+- Code editor/IDE
+- Browser developer tools
+- HTTP client tools
+- Version control client
+- Database management tool
 
-│   │   ├── Breadcrumb.jsx           # Navigation breadcrumbs
-│   │   └── child/                   # Child components
-│   ├── features/                # Redux feature slices
-│   │   ├── auth/                # Authentication
-│   │   ├── projects/            # Project state
-│   │   ├── staff/               # Staff state
-│   │   ├── payment/             # Payment state
-│   │   ├── customers/           # Customer state
-│   │   ├── permissions/         # Permission state
-│   │   ├── notification/        # Notification state
-│   │   └── stages/              # Stage state
-│   ├── pages/                   # Page components
-│   │   ├── HomePageOne.jsx      # Dashboard page
-│   │   ├── AddProjectPage.jsx   # Project creation
-│   │   ├── EditProjectPage.jsx  # Project editing
-│   │   ├── AddStaffPage.jsx     # Staff creation
-│   │   ├── EditStaffListPage.jsx# Staff management
-│   │   ├── AddUserPage.jsx      # User creation
-│   │   ├── EditUserListPage.jsx # User management
-│   │   ├── ErrorPage.jsx        # Error page
-│   │   └── ForgotPasswordPage.jsx# Password reset
-│   ├── helper/                  # Utility helpers
-│   │   ├── MobileMenuToggle.jsx # Mobile menu
-│   │   ├── ThemeToggleButton.jsx# Theme switching
-│   │   ├── RouteScrollToTop.jsx # Scroll behavior
-│   │   └── SortableTask.js      # Task sorting
-│   ├── hook/                    # Custom React hooks
-│   │   ├── event-utils.js       # Event utilities
-│   │   ├── usePaymentReminders.js # Payment hook
-│   │   └── useReactApexChart.js # Chart hook
-│   ├── masterLayout/            # Layout components
-│   │   └── MasterLayout.jsx     # Main layout wrapper
-│   ├── store/                   # Redux configuration
-│   ├── utils/                   # Utility functions
-│   └── setupTests.js            # Test configuration
-├── package.json
-├── README.md                    # This file
-└── .env                         # Environment variables
-```
+### Browser Extensions
+- State management tools
+- Framework developer tools
+- Network inspection tools
 
-## 🎨 Key Features
-
-### Dashboard & Analytics
-- Real-time project overview
-- Performance charts and graphs
-- Key metrics visualization
-- ApexCharts integration
-
-### Project Management
-- Create, edit, and delete projects
-- Organize projects by stages
-- Assign staff to projects
-- Track project progress
-- Upload project documents
-
-### Staff & User Management
-- Comprehensive staff directory
-- User profile management
-- Role-based access control
-- Department organization
-- Permission management
-
-### Payment Processing
-- Track payments and invoices
-- Payment history
-- Automated payment reminders
-- Financial reporting
-
-### Customer Management
-- Maintain customer database
-- Customer details and contacts
-- Customer-project relationships
-- Communication history
-
-### File Management
-- Document uploads for projects
-- Secure file storage
-- File organization
-- Download functionality
-
-### Notifications & Alerts
-- Payment reminders
-- Project updates
-- System notifications
-- Toast notifications for user feedback
-
-## 📱 Responsive Design
-
-- Mobile-first approach
-- Bootstrap 5 grid system
-- Tablet and desktop optimization
-- Touch-friendly interface
-
-## 🔧 Technologies Used
-
-| Technology | Purpose |
-|-----------|---------|
-| **React 18** | UI framework |
-| **Redux Toolkit** | State management |
-| **React Router v6** | Client-side routing |
-| **Axios** | HTTP requests |
-| **Bootstrap 5** | CSS framework |
-| **ApexCharts** | Data visualization |
-| **React Hot Toast** | Notifications |
-| **React Quill** | Rich text editor |
-| **Flatpickr** | Date picker |
-| **React Datepicker** | Date selection |
-| **Lucide React** | Icon library |
-
-## 📦 Core Dependencies
-
-```json
-{
-  "react": "^18.2.0",
-  "react-dom": "^18.2.0",
-  "react-router-dom": "^6.22.1",
-  "redux": "included in @reduxjs/toolkit",
-  "@reduxjs/toolkit": "^2.11.2",
-  "react-redux": "^9.2.0",
-  "axios": "^1.15.0",
-  "bootstrap": "^5.3.3",
-  "react-bootstrap": "^2.10.5",
-  "apexcharts": "^4.3.0",
-  "react-apexcharts": "^1.9.0",
-  "react-hot-toast": "^2.6.0",
-  "react-quill": "^2.0.0",
-  "lucide-react": "^1.9.0"
-}
-```
-
-## 🔑 Redux Store Structure
-
-```
-store/
-├── auth/          # User authentication & login state
-├── projects/      # Project management state
-├── staff/         # Staff directory state
-├── payment/       # Payment tracking state
-├── customers/     # Customer data state
-├── permissions/   # Permission & role state
-├── notification/  # Notification state
-└── stages/        # Project stages state
-```
-
-## 🔐 Authentication
-
-- JWT token-based authentication
-- Secure login/logout functionality
-- Protected routes with ProtectedRoute component
-- Permission-based access control
-- Token storage in localStorage
-- Automatic token refresh
-
-## 🎯 Component Hierarchy
-
-```
-App
-├── ProtectedRoute (if authenticated)
-│   └── MasterLayout
-│       ├── Navigation/Sidebar
-│       └── Main Content
-│           ├── Dashboard
-│           ├── Projects
-│           ├── Staff
-│           ├── Payments
-│           ├── Customers
-│           └── Permissions
-└── Auth Routes
-    ├── SignIn
-    ├── SignUp
-    └── ForgotPassword
-```
-
-## 🚀 Available Scripts
-
-### Development
+### Testing
 ```bash
-npm start                   # Start dev server (http://localhost:3000)
-npm run build              # Production build
-npm test                   # Run tests
-npm run eject              # Eject configuration (one-way operation)
+# Client
+cd Frontend
+npm test
+
+# Server
+cd Backend
+npm test
 ```
 
-### Build Process
-- Webpack bundling
-- Code splitting
-- Asset optimization
-- Source maps for debugging
+## 📚 Documentation
 
-## 📝 Environment Variables
+For detailed information, refer to:
 
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `REACT_APP_API_URL` | Backend API URL | http://localhost:5000/api |
-| `REACT_APP_ENVIRONMENT` | Environment type | development/production |
+- [Client Documentation](Frontend/README.md) - Client application guide
+- [Server Documentation](Backend/README.md) - Server API documentation
 
-## 🛡️ Security Features
+## 🐛 Troubleshooting
 
-- XSS protection via React
-- CSRF token handling
-- Secure API communication over HTTPS
-- Protected routes
-- Role-based access control
-- Secure localStorage usage
-
-## 🎨 Styling
-
-- Bootstrap 5 utility classes
-- Custom CSS variables
-- Responsive design patterns
-- Dark mode support (via ThemeToggleButton)
-- SCSS preprocessing
-
-## 📊 Charts & Visualizations
-
-- ApexCharts for interactive charts
-- Pie charts, bar charts, line graphs
-- Real-time data updates
-- Customizable chart options
-
-## 🔄 State Management Flow
-
-1. User actions trigger Redux actions
-2. Reducers update state
-3. Components subscribe to store changes
-4. UI updates based on new state
-
-## 🧪 Testing
-
+### Server Won't Start
 ```bash
-npm test                   # Run all tests
-npm test -- --coverage     # Coverage report
-npm test -- --watch       # Watch mode
+# Check if port 5000 is in use
+lsof -i :5000  # macOS/Linux
+netstat -ano | findstr :5000  # Windows
+
+# Kill process or change PORT in .env
 ```
 
-Test files: `*.test.js`
+### Database Connection Error
+```bash
+# Verify database service is running
+# Check database credentials in .env
+# Ensure database is created
+```
 
-## 📈 Performance Optimization
+### Client Can't Connect to Server
+- Check server is running on port 5000
+- Verify API_URL in client .env
+- Check browser console for errors
+- Ensure CORS is enabled on server
 
-- Code splitting with React.lazy()
-- Image lazy loading
-- Memoization with useMemo/useCallback
-- Virtual scrolling for large lists
-- Efficient Redux selectors
+### Cross-Origin Errors
+- Verify server CORS configuration
+- Check client makes requests to correct URL
+- Ensure credentials are properly configured
 
-## 🚨 Error Handling
+## 📞 Support
 
-- Error boundaries for component errors
-- API error handling with try-catch
-- User-friendly error messages
-- ErrorLayer component for displaying errors
-- Validation on forms
+For issues or questions:
+1. Review documentation
+2. Check error logs
+3. Review browser console output
+4. Check server terminal output
+5. Verify environment variables
 
 ## 🤝 Contributing
 
 1. Create a feature branch
-2. Make your changes
+2. Make changes
 3. Test thoroughly
-4. Submit a pull request
-
-## 📞 Support & Troubleshooting
-
-### API Connection Issues
-- Verify backend is running on port 5000
-- Check REACT_APP_API_URL in .env
-- Check browser console for CORS errors
-
-### State Management Issues
-- Use Redux DevTools extension
-- Check Redux actions in store
-- Verify action creators are dispatched
-
-### Styling Issues
-- Clear browser cache
-- Verify Bootstrap 5 is loaded
-- Check CSS specificity conflicts
+4. Submit contribution
+5. Wait for review
 
 ## 📄 License
 
 ISC
 
-## 👥 Author
+---
 
-Amount Manager Development Team
+## 🚦 Quick Reference
+
+### Start Both Services
+
+**Terminal 1 - Server:**
+```bash
+cd Backend
+npm run dev
+```
+
+**Terminal 2 - Client:**
+```bash
+cd Frontend
+npm start
+```
+
+Then open `http://localhost:3000` in your browser.
+
+### Default Credentials
+
+After database seeding, try:
+- Email: `admin@example.com`
+- Password: `admin123` (change immediately!)
+
+### Stop Services
+
+- Client: Press `Ctrl+C` in terminal
+- Server: Press `Ctrl+C` in terminal
+
+### Service Status
+
+```bash
+# Server running on 5000?
+curl http://localhost:5000
+
+# Client running on 3000?
+curl http://localhost:3000
+```
 
 ---
 
 **Last Updated**: April 2026
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+**Version**: 1.0.0
