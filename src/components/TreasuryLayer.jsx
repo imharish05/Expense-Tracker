@@ -446,7 +446,7 @@ const TreasuryLayer = () => {
                   />
                 </div>
 
-                <button className="btn btn-deposit w-100 py-3 mb-4 fw-bold text-white shadow-sm" onClick={handleTopUp}
+                <button className="btn btn-deposit w-100 py-3 my-3 fw-bold text-white shadow-sm" onClick={handleTopUp}
                   style={{ backgroundColor: "#ea8b0c", borderRadius: 14, border: "none", fontSize: 14 }}>
                   Confirm Deposit
                 </button>
