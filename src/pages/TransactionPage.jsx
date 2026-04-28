@@ -86,8 +86,6 @@ const TransactionPage = () => {
         background: "rgba(255,255,255,0.85)",
         backdropFilter: "blur(12px)",
         borderBottom: "1px solid #e2e8f0",
-        position: 'sticky', top: 0,
-        zIndex: 1000
       }}>
         <div className="container-fluid" style={{ maxWidth: 1200, height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 1.5rem" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>

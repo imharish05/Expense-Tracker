@@ -353,70 +353,147 @@ const handleDelete = (id, type) => {
           </div>
 
           {/* Table */}
-          <div className="table-responsive">
-            <table className="table table-hover align-middle responsive-report-table border">
-              <thead className="table-light">
-                <tr style={{ background: '#f8fafc' }}>
-                  <th className="text-xs py-3 ps-4 border-0">TIMELINE</th>
-                  <th className="text-xs py-3 border-0">PARTICULARS & REFERENCE</th>
-                  <th className="text-xs py-3 border-0">STATUS</th>
-                  <th className="text-xs py-3 text-end border-0">TRANSACTION</th>
-                  <th className="text-xs py-3 text-center pe-4 border-0">ACTIONS</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                   <tr><td colSpan="5" className="text-center py-5 text-muted small">Synchronizing Ledger...</td></tr>
-                ) : reportData.map((item) => (
-                  <tr key={item.id}>
-                    <td className="ps-4 text-sm" data-label="Date">
-                      <div className="fw-600">{new Date(item.date).toLocaleDateString("en-IN", { day: '2-digit', month: 'short' })}</div>
-                      <div className="text-xxs text-muted">{new Date(item.date).getFullYear()}</div>
-                    </td>
-                    <td data-label="Particulars">
-                      <div className="d-flex flex-column align-items-end align-items-md-start">
-                        <span className="fw-bold text-dark text-sm text-capitalize">{item.entity}</span>
-                        <span className="text-xs text-muted d-flex align-items-center gap-1">
-                            <Icon icon={item.type === 'INCOMING' ? "solar:wallet-bold-duotone" : "solar:user-bold-duotone"} width="12" />
-                            {item.payer} — {item.description}
-                        </span>
-                      </div>
-                    </td>
-                    <td data-label="Type">
-                      <span className={`badge px-2 py-1 radius-4 text-xxs ${item.type === 'INCOMING' ? 'bg-success-focus text-success' : 'bg-danger-focus text-danger'}`}>
-                        {item.type === 'INCOMING' ? 'RECEIVED' : 'SPENT'}
-                      </span>
-                    </td>
-                    <td className={`text-end fw-bold ${item.type === 'INCOMING' ? 'text-success' : 'text-danger'}`} data-label="Amount">
-                      {item.type === 'INCOMING' ? '+' : '-'} ₹{item.amount.toLocaleString("en-IN")}
-                    </td>
-                    <td data-label="Actions" className="text-center pe-4">
-                      {!item.isProject ? (
-                        <div className="d-flex justify-content-center gap-2">
-                          <button onClick={() => setEditModal({ show: true, data: item })} className="btn btn-sm btn-light text-primary radius-8 border">
-                            <Icon icon="lucide:edit-3" width="14" />
-                          </button>
-                          <button onClick={() => handleDelete(item.id, item.type)} className="btn btn-sm btn-light text-danger radius-8 border">
-                            <Icon icon="lucide:trash-2" width="14" />
-                          </button>
-                        </div>
-                      ) : (
-                        <span className="text-xxs text-muted opacity-50">Locked</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-                {!loading && reportData.length === 0 && (
-                    <tr>
-                        <td colSpan="5" className="text-center py-5">
-                          <Icon icon="solar:document-text-broken" width="48" className="text-muted mb-2" />
-                          <div className="text-muted small">No records match your selection.</div>
-                        </td>
-                    </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+          {/* Table */}
+<div className="table-responsive" style={{ borderRadius: 16, overflow: 'hidden', border: '1px solid #e8edf4', boxShadow: '0 2px 12px rgba(15,23,42,0.06)' }}>
+  <table className="table align-middle responsive-report-table mb-0" style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
+    <thead>
+      <tr style={{ background: 'linear-gradient(135deg, #f1f5f9 0%, #e8edf4 100%)' }}>
+        <th style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.08em', color: '#64748b', padding: '14px 16px 14px 24px', borderBottom: '2px solid #e2e8f0', whiteSpace: 'nowrap', textTransform: 'uppercase' }}>Timeline</th>
+        <th style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.08em', color: '#64748b', padding: '14px 16px', borderBottom: '2px solid #e2e8f0', textTransform: 'uppercase' }}>Particulars & Reference</th>
+        <th style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.08em', color: '#64748b', padding: '14px 16px', borderBottom: '2px solid #e2e8f0', textTransform: 'uppercase' }}>Status</th>
+        <th style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.08em', color: '#64748b', padding: '14px 16px', borderBottom: '2px solid #e2e8f0', textAlign: 'right', textTransform: 'uppercase' }}>Transaction</th>
+        <th style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.08em', color: '#64748b', padding: '14px 24px 14px 16px', borderBottom: '2px solid #e2e8f0', textAlign: 'center', textTransform: 'uppercase' }}>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {loading ? (
+        <tr>
+          <td colSpan="5" style={{ textAlign: 'center', padding: '56px 0', color: '#94a3b8', fontSize: 13 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 36, height: 36, borderRadius: '50%', border: '3px solid #e2e8f0', borderTopColor: '#5B8EF0', animation: 'spin 0.8s linear infinite' }} />
+              Synchronizing Ledger...
+            </div>
+          </td>
+        </tr>
+      ) : reportData.map((item, idx) => {
+        const isIncoming = item.type === 'INCOMING';
+        const rowBg = idx % 2 === 0 ? '#ffffff' : '#fafbfd';
+        return (
+          <tr
+            key={item.id}
+            style={{ background: rowBg, transition: 'background 0.15s ease' }}
+            onMouseEnter={e => e.currentTarget.style.background = '#f0f7ff'}
+            onMouseLeave={e => e.currentTarget.style.background = rowBg}
+          >
+            {/* Date */}
+            <td data-label="Date" style={{ padding: '14px 16px 14px 24px', borderBottom: '1px solid #f1f5f9', whiteSpace: 'nowrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{
+                  width: 38, height: 38, borderRadius: 10, flexShrink: 0,
+                  background: isIncoming ? 'linear-gradient(135deg, #dcfce7, #bbf7d0)' : 'linear-gradient(135deg, #fee2e2, #fecaca)',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                  border: `1px solid ${isIncoming ? '#86efac' : '#fca5a5'}`
+                }}>
+                  <span style={{ fontSize: 13, fontWeight: 800, color: isIncoming ? '#16a34a' : '#dc2626', lineHeight: 1 }}>
+                    {new Date(item.date).toLocaleDateString("en-IN", { day: '2-digit' })}
+                  </span>
+                  <span style={{ fontSize: 8, fontWeight: 700, color: isIncoming ? '#15803d' : '#b91c1c', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    {new Date(item.date).toLocaleDateString("en-IN", { month: 'short' })}
+                  </span>
+                </div>
+                <span style={{ fontSize: 11, color: '#94a3b8', fontWeight: 600 }}>
+                  {new Date(item.date).getFullYear()}
+                </span>
+              </div>
+            </td>
+
+            {/* Particulars */}
+            <td data-label="Particulars" style={{ padding: '14px 16px', borderBottom: '1px solid #f1f5f9', maxWidth: 240 }}>
+              <div style={{ fontWeight: 700, fontSize: 13, color: '#0f172a', textTransform: 'capitalize', marginBottom: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {item.entity}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#94a3b8', fontWeight: 500 }}>
+                <Icon icon={isIncoming ? "solar:wallet-bold-duotone" : "solar:user-bold-duotone"} width="11" style={{ flexShrink: 0 }} />
+                <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.description}</span>
+              </div>
+            </td>
+
+            {/* Status Badge */}
+            <td data-label="Type" style={{ padding: '14px 16px', borderBottom: '1px solid #f1f5f9' }}>
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: 5,
+                padding: '4px 10px', borderRadius: 20, fontSize: 10, fontWeight: 800,
+                letterSpacing: '0.06em', textTransform: 'uppercase',
+                background: isIncoming ? '#dcfce7' : '#fee2e2',
+                color: isIncoming ? '#15803d' : '#dc2626',
+                border: `1px solid ${isIncoming ? '#86efac' : '#fca5a5'}`
+              }}>
+                <span style={{ width: 5, height: 5, borderRadius: '50%', background: isIncoming ? '#22c55e' : '#ef4444', flexShrink: 0 }} />
+                {isIncoming ? 'Received' : 'Spent'}
+              </span>
+            </td>
+
+            {/* Amount */}
+            <td data-label="Amount" style={{ padding: '14px 16px', borderBottom: '1px solid #f1f5f9', textAlign: 'right', whiteSpace: 'nowrap' }}>
+              <div style={{ fontSize: 15, fontWeight: 800, color: isIncoming ? '#16a34a' : '#dc2626', letterSpacing: '-0.3px' }}>
+                {isIncoming ? '+' : '−'}&nbsp;₹{item.amount.toLocaleString("en-IN")}
+              </div>
+            </td>
+
+            {/* Actions */}
+            <td data-label="Actions" style={{ padding: '14px 24px 14px 16px', borderBottom: '1px solid #f1f5f9', textAlign: 'center' }}>
+              {!item.isProject ? (
+                <div style={{ display: 'flex', justifyContent: 'center', gap: 6 }}>
+                  <button
+                    onClick={() => setEditModal({ show: true, data: item })}
+                    title="Edit"
+                    style={{
+                      width: 32, height: 32, borderRadius: 8, border: '1px solid #dbeafe',
+                      background: '#eff6ff', color: '#3b82f6', cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      transition: 'all 0.15s ease'
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.background = '#3b82f6'; e.currentTarget.style.color = '#fff'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = '#eff6ff'; e.currentTarget.style.color = '#3b82f6'; }}
+                  >
+                    <Icon icon="lucide:edit-3" width="13" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(item.id, item.type)}
+                    title="Delete"
+                    style={{
+                      width: 32, height: 32, borderRadius: 8, border: '1px solid #fee2e2',
+                      background: '#fff1f2', color: '#ef4444', cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      transition: 'all 0.15s ease'
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.background = '#ef4444'; e.currentTarget.style.color = '#fff'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = '#fff1f2'; e.currentTarget.style.color = '#ef4444'; }}
+                  >
+                    <Icon icon="lucide:trash-2" width="13" />
+                  </button>
+                </div>
+              ) : (
+                <span style={{ fontSize: 10, color: '#cbd5e1', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                  🔒 Locked
+                </span>
+              )}
+            </td>
+          </tr>
+        );
+      })}
+      {!loading && reportData.length === 0 && (
+        <tr>
+          <td colSpan="5" style={{ textAlign: 'center', padding: '64px 0' }}>
+            <Icon icon="solar:document-text-broken" width="44" style={{ color: '#cbd5e1', display: 'block', margin: '0 auto 12px' }} />
+            <div style={{ fontSize: 13, fontWeight: 600, color: '#94a3b8' }}>No records match your selection.</div>
+            <div style={{ fontSize: 11, color: '#cbd5e1', marginTop: 4 }}>Try adjusting your filters</div>
+          </td>
+        </tr>
+      )}
+    </tbody>
+  </table>
+</div>
         </div>
       </div>
 
