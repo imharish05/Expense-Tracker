@@ -77,7 +77,7 @@ const ReportLayer = () => {
   // 3. Fetch Treasury Data
   const fetchTreasury = async () => {
     try {
-      const res = await api.get("/api/treasury/status");
+      const res = await api.get("/treasury/status");
       setTreasuryLogs(res.data.recentLogs || []);
     } catch (err) {
       console.error("Failed to fetch treasury", err);
@@ -91,11 +91,45 @@ const ReportLayer = () => {
   }, []);
 
   // 4. Action Handlers
-  const handleDelete = (id, type) => {
-    if (window.confirm("Permanent delete? This will update treasury balances.")) {
-      dispatch(deleteEntry(id, type)).then(() => fetchTreasury());
-    }
-  };
+const handleDelete = (id, type) => {
+  toast((t) => (
+    <div className="d-flex align-items-center gap-3">
+      <div>
+        <div className="fw-bold text-sm" style={{ color: '#0f172a' }}>Confirm Delete?</div>
+        <div className="text-xxs text-muted">This action cannot be undone.</div>
+      </div>
+      <div className="d-flex gap-2">
+        {/* Cancel Button */}
+        <button
+          onClick={() => toast.dismiss(t.id)}
+          className="btn btn-light btn-sm radius-8 py-1 px-3 border text-xs fw-bold"
+        >
+          No
+        </button>
+        {/* Confirm Button */}
+        <button
+          onClick={() => {
+            toast.dismiss(t.id);
+            // Execute the delete logic
+            dispatch(deleteEntry(id, type)).then(() => fetchTreasury());
+          }}
+          className="btn btn-danger btn-sm radius-8 py-1 px-2 text-xs fw-bold"
+        >
+          Yes, Delete
+        </button>
+      </div>
+    </div>
+  ), {
+    id: "confirm-delete-action",
+    duration: 6000, // Stays open longer to give user time to think
+    style: {
+      minWidth: '300px',
+      borderRadius: '12px',
+      border: '1px solid #e2e8f0',
+      boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+    },
+  });
+};
 
   const handleEditSubmit = (e) => {
     e.preventDefault();
@@ -359,10 +393,10 @@ const ReportLayer = () => {
                     <td data-label="Actions" className="text-center pe-4">
                       {!item.isProject ? (
                         <div className="d-flex justify-content-center gap-2">
-                          <button onClick={() => setEditModal({ show: true, data: item })} className="btn btn-sm btn-light text-primary radius-8 p-2 border">
+                          <button onClick={() => setEditModal({ show: true, data: item })} className="btn btn-sm btn-light text-primary radius-8 border">
                             <Icon icon="lucide:edit-3" width="14" />
                           </button>
-                          <button onClick={() => handleDelete(item.id, item.type)} className="btn btn-sm btn-light text-danger radius-8 p-2 border">
+                          <button onClick={() => handleDelete(item.id, item.type)} className="btn btn-sm btn-light text-danger radius-8 border">
                             <Icon icon="lucide:trash-2" width="14" />
                           </button>
                         </div>
@@ -395,7 +429,7 @@ const ReportLayer = () => {
                 <h6 className="fw-bold mb-0">Update {editModal.data.type === 'INCOMING' ? 'Treasury' : 'Expense'}</h6>
                 <button type="button" className="btn-close" onClick={() => setEditModal({ show: false, data: null })}></button>
               </div>
-              <form onSubmit={handleEditSubmit}>
+              <form onSubmit={handleEditSubmit} className="px-3">
                 <div className="modal-body p-4">
                   <div className="mb-3">
                     <label className="text-xxs fw-bold text-muted mb-1">PARTICULAR (ITEM / BENEFICIARY)</label>

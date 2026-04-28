@@ -41,30 +41,49 @@ export const createExpense = (formData) => async (dispatch, getState) => {
 };
 
 // Unified Delete Service
+// Unified Delete Service
 export const deleteEntry = (id, type) => async (dispatch, getState) => {
+    // 1. Define the promise (the actual API call)
+    const url = type === "INCOMING" ? `/treasury/log/${id}` : `/expenses/${id}`;
+    const deletePromise = api.delete(url);
+
+    // 2. Wrap the promise in a toast
+    toast.promise(deletePromise, {
+        loading: 'Deleting entry...',
+        success: 'Entry deleted successfully!',
+        error: (err) => err.response?.data?.error || 'Delete failed',
+    });
+
     try {
-        const url = type === "INCOMING" ? `/api/treasury/log/${id}` : `/api/expenses/${id}`;
-        await api.delete(url);
-        toast.success("Entry deleted successfully");
+        await deletePromise;
         
         // Refresh all data to ensure balances and lists are in sync
         const currentRange = getState().expenses.range;
         dispatch(fetchAllExpenseData(currentRange));
     } catch (error) {
-        toast.error("Delete failed");
+        console.error("Delete operation failed", error);
     }
 };
 
 // Unified Update Service
 export const updateEntry = (id, type, data) => async (dispatch, getState) => {
+    // 1. Define the promise
+    const url = type === "INCOMING" ? `/treasury/log/${id}` : `/expenses/${id}`;
+    const updatePromise = api.put(url, data);
+
+    // 2. Wrap the promise in a toast
+    toast.promise(updatePromise, {
+        loading: 'Updating entry...',
+        success: 'Entry updated successfully!',
+        error: (err) => err.response?.data?.error || 'Update failed',
+    });
+
     try {
-        const url = type === "INCOMING" ? `/api/treasury/log/${id}` : `/api/expenses/${id}`;
-        await api.put(url, data);
-        toast.success("Entry updated successfully");
+        await updatePromise;
         
         const currentRange = getState().expenses.range;
         dispatch(fetchAllExpenseData(currentRange));
     } catch (error) {
-        toast.error("Update failed");
+        console.error("Update operation failed", error);
     }
 };
