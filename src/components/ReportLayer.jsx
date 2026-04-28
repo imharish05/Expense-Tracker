@@ -52,13 +52,13 @@ const mobileTableStyles = `
 `;
 
 const ReportLayer = () => {
-  // Selectors matching your slice structures
-  const payments = useSelector((state) => state.payments?.payments) || [];
-  const expenses = useSelector((state) => state.expenses?.transactions) || [];
+  // 1. Redux Selectors
+  const paymentsData = useSelector((state) => state.payments?.payments);
+  const expensesData = useSelector((state) => state.expenses?.transactions);
   
+  // 2. Local State
   const [treasuryLogs, setTreasuryLogs] = useState([]);
   const [loading, setLoading] = useState(true);
-
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -68,6 +68,7 @@ const ReportLayer = () => {
   const startDateRef = useRef(null);
   const endDateRef = useRef(null);
 
+  // 3. Fetch Treasury Data
   useEffect(() => {
     const fetchTreasury = async () => {
       try {
@@ -82,8 +83,11 @@ const ReportLayer = () => {
     fetchTreasury();
   }, []);
 
-  // Combine Redux data into a unified stream
+  // 4. Combine Redux data into a unified stream (Dependencies fixed for Netlify)
   const combinedData = useMemo(() => {
+    const payments = paymentsData || []; 
+    const expenses = expensesData || []; 
+
     const incoming = payments.map((p) => ({
       id: p._id || p.id,
       date: p.payment_date ? p.payment_date.split("T")[0] : "",
@@ -105,9 +109,9 @@ const ReportLayer = () => {
     }));
 
     return [...incoming, ...outgoing].sort((a, b) => new Date(b.date) - new Date(a.date));
-  }, [payments, expenses]);
+  }, [paymentsData, expensesData]);
 
-  // Apply filters
+  // 5. Apply UI Filters
   const reportData = useMemo(() => {
     return combinedData.filter((item) => {
       const search = searchTerm.toLowerCase();
@@ -122,10 +126,9 @@ const ReportLayer = () => {
     });
   }, [combinedData, searchTerm, typeFilter, payerFilter, startDate, endDate]);
 
-  // Financial Summary logic
+  // 6. Financial Summary logic
   const totals = useMemo(() => {
     const totalInjected = treasuryLogs.reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0);
-    // Use reportData for 'out' so the summary cards reflect the filters applied
     const totalOut = reportData.reduce((acc, item) => item.type === "OUTGOING" ? acc + item.amount : acc, 0);
     return { in: totalInjected, out: totalOut };
   }, [treasuryLogs, reportData]);
