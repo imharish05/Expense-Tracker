@@ -1,5 +1,5 @@
 import { useSelector } from "react-redux";
-import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import MasterLayout from "../masterLayout/MasterLayout";
 
 const ProtectedLayout = () => {
@@ -21,7 +21,8 @@ const ProtectedLayout = () => {
         return <Navigate to="/sign-in" state={{ from: location }} replace />;
     }
 
-    return <MasterLayout />; // MasterLayout already has <Outlet /> inside
+    return <MasterLayout />;
+
 };
 
 export default ProtectedLayout;

@@ -97,26 +97,7 @@ npm install
 Create `.env` file:
 
 ```env
-PORT=5000
-ENVIRONMENT=development
 
-# Database Configuration
-DB_HOST=localhost
-DB_USER=root
-DB_PASSWORD=your_password
-DB_NAME=financial_system
-DB_TYPE=relational
-
-# Authentication
-AUTH_SECRET=your_secret_key
-AUTH_EXPIRY=7d
-
-# Email Configuration
-EMAIL_SERVICE=your_service
-EMAIL_HOST=your_email_host
-EMAIL_PORT=587
-EMAIL_ADDRESS=your_email@example.com
-EMAIL_PASSWORD=your_app_password
 ```
 
 Create database:
@@ -143,7 +124,11 @@ npm install
 ```
 
 Create `.env` file:
-
+PORT=5000
+MONGO_URI=mongo_URL/expense_dashboard
+CLIENT_URL = http://localhost:3000
+JWT_SECRET=your_super_secret_key_123
+NODE_ENV=development
 ```env
 REACT_APP_API_URL=http://localhost:5000/api
 REACT_APP_ENVIRONMENT=development

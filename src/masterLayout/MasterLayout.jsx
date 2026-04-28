@@ -1,10 +1,8 @@
-import React, { useEffect, useRef, useState, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import { Icon } from "@iconify/react/dist/iconify.js";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../features/auth/authSlice";
-import api from ".././api/axios.js"
-
 const MasterLayout = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -15,7 +13,6 @@ const MasterLayout = () => {
   
   // Local State & Refs
   const [initialLoading, setInitialLoading] = useState(true);
-  const [showAlert, setShowAlert] = useState(false);
   const [sidebarActive, seSidebarActive] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
 

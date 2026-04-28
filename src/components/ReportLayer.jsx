@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
-import { useSelector, useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
 import { Icon } from "@iconify/react";
 import api from "../api/axios";
 import { Toaster } from "react-hot-toast";
