@@ -1,8 +1,9 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { Icon } from "@iconify/react";
 import api from "../api/axios";
-import { Toaster } from "react-hot-toast";
+import { Toaster, toast } from "react-hot-toast";
+import { deleteEntry, updateEntry } from "../features/expense/expenseService"; // Ensure these are exported from your service
 
 // Config matching for visual harmony
 const PAYER_CONFIG = {
@@ -52,6 +53,8 @@ const mobileTableStyles = `
 `;
 
 const ReportLayer = () => {
+  const dispatch = useDispatch();
+
   // 1. Redux Selectors
   const paymentsData = useSelector((state) => state.payments?.payments);
   const expensesData = useSelector((state) => state.expenses?.transactions);
@@ -65,32 +68,59 @@ const ReportLayer = () => {
   const [typeFilter, setTypeFilter] = useState("ALL");
   const [payerFilter, setPayerFilter] = useState("ALL");
   
+  // Modal State
+  const [editModal, setEditModal] = useState({ show: false, data: null });
+
   const startDateRef = useRef(null);
   const endDateRef = useRef(null);
 
   // 3. Fetch Treasury Data
+  const fetchTreasury = async () => {
+    try {
+      const res = await api.get("/api/treasury/status");
+      setTreasuryLogs(res.data.recentLogs || []);
+    } catch (err) {
+      console.error("Failed to fetch treasury", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchTreasury = async () => {
-      try {
-        const res = await api.get("/treasury/status");
-        setTreasuryLogs(res.data.recentLogs || []);
-      } catch (err) {
-        console.error("Failed to fetch treasury", err);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchTreasury();
   }, []);
 
-  // 4. Combine Redux data into a unified stream (Dependencies fixed for Netlify)
-// 4. Combine Redux data + Treasury Logs into a unified stream
+  // 4. Action Handlers
+  const handleDelete = (id, type) => {
+    if (window.confirm("Permanent delete? This will update treasury balances.")) {
+      dispatch(deleteEntry(id, type)).then(() => fetchTreasury());
+    }
+  };
+
+  const handleEditSubmit = (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const updatedData = Object.fromEntries(formData.entries());
+
+    // Map logic back to schema keys
+    if (editModal.data.type === 'OUTGOING') {
+        updatedData.item = updatedData.entity;
+        updatedData.paid_by = updatedData.payer;
+    }
+
+    dispatch(updateEntry(editModal.data.id, editModal.data.type, updatedData))
+      .then(() => {
+        setEditModal({ show: false, data: null });
+        fetchTreasury();
+      });
+  };
+
+  // 5. Combine Redux data + Treasury Logs into a unified stream
   const combinedData = useMemo(() => {
     const payments = paymentsData || []; 
     const expenses = expensesData || []; 
-    const treasury = treasuryLogs || []; // Accessing the local state fetched in useEffect
+    const treasury = treasuryLogs || [];
 
-    // 1. Map Project Payments (Incoming)
     const incoming = payments.map((p) => ({
       id: p._id || p.id,
       date: p.payment_date ? p.payment_date.split("T")[0] : "",
@@ -99,20 +129,20 @@ const ReportLayer = () => {
       type: "INCOMING",
       payer: "Company",
       amount: Number(p.amount) || 0,
+      isProject: true // Flag to hide edit/delete for project payments if necessary
     }));
 
-    // 2. Map Treasury Deposits (Incoming - NEW)
     const capitalInjections = treasury.map((log) => ({
       id: log._id || log.id,
       date: log.date ? log.date.split("T")[0] : "",
       entity: log.beneficiary || "Capital Injection",
-      description: `Treasury: ${log.source} ${log.description ? `— ${log.description}` : ""}`,
+      description: `${log.source} ${log.description ? `— ${log.description}` : ""}`,
       type: "INCOMING",
-      payer: log.source, // Uses "Union Bank", "Indus Bank", etc.
+      payer: log.source,
       amount: Number(log.amount) || 0,
+      rawDescription: log.description
     }));
 
-    // 3. Map Expenses (Outgoing)
     const outgoing = expenses.map((e) => ({
       id: e._id || e.id,
       date: e.created_at ? e.created_at.split("T")[0] : "",
@@ -123,12 +153,12 @@ const ReportLayer = () => {
       amount: Number(e.amount) || 0,
     }));
 
-    // Combine all three and sort by date descending
     return [...incoming, ...capitalInjections, ...outgoing].sort(
       (a, b) => new Date(b.date) - new Date(a.date)
     );
-  }, [paymentsData, expensesData, treasuryLogs]); // Added treasuryLogs to dependencies
-  // 5. Apply UI Filters
+  }, [paymentsData, expensesData, treasuryLogs]);
+
+  // 6. Apply UI Filters
   const reportData = useMemo(() => {
     return combinedData.filter((item) => {
       const search = searchTerm.toLowerCase();
@@ -143,7 +173,6 @@ const ReportLayer = () => {
     });
   }, [combinedData, searchTerm, typeFilter, payerFilter, startDate, endDate]);
 
-  // 6. Financial Summary logic
   const totals = useMemo(() => {
     const totalInjected = treasuryLogs.reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0);
     const totalOut = reportData.reduce((acc, item) => item.type === "OUTGOING" ? acc + item.amount : acc, 0);
@@ -297,12 +326,13 @@ const ReportLayer = () => {
                   <th className="text-xs py-3 ps-4 border-0">TIMELINE</th>
                   <th className="text-xs py-3 border-0">PARTICULARS & REFERENCE</th>
                   <th className="text-xs py-3 border-0">STATUS</th>
-                  <th className="text-xs py-3 text-end pe-4 border-0">TRANSACTION</th>
+                  <th className="text-xs py-3 text-end border-0">TRANSACTION</th>
+                  <th className="text-xs py-3 text-center pe-4 border-0">ACTIONS</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
-                   <tr><td colSpan="4" className="text-center py-5 text-muted small">Synchronizing Ledger...</td></tr>
+                   <tr><td colSpan="5" className="text-center py-5 text-muted small">Synchronizing Ledger...</td></tr>
                 ) : reportData.map((item) => (
                   <tr key={item.id}>
                     <td className="ps-4 text-sm" data-label="Date">
@@ -323,14 +353,28 @@ const ReportLayer = () => {
                         {item.type === 'INCOMING' ? 'RECEIVED' : 'SPENT'}
                       </span>
                     </td>
-                    <td className={`text-end pe-4 fw-bold ${item.type === 'INCOMING' ? 'text-success' : 'text-danger'}`} data-label="Amount">
+                    <td className={`text-end fw-bold ${item.type === 'INCOMING' ? 'text-success' : 'text-danger'}`} data-label="Amount">
                       {item.type === 'INCOMING' ? '+' : '-'} ₹{item.amount.toLocaleString("en-IN")}
+                    </td>
+                    <td data-label="Actions" className="text-center pe-4">
+                      {!item.isProject ? (
+                        <div className="d-flex justify-content-center gap-2">
+                          <button onClick={() => setEditModal({ show: true, data: item })} className="btn btn-sm btn-light text-primary radius-8 p-2 border">
+                            <Icon icon="lucide:edit-3" width="14" />
+                          </button>
+                          <button onClick={() => handleDelete(item.id, item.type)} className="btn btn-sm btn-light text-danger radius-8 p-2 border">
+                            <Icon icon="lucide:trash-2" width="14" />
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-xxs text-muted opacity-50">Locked</span>
+                      )}
                     </td>
                   </tr>
                 ))}
                 {!loading && reportData.length === 0 && (
                     <tr>
-                        <td colSpan="4" className="text-center py-5">
+                        <td colSpan="5" className="text-center py-5">
                           <Icon icon="solar:document-text-broken" width="48" className="text-muted mb-2" />
                           <div className="text-muted small">No records match your selection.</div>
                         </td>
@@ -341,6 +385,66 @@ const ReportLayer = () => {
           </div>
         </div>
       </div>
+
+      {/* Edit Modal */}
+      {editModal.show && (
+        <div className="modal d-block" style={{ background: 'rgba(15, 23, 42, 0.7)', backdropFilter: 'blur(4px)', zIndex: 1050 }}>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content border-0 radius-12 shadow-lg">
+              <div className="modal-header border-bottom py-3">
+                <h6 className="fw-bold mb-0">Update {editModal.data.type === 'INCOMING' ? 'Treasury' : 'Expense'}</h6>
+                <button type="button" className="btn-close" onClick={() => setEditModal({ show: false, data: null })}></button>
+              </div>
+              <form onSubmit={handleEditSubmit}>
+                <div className="modal-body p-4">
+                  <div className="mb-3">
+                    <label className="text-xxs fw-bold text-muted mb-1">PARTICULAR (ITEM / BENEFICIARY)</label>
+                    <input name="entity" defaultValue={editModal.data.entity} className="form-control form-control-sm h-40-px radius-8" required />
+                  </div>
+                  <div className="row g-3 mb-3">
+                    <div className="col-6">
+                      <label className="text-xxs fw-bold text-muted mb-1">AMOUNT (₹)</label>
+                      <input name="amount" type="number" defaultValue={editModal.data.amount} className="form-control form-control-sm h-40-px radius-8" required />
+                    </div>
+                    <div className="col-6">
+                      <label className="text-xxs fw-bold text-muted mb-1">DATE</label>
+                      <input name="date" type="date" defaultValue={editModal.data.date} className="form-control form-control-sm h-40-px radius-8" required />
+                    </div>
+                  </div>
+                  
+                  {editModal.data.type === 'INCOMING' ? (
+                    <>
+                      <div className="mb-3">
+                        <label className="text-xxs fw-bold text-muted mb-1">SOURCE BANK</label>
+                        <select name="source" defaultValue={editModal.data.payer} className="form-select form-select-sm h-40-px radius-8">
+                          <option value="Union Bank">Union Bank</option>
+                          <option value="Indus Bank">Indus Bank</option>
+                          <option value="Cash">Cash</option>
+                        </select>
+                      </div>
+                      <div className="mb-3">
+                        <label className="text-xxs fw-bold text-muted mb-1">DESCRIPTION</label>
+                        <input name="description" defaultValue={editModal.data.rawDescription} className="form-control form-control-sm h-40-px radius-8" />
+                      </div>
+                    </>
+                  ) : (
+                    <div className="mb-3">
+                      <label className="text-xxs fw-bold text-muted mb-1">PAID BY</label>
+                      <select name="payer" defaultValue={editModal.data.payer} className="form-select form-select-sm h-40-px radius-8">
+                        {PAYERS.map(p => <option key={p} value={p}>{p}</option>)}
+                      </select>
+                    </div>
+                  )}
+                </div>
+                <div className="modal-footer border-0 p-3">
+                  <button type="button" className="btn btn-light btn-sm px-4 radius-8" onClick={() => setEditModal({ show: false, data: null })}>Cancel</button>
+                  <button type="submit" className="btn btn-primary btn-sm px-4 radius-8 fw-bold">Save Changes</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

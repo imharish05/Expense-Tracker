@@ -1,3 +1,4 @@
+import toast from "react-hot-toast";
 import api from "../../api/axios";
 import { setExpenseData, setLoading, setError } from "./expenseSlice";
 
@@ -26,6 +27,8 @@ export const fetchAllExpenseData = (range) => async (dispatch) => {
   }
 };
 
+
+
 // Function to add and then auto-refresh
 export const createExpense = (formData) => async (dispatch, getState) => {
   try {
@@ -35,4 +38,33 @@ export const createExpense = (formData) => async (dispatch, getState) => {
   } catch (error) {
     console.error("Creation failed", error);
   }
+};
+
+// Unified Delete Service
+export const deleteEntry = (id, type) => async (dispatch, getState) => {
+    try {
+        const url = type === "INCOMING" ? `/api/treasury/log/${id}` : `/api/expenses/${id}`;
+        await api.delete(url);
+        toast.success("Entry deleted successfully");
+        
+        // Refresh all data to ensure balances and lists are in sync
+        const currentRange = getState().expenses.range;
+        dispatch(fetchAllExpenseData(currentRange));
+    } catch (error) {
+        toast.error("Delete failed");
+    }
+};
+
+// Unified Update Service
+export const updateEntry = (id, type, data) => async (dispatch, getState) => {
+    try {
+        const url = type === "INCOMING" ? `/api/treasury/log/${id}` : `/api/expenses/${id}`;
+        await api.put(url, data);
+        toast.success("Entry updated successfully");
+        
+        const currentRange = getState().expenses.range;
+        dispatch(fetchAllExpenseData(currentRange));
+    } catch (error) {
+        toast.error("Update failed");
+    }
 };
