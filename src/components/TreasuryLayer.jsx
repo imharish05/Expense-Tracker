@@ -135,7 +135,7 @@ const TreasuryLayer = () => {
     source: "Union Bank", 
     beneficiary: "", 
     description: "",
-    date: today // Defaulting to today's date
+    date: today 
   });
 
   const fetchTreasuryStatus = async () => {
@@ -156,7 +156,6 @@ const TreasuryLayer = () => {
   }, []);
 
   const handleTopUp = async () => {
-    // Logic: use the manually selected date, or fallback to today if the string is empty
     const submissionDate = form.date || today;
 
     if (!form.amount || isNaN(form.amount) || +form.amount <= 0) {
@@ -301,10 +300,10 @@ const TreasuryLayer = () => {
             <div style={{ ...heroCardStyle, padding: 0 }}>
               <div className="px-4 py-3 border-bottom d-flex justify-content-between align-items-center" style={{ position: 'relative', zIndex: 1 }}>
                 <span style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", color: "#94a3b8", letterSpacing: '0.05em' }}>
-                  Transaction History
+                  Recent Deposits
                 </span>
                 <span className="badge rounded-pill" style={{ background: '#f1f5f9', color: '#64748b', fontSize: 10, fontWeight: 700 }}>
-                  {data.recentLogs.length} Records
+                  Showing last 10
                 </span>
               </div>
 
@@ -320,41 +319,47 @@ const TreasuryLayer = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {data.recentLogs.map((log) => (
-                      <tr key={log._id}>
-                        <td className="ps-4" data-label="Date" style={{ fontSize: 13, fontWeight: 600 }}>
-                          {new Date(log.date).toLocaleDateString("en-IN", { day: '2-digit', month: 'short', year: 'numeric' })}
-                        </td>
-                        <td data-label="Source"><SourceBadge source={log.source} /></td>
-                        <td data-label="Beneficiary">
-                          {log.beneficiary ? (
-                            <div className="d-flex align-items-center gap-2 justify-content-end justify-content-md-start">
-                              <div style={{
-                                width: 24, height: 24, borderRadius: "50%",
-                                background: (SOURCE_COLORS[log.source] || {}).light || "#f1f5f9",
-                                color: (SOURCE_COLORS[log.source] || {}).text || "#475569",
-                                display: "flex", alignItems: "center", justifyContent: "center",
-                                fontSize: 9, fontWeight: 800, flexShrink: 0,
-                              }}>
-                                {log.beneficiary.charAt(0).toUpperCase()}
-                              </div>
-                              <span style={{ fontSize: 13, fontWeight: 700, color: "#1e293b" }}>{log.beneficiary}</span>
-                            </div>
-                          ) : <span style={{ color: "#cbd5e1", fontSize: 13 }}>—</span>}
-                        </td>
-                        <td data-label="Memo" style={{ fontSize: 13, fontWeight: 500, color: '#475569' }}>{log.description || "—"}</td>
-                        <td className="pe-4 text-end" data-label="Credit" style={{ fontSize: 14, fontWeight: 800, color: "#16a34a" }}>
-                          +₹{Number(log.amount).toLocaleString("en-IN")}
-                        </td>
-                      </tr>
-                    ))}
-                    {!loading && data.recentLogs.length === 0 && (
+                    {loading ? (
+                      <tr><td colSpan="5" className="text-center py-5 text-muted small">Syncing records...</td></tr>
+                    ) : data.recentLogs.length === 0 ? (
                       <tr>
                         <td colSpan="5" className="text-center py-5 text-muted">
                            <Icon icon="solar:document-add-bold-duotone" width="40" className="mb-2 opacity-25" />
                            <p className="small mb-0">No transaction records found.</p>
                         </td>
                       </tr>
+                    ) : (
+                      [...data.recentLogs]
+                        .sort((a, b) => new Date(b.date) - new Date(a.date))
+                        .slice(0, 10)
+                        .map((log) => (
+                          <tr key={log._id}>
+                            <td className="ps-4" data-label="Date" style={{ fontSize: 13, fontWeight: 600 }}>
+                              {new Date(log.date).toLocaleDateString("en-IN", { day: '2-digit', month: 'short', year: 'numeric' })}
+                            </td>
+                            <td data-label="Source"><SourceBadge source={log.source} /></td>
+                            <td data-label="Beneficiary">
+                              {log.beneficiary ? (
+                                <div className="d-flex align-items-center gap-2 justify-content-end justify-content-md-start">
+                                  <div style={{
+                                    width: 24, height: 24, borderRadius: "50%",
+                                    background: (SOURCE_COLORS[log.source] || {}).light || "#f1f5f9",
+                                    color: (SOURCE_COLORS[log.source] || {}).text || "#475569",
+                                    display: "flex", alignItems: "center", justifyContent: "center",
+                                    fontSize: 9, fontWeight: 800, flexShrink: 0,
+                                  }}>
+                                    {log.beneficiary.charAt(0).toUpperCase()}
+                                  </div>
+                                  <span style={{ fontSize: 13, fontWeight: 700, color: "#1e293b" }}>{log.beneficiary}</span>
+                                </div>
+                              ) : <span style={{ color: "#cbd5e1", fontSize: 13 }}>—</span>}
+                            </td>
+                            <td data-label="Memo" style={{ fontSize: 13, fontWeight: 500, color: '#475569' }}>{log.description || "—"}</td>
+                            <td className="pe-4 text-end" data-label="Credit" style={{ fontSize: 14, fontWeight: 800, color: "#16a34a" }}>
+                              +₹{Number(log.amount).toLocaleString("en-IN")}
+                            </td>
+                          </tr>
+                        ))
                     )}
                   </tbody>
                 </table>

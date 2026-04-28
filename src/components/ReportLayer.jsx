@@ -84,10 +84,13 @@ const ReportLayer = () => {
   }, []);
 
   // 4. Combine Redux data into a unified stream (Dependencies fixed for Netlify)
+// 4. Combine Redux data + Treasury Logs into a unified stream
   const combinedData = useMemo(() => {
     const payments = paymentsData || []; 
     const expenses = expensesData || []; 
+    const treasury = treasuryLogs || []; // Accessing the local state fetched in useEffect
 
+    // 1. Map Project Payments (Incoming)
     const incoming = payments.map((p) => ({
       id: p._id || p.id,
       date: p.payment_date ? p.payment_date.split("T")[0] : "",
@@ -98,6 +101,18 @@ const ReportLayer = () => {
       amount: Number(p.amount) || 0,
     }));
 
+    // 2. Map Treasury Deposits (Incoming - NEW)
+    const capitalInjections = treasury.map((log) => ({
+      id: log._id || log.id,
+      date: log.date ? log.date.split("T")[0] : "",
+      entity: log.beneficiary || "Capital Injection",
+      description: `Treasury: ${log.source} ${log.description ? `— ${log.description}` : ""}`,
+      type: "INCOMING",
+      payer: log.source, // Uses "Union Bank", "Indus Bank", etc.
+      amount: Number(log.amount) || 0,
+    }));
+
+    // 3. Map Expenses (Outgoing)
     const outgoing = expenses.map((e) => ({
       id: e._id || e.id,
       date: e.created_at ? e.created_at.split("T")[0] : "",
@@ -108,9 +123,11 @@ const ReportLayer = () => {
       amount: Number(e.amount) || 0,
     }));
 
-    return [...incoming, ...outgoing].sort((a, b) => new Date(b.date) - new Date(a.date));
-  }, [paymentsData, expensesData]);
-
+    // Combine all three and sort by date descending
+    return [...incoming, ...capitalInjections, ...outgoing].sort(
+      (a, b) => new Date(b.date) - new Date(a.date)
+    );
+  }, [paymentsData, expensesData, treasuryLogs]); // Added treasuryLogs to dependencies
   // 5. Apply UI Filters
   const reportData = useMemo(() => {
     return combinedData.filter((item) => {

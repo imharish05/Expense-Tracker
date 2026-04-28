@@ -48,25 +48,32 @@ function PayerBadge({ name }) {
 const TransactionPage = () => {
   const dispatch = useDispatch();
   const { transactions = [], summary = {}, isLoading } = useSelector((state) => state.expenses || {});
-  const [form, setForm] = useState({ item: "", amount: "", paid_by: "Harish" });
+  
+  const today = new Date().toISOString().split('T')[0];
+  const [form, setForm] = useState({ 
+    item: "", 
+    amount: "", 
+    paid_by: "Harish",
+    date: today 
+  });
 
   // Load data on mount
   useEffect(() => {
     dispatch(fetchAllExpenseData());
   }, [dispatch]);
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  if (!form.item || !form.amount) return toast.error("Please enter details");
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.item || !form.amount || !form.date) return toast.error("Please enter details");
 
-  try {
-    await dispatch(createExpense(form));
-    toast.success("Transaction Saved");
-    setForm({ item: "", amount: "", paid_by: "Harish" });
-  } catch (err) {
-    toast.error("Failed to save transaction");
-  }
-};
+    try {
+      await dispatch(createExpense(form));
+      toast.success("Transaction Saved");
+      setForm({ item: "", amount: "", paid_by: "Harish", date: today });
+    } catch (err) {
+      toast.error("Failed to save transaction");
+    }
+  };
 
   const totalSpent = Object.values(summary).reduce((s, v) => s + Number(v || 0), 0);
 
@@ -80,6 +87,7 @@ const handleSubmit = async (e) => {
         backdropFilter: "blur(12px)",
         borderBottom: "1px solid #e2e8f0",
         position: 'sticky', top: 0,
+        zIndex: 1000
       }}>
         <div className="container-fluid" style={{ maxWidth: 1200, height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 1.5rem" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -163,8 +171,8 @@ const handleSubmit = async (e) => {
           <div className="col-12 col-lg-8 order-2 order-lg-1">
             <div style={{ ...customCardStyle, padding: 0, overflow: "hidden" }}>
               <div style={{ padding: "16px 20px", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: 'center' }}>
-                <span style={{ fontSize: 13, fontWeight: 700 }}>Activity Log</span>
-                <span className="badge rounded-pill" style={{ background: '#f1f5f9', color: '#64748b', fontSize: 10 }}>{transactions.length} total</span>
+                <span style={{ fontSize: 13, fontWeight: 700 }}>Recent Activity</span>
+                <span className="badge rounded-pill" style={{ background: '#f1f5f9', color: '#64748b', fontSize: 10 }}>Showing last 10</span>
               </div>
               <div className="table-responsive">
                 <table className="table table-hover align-middle mb-0">
@@ -181,22 +189,25 @@ const handleSubmit = async (e) => {
                     ) : transactions.length === 0 ? (
                       <tr><td colSpan="3" className="text-center py-5 text-muted small">No transactions found</td></tr>
                     ) : (
-                      transactions.map(t => (
-                        <tr key={t._id} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                          <td style={{ padding: "16px 24px" }}>
-                            <div style={{ fontSize: 14, fontWeight: 600 }} className="text-capitalize">{t.item}</div>
-                            <div style={{ fontSize: 11, color: "#94a3b8" }}>
-                              {new Date(t.created_at).toLocaleDateString("en-IN", { day: '2-digit', month: 'short', year: 'numeric' })}
-                            </div>
-                          </td>
-                          <td style={{ padding: "16px 24px" }}>
-                            <PayerBadge name={t.paid_by} />
-                          </td>
-                          <td className="text-end" style={{ padding: "16px 24px", fontSize: 14, fontWeight: 700, color: "#E11D48" }}>
-                            -₹{Number(t.amount).toLocaleString("en-IN")}
-                          </td>
-                        </tr>
-                      ))
+                      [...transactions]
+                        .sort((a, b) => new Date(b.date || b.created_at) - new Date(a.date || a.created_at))
+                        .slice(0, 10)
+                        .map(t => (
+                          <tr key={t._id} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                            <td style={{ padding: "16px 24px" }}>
+                              <div style={{ fontSize: 14, fontWeight: 600 }} className="text-capitalize">{t.item}</div>
+                              <div style={{ fontSize: 11, color: "#94a3b8" }}>
+                                {new Date(t.date || t.created_at).toLocaleDateString("en-IN", { day: '2-digit', month: 'short', year: 'numeric' })}
+                              </div>
+                            </td>
+                            <td style={{ padding: "16px 24px" }}>
+                              <PayerBadge name={t.paid_by} />
+                            </td>
+                            <td className="text-end" style={{ padding: "16px 24px", fontSize: 14, fontWeight: 700, color: "#E11D48" }}>
+                              -₹{Number(t.amount).toLocaleString("en-IN")}
+                            </td>
+                          </tr>
+                        ))
                     )}
                   </tbody>
                 </table>
@@ -209,6 +220,26 @@ const handleSubmit = async (e) => {
             <div style={customCardStyle}>
               <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 16 }}>New Entry</div>
               <form onSubmit={handleSubmit}>
+                
+                {/* DATE FIELD */}
+                <div className="mb-3">
+                  <label style={{ fontSize: 10, fontWeight: 800, color: "#94a3b8", textTransform: 'uppercase', marginBottom: 4, display: 'block' }}>Transaction Date</label>
+                  <div className="position-relative">
+                    <input
+                      type="date"
+                      className="form-control border-0 bg-light"
+                      style={{ borderRadius: 10, padding: '12px 12px 12px 2.5rem', fontSize: 14, color: "#1e293b" }}
+                      value={form.date}
+                      onChange={(e) => setForm({ ...form, date: e.target.value })}
+                    />
+                    <Icon 
+                      icon="solar:calendar-bold-duotone" 
+                      width="18" 
+                      style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }} 
+                    />
+                  </div>
+                </div>
+
                 <div className="mb-3">
                   <label style={{ fontSize: 10, fontWeight: 800, color: "#94a3b8", textTransform: 'uppercase', marginBottom: 4, display: 'block' }}>Expense Item</label>
                   <input
@@ -219,6 +250,7 @@ const handleSubmit = async (e) => {
                     onChange={(e) => setForm({ ...form, item: e.target.value })}
                   />
                 </div>
+
                 <div className="mb-3">
                   <label style={{ fontSize: 10, fontWeight: 800, color: "#94a3b8", textTransform: 'uppercase', marginBottom: 4, display: 'block' }}>Amount (₹)</label>
                   <input
@@ -230,6 +262,7 @@ const handleSubmit = async (e) => {
                     onChange={(e) => setForm({ ...form, amount: e.target.value })}
                   />
                 </div>
+
                 <div className="mb-4">
                   <label style={{ fontSize: 10, fontWeight: 800, color: "#94a3b8", textTransform: 'uppercase', marginBottom: 8, display: 'block' }}>Paid By</label>
                   <div className="d-flex gap-2">
@@ -256,9 +289,10 @@ const handleSubmit = async (e) => {
                     })}
                   </div>
                 </div>
+
                 <button
                   type="submit"
-                  className="my-3"
+                  className="my-3 text-center"
                   disabled={isLoading}
                   style={{
                     width: "100%", padding: "14px", background: "#ea8b0c",

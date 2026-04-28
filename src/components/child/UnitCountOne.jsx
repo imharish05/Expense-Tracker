@@ -4,12 +4,13 @@ import {
   ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, 
   Tooltip, ResponsiveContainer, PieChart, Pie, Cell 
 } from "recharts";
+import { Icon } from "@iconify/react"; 
 import toast, { Toaster } from "react-hot-toast";
 
-// --- UPDATED IMPORTS ---
+// --- API & REDUX IMPORTS ---
 import api from "../../api/axios";
-import { fetchAllExpenseData, createExpense } from "../../features/expense/expenseService"; // From Service
-import { updateRange } from "../../features/expense/expenseSlice"; // From Slice
+import { fetchAllExpenseData, createExpense } from "../../features/expense/expenseService"; 
+import { updateRange } from "../../features/expense/expenseSlice"; 
 
 // Constants & Styles
 const USERS = ["Harish", "Sankaran", "Vijay"];
@@ -19,7 +20,6 @@ const USER_COLORS = {
   Harish: { primary: "#F08050", light: "#FEF0EA", text: "#943010" },
 };
 
-// Unified Hero Card Style
 const heroCardStyle = { 
   background: "#fff", 
   border: "1px solid #e2e8f0", 
@@ -30,7 +30,6 @@ const heroCardStyle = {
   boxShadow: "0 10px 30px rgba(148,163,184,0.06)"
 };
 
-// Reusable Background Gradient
 const CornerGradient = () => (
   <div style={{
     position: "absolute", top: -20, right: -20,
@@ -186,9 +185,17 @@ export default function UnitCountOne() {
   const dispatch = useDispatch();
   const { transactions, graphData, summary, range } = useSelector((state) => state.expenses);
   
+  const today = new Date().toISOString().split('T')[0];
+
   const [treasuryLogs, setTreasuryLogs] = useState([]);
   const [totalAddedGlobal, setTotalAddedGlobal] = useState(0);
-  const [form, setForm] = useState({ item: "", amount: "", paidBy: "Harish" });
+  
+  const [form, setForm] = useState({ 
+    item: "", 
+    amount: "", 
+    paidBy: "Harish", 
+    date: today 
+  });
 
   const fetchTreasuryData = async () => {
     try {
@@ -200,7 +207,6 @@ export default function UnitCountOne() {
   };
 
   useEffect(() => {
-    // UPDATED: Now calling the service function
     dispatch(fetchAllExpenseData(range));
     fetchTreasuryData();
   }, [dispatch, range]);
@@ -208,11 +214,11 @@ export default function UnitCountOne() {
   const handleAdd = () => {
     if (!form.item.trim() || !form.amount) return toast.error("Fill all fields");
     
-    // UPDATED: Now calling createExpense from service
     const action = dispatch(createExpense({ 
       item: form.item, 
       amount: Number(form.amount), 
-      paid_by: form.paidBy 
+      paid_by: form.paidBy,
+      date: form.date 
     }));
 
     toast.promise(action, {
@@ -262,12 +268,16 @@ export default function UnitCountOne() {
             <div style={heroCardStyle}>
               <div style={{ position: 'relative', zIndex: 1 }}>
                 <div className="fw-bold mb-3" style={{ fontSize: 14, textTransform: 'uppercase', color: '#94a3b8', letterSpacing: '0.5px' }}>Recent Logs</div>
-                {transactions.slice(0, 5).map(t => (
+                
+                {/* UPDATED: Showed last 10 logs */}
+                {transactions.slice(0, 10).map(t => (
                   <div key={t._id} className="d-flex align-items-center gap-3 py-3 border-bottom border-light">
                     <Avatar name={t.paid_by} size={32} />
                     <div className="flex-grow-1">
                       <div className="fw-bold text-dark text-capitalize" style={{ fontSize: 14 }}>{t.item}</div>
-                      <div className="text-muted" style={{ fontSize: 11, fontWeight: 500 }}>{t.paid_by} · {new Date(t.created_at).toLocaleDateString()}</div>
+                      <div className="text-muted" style={{ fontSize: 11, fontWeight: 500 }}>
+                        {t.paid_by} · {new Date(t.created_at || t.date).toLocaleDateString()}
+                      </div>
                     </div>
                     <div className="fw-bold" style={{ color: "#e11d48" }}>-₹{t.amount.toLocaleString()}</div>
                   </div>
@@ -281,6 +291,21 @@ export default function UnitCountOne() {
               <CornerGradient />
               <div style={{ position: 'relative', zIndex: 1 }}>
                 <div className="fw-bold mb-4" style={{ fontSize: 14, textTransform: 'uppercase', letterSpacing: '0.5px' }}>New Transaction</div>
+                
+                <div className="mb-3">
+                  <label style={{ fontSize: 10, fontWeight: 800, color: "#94a3b8", display: 'block', marginBottom: 4 }}>TRANSACTION DATE</label>
+                  <div className="position-relative">
+                    <input 
+                      type="date" 
+                      className="form-control border-0 bg-light" 
+                      style={{ borderRadius: 12, padding: '12px 12px 12px 2.4rem', fontSize: 13 }} 
+                      value={form.date} 
+                      onChange={e => setForm({...form, date: e.target.value})} 
+                    />
+                    <Icon icon="solar:calendar-bold-duotone" width="16" style={{ position: "absolute", left: "0.85rem", top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }} />
+                  </div>
+                </div>
+
                 <div className="mb-3">
                   <input className="form-control border-0 bg-light" style={{ borderRadius: 12, padding: '12px' }} placeholder="Description" value={form.item} onChange={e => setForm({...form, item: e.target.value})} />
                 </div>
