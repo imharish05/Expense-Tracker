@@ -1,444 +1,325 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { Icon } from "@iconify/react";
-import * as XLSX from "xlsx";
-import { Link } from "react-router-dom";
+import api from "../api/axios";
+import { Toaster } from "react-hot-toast";
+
+// Config matching for visual harmony
+const PAYER_CONFIG = {
+  Harish:   { primary: "#F08050", light: "#FEF0EA", text: "#943010" },
+  Vijay:    { primary: "#5B8EF0", light: "#EEF3FE", text: "#2C4CA0" },
+  Sankaran: { primary: "#22C4A0", light: "#E4FBF5", text: "#0B7A62" },
+};
+const PAYERS = Object.keys(PAYER_CONFIG);
+
+const mobileTableStyles = `
+  @media (max-width: 768px) {
+    .responsive-report-table thead { display: none; }
+    .responsive-report-table tr {
+      display: block;
+      padding: 1rem 0.5rem;
+      border-bottom: 1px solid #e2e8f0 !important;
+      background: #fff;
+      margin-bottom: 0.5rem;
+      border-radius: 12px;
+    }
+    .responsive-report-table td {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: none !important;
+      padding: 0.5rem 0.75rem !important;
+    }
+    .responsive-report-table td::before {
+      content: attr(data-label);
+      font-weight: 700;
+      font-size: 10px;
+      text-transform: uppercase;
+      color: #94a3b8;
+    }
+    .responsive-report-table td:last-child {
+        border-top: 1px dashed #f1f5f9 !important;
+        margin-top: 0.5rem;
+        padding-top: 0.75rem !important;
+    }
+  }
+  .h-40-px { height: 40px; }
+  .bg-success-focus { background: #e4fbf5; }
+  .bg-danger-focus { background: #fef2f2; }
+  .radius-12 { border-radius: 12px; }
+  .radius-8 { border-radius: 8px; }
+  .text-xxs { font-size: 0.65rem; }
+`;
 
 const ReportLayer = () => {
-  const payments = useSelector((state) => state.payments.payments) || [];
-  const projects = useSelector((state) => state.projects.projects) || [];
+  // Selectors matching your slice structures
+  const payments = useSelector((state) => state.payments?.payments) || [];
+  const expenses = useSelector((state) => state.expenses?.transactions) || [];
+  
+  const [treasuryLogs, setTreasuryLogs] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Filter States
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [projectSearchTerm, setProjectSearchTerm] = useState("");
-  const [isProjectDropdownOpen, setIsProjectDropdownOpen] = useState(false);
-  const [selectedProjectId, setSelectedProjectId] = useState("");
-  const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [currentPage, setCurrentPage] = useState(1);
-
+  const [typeFilter, setTypeFilter] = useState("ALL");
+  const [payerFilter, setPayerFilter] = useState("ALL");
+  
   const startDateRef = useRef(null);
   const endDateRef = useRef(null);
 
-const filteredProjectOptions = useMemo(() => {
-    // Collect all unique project IDs from payments
-    const projectIdsWithPayments = new Set(payments.map(p => p.projectId));
-
-    console.log(projectIdsWithPayments,"Sample");
-    
-    
-    return projects
-        .filter(p => {
-            const pId = p.id || p._id; // Normalize the ID
-            return projectIdsWithPayments.has(pId);
-        })
-        .filter(p =>
-            (p.projectName || "").toLowerCase().includes(projectSearchTerm.toLowerCase())
-        );
-}, [projects, payments, projectSearchTerm]);
-  // Main filter logic
-  const reportData = useMemo(() => {
-    return payments
-      .map((pay) => ({
-        ...pay,
-        formattedDate: pay.payment_date ? pay.payment_date.split("T")[0] : "",
-      }))
-      .filter((item) => {
-        const search = searchTerm.toLowerCase();
-        const matchesSearch =
-          !searchTerm ||
-          (item.customerName || "").toLowerCase().includes(search) ||
-          (item.projectName || "").toLowerCase().includes(search);
-
-        const matchesProject = !selectedProjectId || String(item.projectId) === String(selectedProjectId);
-
-        const matchesStartDate = !startDate || item.formattedDate >= startDate;
-        const matchesEndDate = !endDate || item.formattedDate <= endDate;
-
-        return matchesSearch && matchesProject && matchesStartDate && matchesEndDate;
-      });
-  }, [payments, searchTerm, selectedProjectId, startDate, endDate]);
-
-  // Reset to page 1 when filters change
   useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, selectedProjectId, startDate, endDate, itemsPerPage]);
+    const fetchTreasury = async () => {
+      try {
+        const res = await api.get("/treasury/status");
+        setTreasuryLogs(res.data.recentLogs || []);
+      } catch (err) {
+        console.error("Failed to fetch treasury", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTreasury();
+  }, []);
 
-  const totalPages = Math.ceil(reportData.length / itemsPerPage);
+  // Combine Redux data into a unified stream
+  const combinedData = useMemo(() => {
+    const incoming = payments.map((p) => ({
+      id: p._id || p.id,
+      date: p.payment_date ? p.payment_date.split("T")[0] : "",
+      entity: p.customerName || "Project Payment",
+      description: p.projectName || "Incoming",
+      type: "INCOMING",
+      payer: "Company",
+      amount: Number(p.amount) || 0,
+    }));
 
-  const paginatedData = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return reportData.slice(start, start + itemsPerPage);
-  }, [reportData, currentPage, itemsPerPage]);
+    const outgoing = expenses.map((e) => ({
+      id: e._id || e.id,
+      date: e.created_at ? e.created_at.split("T")[0] : "",
+      entity: e.item || "Expense",
+      description: e.paid_by || "Member",
+      type: "OUTGOING",
+      payer: e.paid_by,
+      amount: Number(e.amount) || 0,
+    }));
 
-  // Summary totals for current filtered data
+    return [...incoming, ...outgoing].sort((a, b) => new Date(b.date) - new Date(a.date));
+  }, [payments, expenses]);
+
+  // Apply filters
+  const reportData = useMemo(() => {
+    return combinedData.filter((item) => {
+      const search = searchTerm.toLowerCase();
+      const matchesSearch = !searchTerm || 
+                            item.entity.toLowerCase().includes(search) || 
+                            item.description.toLowerCase().includes(search);
+      const matchesType = typeFilter === "ALL" || item.type === typeFilter;
+      const matchesPayer = payerFilter === "ALL" || item.payer === payerFilter;
+      const matchesStartDate = !startDate || item.date >= startDate;
+      const matchesEndDate = !endDate || item.date <= endDate;
+      return matchesSearch && matchesType && matchesPayer && matchesStartDate && matchesEndDate;
+    });
+  }, [combinedData, searchTerm, typeFilter, payerFilter, startDate, endDate]);
+
+  // Financial Summary logic
   const totals = useMemo(() => {
-    return reportData.reduce(
-      (acc, item) => ({
-        totalAmount: acc.totalAmount + (Number(item.amount) || 0),
-        totalBudget: acc.totalBudget + (Number(item.budget) || 0),
-      }),
-      { totalAmount: 0, totalBudget: 0 }
-    );
-  }, [reportData]);
-
-  const formatCurrency = (val) =>
-    new Intl.NumberFormat("en-IN", {
-      style: "currency",
-      currency: "INR",
-      maximumFractionDigits: 0,
-    }).format(val || 0);
+    const totalInjected = treasuryLogs.reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0);
+    // Use reportData for 'out' so the summary cards reflect the filters applied
+    const totalOut = reportData.reduce((acc, item) => item.type === "OUTGOING" ? acc + item.amount : acc, 0);
+    return { in: totalInjected, out: totalOut };
+  }, [treasuryLogs, reportData]);
 
   const handleClearFilters = () => {
     setSearchTerm("");
     setStartDate("");
     setEndDate("");
-    setSelectedProjectId("");
-    setProjectSearchTerm("");
-    setCurrentPage(1);
-    // Clear the actual input values
+    setTypeFilter("ALL");
+    setPayerFilter("ALL");
     if (startDateRef.current) startDateRef.current.value = "";
     if (endDateRef.current) endDateRef.current.value = "";
   };
 
-  const handleExport = () => {
-    const exportData = reportData.map((item) => ({
-      "Customer Name": item.customerName,
-      "Project Name": item.projectName,
-      "Payment Mode": item.payment_mode,
-      "Total Budget": item.budget,
-      "Payment Amount": item.amount,
-      "Stage Goal": item.stage_amount,
-      Status: item.payment_status,
-      Date: item.formattedDate,
-    }));
-    const ws = XLSX.utils.json_to_sheet(exportData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Payments");
-    XLSX.writeFile(wb, "Payment_Collection_Report.xlsx");
-  };
-
-  const isFiltered = searchTerm || selectedProjectId || startDate || endDate;
-
   return (
-    <div className="card h-100 p-0 radius-12 shadow-sm border">
-      {/* Header */}
-      <div className="card-header border-bottom bg-base py-16 px-24 d-flex align-items-center flex-wrap gap-3 justify-content-between">
-        <div className="d-flex align-items-center flex-wrap gap-3">
-          <select
-            className="form-select form-select-sm w-auto ps-12 radius-12 h-40-px"
-            value={itemsPerPage}
-            onChange={(e) => setItemsPerPage(Number(e.target.value))}
-          >
-            {[5, 10, 20, 50, 100].map((num) => (
-              <option key={num} value={num}>{num}</option>
-            ))}
-          </select>
-
-          <div className="navbar-search position-relative">
-            <input
-              type="text"
-              className="bg-base h-40-px w-auto border radius-8"
-              placeholder="Search customer or project..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            <Icon
-              icon="ion:search-outline"
-              className="icon position-absolute end-0 me-12 top-50 translate-middle-y text-secondary-light"
-            />
+    <div className="container-fluid p-2 p-md-4" style={{ background: "#f8fafc", minHeight: "100vh", fontFamily: "'Inter', sans-serif" }}>
+      <style>{mobileTableStyles}</style>
+      <Toaster position="top-center" />
+      
+      <div className="card shadow-sm border-0 radius-12 overflow-hidden">
+        
+        {/* Header */}
+        <div className="card-header bg-white border-bottom py-3 px-3 px-md-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
+          <div>
+            <h5 className="mb-0 fw-bold" style={{ fontSize: '1.1rem', color: '#0f172a' }}>Financial Ledger</h5>
+            <p className="text-xs text-muted mb-0">Audited Unified Intelligence</p>
           </div>
-        </div>
-
-        <div className="d-flex gap-2">
-          {isFiltered && (
-            <button
-              onClick={handleClearFilters}
-              className="btn btn-outline-danger text-sm btn-sm px-16 py-10 radius-8 d-flex align-items-center gap-2"
-            >
-              <Icon icon="lucide:x" className="text-xl" />
-              Clear Filters
-            </button>
-          )}
-          <button
-            onClick={handleExport}
-            className="btn btn-success-600 text-sm btn-sm px-16 py-10 radius-8 d-flex align-items-center gap-2"
-          >
-            <Icon icon="lucide:file-spreadsheet" className="text-xl" />
-            Export Excel
-          </button>
-        </div>
-      </div>
-
-      <div className="card-body p-24">
-        {/* Filters Row */}
-        <div className="row gy-3 mb-24 pb-24 border-bottom">
-          {/* Project Dropdown */}
-          <div className="col-lg-4 position-relative">
-            <label className="form-label text-sm fw-semibold">Filter by Project</label>
-            <div className="position-relative">
-              <input
-                type="text"
-                className="form-control radius-8 h-40-px"
-                placeholder="Type to search project..."
-                value={projectSearchTerm}
-                onFocus={() => setIsProjectDropdownOpen(true)}
-                onBlur={() => setTimeout(() => setIsProjectDropdownOpen(false), 200)}
-                onChange={(e) => {
-                  setProjectSearchTerm(e.target.value);
-                  // If user clears the input, also clear the selected project filter
-                  if (e.target.value === "") {
-                    setSelectedProjectId("");
-                  }
-                }}
-              />
-              {selectedProjectId && (
-                <button
-                  className="position-absolute end-0 me-12 top-50 translate-middle-y border-0 bg-transparent p-0"
-                  onClick={() => {
-                    setSelectedProjectId("");
-                    setProjectSearchTerm("");
-                  }}
-                >
-                  <Icon icon="lucide:x" className="text-danger" />
-                </button>
-              )}
-              {!selectedProjectId && (
-                <Icon
-                  icon="lucide:chevron-down"
-                  className="position-absolute end-0 me-12 top-50 translate-middle-y text-muted"
-                />
-              )}
-            </div>
-
-            {isProjectDropdownOpen && (
-              <ul
-                className="position-absolute w-100 mt-1 bg-white radius-8 shadow-lg z-3 overflow-auto border"
-                style={{ maxHeight: "200px", listStyle: "none", padding: 0 }}
-              >
-                <li
-                  className="p-10 border-bottom cursor-pointer hover-bg-primary-50 text-primary-600 fw-bold"
-                  onMouseDown={() => {
-                    setSelectedProjectId("");
-                    setProjectSearchTerm("");
-                  }}
-                >
-                  All Projects
-                </li>
-                {filteredProjectOptions.length > 0 ? (
-                  filteredProjectOptions.map((p) => (
-                    <li
-  key={p.id || p._id}
-  className="p-10 border-bottom cursor-pointer hover-bg-primary-50"
-  onMouseDown={() => {
-    const pId = p.id || p._id;
-    setSelectedProjectId(pId);
-    setProjectSearchTerm(p.projectName); // This fills the input with the name
-    setIsProjectDropdownOpen(false);
-  }}
->
-                      <div className="fw-medium text-sm">{p.projectName}</div>
-                      <small className="text-muted">{p.customerName}</small>
-                    </li>
-                  ))
-                ) : (
-                  <li className="p-10 text-center text-secondary-light text-sm">
-                    No projects found
-                  </li>
-                )}
-              </ul>
+          <div className="d-flex gap-2">
+             {(searchTerm || startDate || typeFilter !== "ALL" || payerFilter !== "ALL") && (
+              <button onClick={handleClearFilters} className="btn btn-outline-danger btn-sm radius-8 py-1 px-3 d-flex align-items-center gap-2" style={{ fontSize: '11px', fontWeight: 600 }}>
+                <Icon icon="lucide:refresh-ccw" width="12" />
+                Reset Filters
+              </button>
             )}
           </div>
-
-          {/* From Date */}
-          <div className="col-lg-4">
-            <label className="form-label text-sm fw-semibold">From Date</label>
-            <input
-              ref={startDateRef}
-              type="date"
-              className="form-control radius-8 h-40-px"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-            />
-          </div>
-
-          {/* To Date */}
-          <div className="col-lg-4">
-            <label className="form-label text-sm fw-semibold">To Date</label>
-            <input
-              ref={endDateRef}
-              type="date"
-              className="form-control radius-8 h-40-px"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-            />
-          </div>
         </div>
 
-        {/* Summary Cards */}
-        {isFiltered && (
-          <div className="row gy-3 mb-24">
-            <div className="col-md-3">
-              <div className="card shadow-none border bg-gradient-start-2 p-16">
-                <p className="text-sm fw-medium text-primary-light mb-1">Filtered Records</p>
-                <h6 className="mb-0 text-md">{reportData.length}</h6>
+        <div className="card-body p-3 p-md-4">
+          
+          {/* --- Hero Card --- */}
+          <div style={{
+            background: "#fff",
+            borderRadius: 20,
+            border: "1px solid #e2e8f0",
+            boxShadow: "0 10px 30px rgba(148,163,184,0.06)",
+            padding: "1.5rem",
+            position: "relative",
+            overflow: "hidden",
+            marginBottom: 24,
+          }}>
+            <div style={{
+              position: "absolute", top: -20, right: -20,
+              width: 140, height: 140, borderRadius: "50%",
+              background: "conic-gradient(from 180deg at 50% 50%, #EEF3FE 0deg, #5B8EF0 180deg, #F08050 360deg)",
+              opacity: 0.15, filter: "blur(15px)",
+            }} />
+
+            <div className="row align-items-center g-4" style={{ position: 'relative', zIndex: 1 }}>
+              <div className="col-12 col-md-5 text-center text-md-start">
+                <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "1px" }}>Calculated Net Margin</div>
+                <div style={{ fontSize: "clamp(2rem, 5vw, 2.75rem)", fontWeight: 800, color: "#0f172a", letterSpacing: "-1.5px" }}>
+                  ₹{(totals.in - totals.out).toLocaleString("en-IN")}
+                </div>
+                <div className="d-flex gap-3 mt-1 justify-content-center justify-content-md-start">
+                  <div className="d-flex align-items-center gap-1">
+                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e' }} />
+                    <span style={{ fontSize: 11, fontWeight: 700, color: "#22c55e" }}>₹{totals.in.toLocaleString()}</span>
+                  </div>
+                  <div className="d-flex align-items-center gap-1">
+                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#e11d48' }} />
+                    <span style={{ fontSize: 11, fontWeight: 700, color: "#e11d48" }}>₹{totals.out.toLocaleString()}</span>
+                  </div>
+                </div>
               </div>
-            </div>
-            <div className="col-md-3">
-              <div className="card shadow-none border bg-gradient-start-1 p-16">
-                <p className="text-sm fw-medium text-primary-light mb-1">Total Collected</p>
-                <h6 className="mb-0 text-md text-success-main">{formatCurrency(totals.totalAmount)}</h6>
+
+              <div className="col-12 col-md-7">
+                <div className="row g-2">
+                  {PAYERS.map(name => {
+                    const c = PAYER_CONFIG[name];
+                    const userSpent = reportData
+                      .filter(item => item.payer === name && item.type === "OUTGOING")
+                      .reduce((acc, curr) => acc + curr.amount, 0);
+                    const pct = totals.out > 0 ? Math.min(Math.round((userSpent / totals.out) * 100), 100) : 0;
+
+                    return (
+                      <div key={name} className="col-4">
+                        <div style={{
+                          padding: "12px 10px",
+                          background: "rgba(248,250,252,0.8)",
+                          borderRadius: 14,
+                          border: `1px solid ${c.light}`,
+                          textAlign: 'center'
+                        }}>
+                          <div style={{ fontSize: 9, fontWeight: 800, color: "#64748b", textTransform: "uppercase", marginBottom: 4 }}>{name}</div>
+                          <div style={{ fontSize: 14, fontWeight: 700, color: "#1e293b" }}>
+                              ₹{userSpent > 9999 ? (userSpent/1000).toFixed(1)+'k' : userSpent.toLocaleString()}
+                          </div>
+                          <div style={{ height: 4, background: "#e2e8f0", borderRadius: 4, marginTop: 8, overflow: 'hidden' }}>
+                              <div style={{ height: '100%', width: `${pct}%`, background: c.primary, transition: 'width 0.5s ease' }} />
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </div>
-        )}
 
-        {/* Table */}
-        <div className="table-responsive scroll-sm">
-          <table className="table bordered-table sm-table mb-0">
-            <thead>
-              <tr>
-                <th className="text-sm">S.No</th>
-                <th className="text-sm">Customer Details</th>
-                <th className="text-sm">Project & Mode</th>
-                <th className="text-sm">Total Budget</th>
-                <th className="text-sm">Payment Amount</th>
-                <th className="text-sm">Status</th>
-                <th className="text-sm text-center">Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {paginatedData.length > 0 ? (
-                paginatedData.map((item, i) => (
-                  <tr key={item.id || i}>
-                    <td>{(currentPage - 1) * itemsPerPage + i + 1}</td>
-                    <td>
-                      <div className="d-flex flex-column">
-                        <span className="fw-bold text-secondary-light">{item.customerName}</span>
-                        <span className="text-xs text-muted">Cust ID: {item.customerId}</span>
-                      </div>
+          {/* Filters Bar */}
+          <div className="row g-2 g-md-3 mb-4 align-items-end p-3 bg-light radius-12 mx-0 shadow-sm border">
+            <div className="col-12 col-md-6 col-lg-3">
+              <label className="form-label text-xs fw-bold text-muted">SEARCH</label>
+              <div className="position-relative">
+                <Icon icon="lucide:search" className="position-absolute top-50 start-0 translate-middle-y ms-2 text-muted" />
+                <input type="text" className="form-control form-control-sm h-40-px radius-8 " placeholder="Action or item..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+              </div>
+            </div>
+            <div className="col-6 col-md-3 col-lg-2">
+              <label className="form-label text-xs fw-bold text-muted">CATEGORY</label>
+              <select className="form-select form-select-sm h-40-px radius-8 fw-600" value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
+                <option value="ALL">All Flows</option>
+                <option value="INCOMING">Cash In</option>
+                <option value="OUTGOING">Cash Out</option>
+              </select>
+            </div>
+            <div className="col-6 col-md-3 col-lg-2">
+              <label className="form-label text-xs fw-bold text-muted">OWNER</label>
+              <select className="form-select form-select-sm h-40-px radius-8 fw-600" value={payerFilter} onChange={(e) => setPayerFilter(e.target.value)}>
+                <option value="ALL">All Members</option>
+                {PAYERS.map(name => <option key={name} value={name}>{name}</option>)}
+              </select>
+            </div>
+            <div className="col-6 col-lg-2">
+              <label className="form-label text-xs fw-bold text-muted">START DATE</label>
+              <input ref={startDateRef} type="date" className="form-control form-control-sm h-40-px radius-8" onChange={(e) => setStartDate(e.target.value)} />
+            </div>
+            <div className="col-6 col-lg-2">
+              <label className="form-label text-xs fw-bold text-muted">END DATE</label>
+              <input ref={endDateRef} type="date" className="form-control form-control-sm h-40-px radius-8" onChange={(e) => setEndDate(e.target.value)} />
+            </div>
+          </div>
+
+          {/* Table */}
+          <div className="table-responsive">
+            <table className="table table-hover align-middle responsive-report-table border">
+              <thead className="table-light">
+                <tr style={{ background: '#f8fafc' }}>
+                  <th className="text-xs py-3 ps-4 border-0">TIMELINE</th>
+                  <th className="text-xs py-3 border-0">PARTICULARS & REFERENCE</th>
+                  <th className="text-xs py-3 border-0">STATUS</th>
+                  <th className="text-xs py-3 text-end pe-4 border-0">TRANSACTION</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
+                   <tr><td colSpan="4" className="text-center py-5 text-muted small">Synchronizing Ledger...</td></tr>
+                ) : reportData.map((item) => (
+                  <tr key={item.id}>
+                    <td className="ps-4 text-sm" data-label="Date">
+                      <div className="fw-600">{new Date(item.date).toLocaleDateString("en-IN", { day: '2-digit', month: 'short' })}</div>
+                      <div className="text-xxs text-muted">{new Date(item.date).getFullYear()}</div>
                     </td>
-                    <td>
-                      <div className="d-flex flex-column">
-                        <h6 className="text-sm mb-0">{item.projectName}</h6>
-                        <span className="text-xs text-uppercase fw-bold text-primary-600">
-                          {item.payment_mode}
+                    <td data-label="Particulars">
+                      <div className="d-flex flex-column align-items-end align-items-md-start">
+                        <span className="fw-bold text-dark text-sm text-capitalize">{item.entity}</span>
+                        <span className="text-xs text-muted d-flex align-items-center gap-1">
+                            <Icon icon={item.type === 'INCOMING' ? "solar:wallet-bold-duotone" : "solar:user-bold-duotone"} width="12" />
+                            {item.payer} — {item.description}
                         </span>
                       </div>
                     </td>
-                    <td className="fw-semibold text-secondary-light">
-                      {formatCurrency(item.budget)}
-                    </td>
-                    <td>
-                      <div className="d-flex flex-column">
-                        <span className="text-success-600 fw-bold">{formatCurrency(item.amount)}</span>
-                        <small className="text-muted" style={{ fontSize: "10px" }}>
-                          Stage Goal: {formatCurrency(item.stage_amount)}
-                        </small>
-                      </div>
-                    </td>
-                    <td>
-                      <Link to={`/projects/${item.projectId}?mode=view`}>
-                        <span
-                          className={`px-12 py-4 radius-4 fw-bold text-xxs text-uppercase border ${
-                            item.payment_status === "Paid"
-                              ? "bg-success-50 text-success-600 border-success-100"
-                              : "bg-warning-50 text-warning-600 border-warning-100"
-                          }`}
-                        >
-                          {item.payment_status}
-                        </span>
-                      </Link>
-                    </td>
-                    <td className="text-center">
-                      <span className="badge bg-neutral-200 text-neutral-600 border border-neutral-400 px-12 py-6 radius-8">
-                        {item.formattedDate || "N/A"}
+                    <td data-label="Type">
+                      <span className={`badge px-2 py-1 radius-4 text-xxs ${item.type === 'INCOMING' ? 'bg-success-focus text-success' : 'bg-danger-focus text-danger'}`}>
+                        {item.type === 'INCOMING' ? 'RECEIVED' : 'SPENT'}
                       </span>
                     </td>
+                    <td className={`text-end pe-4 fw-bold ${item.type === 'INCOMING' ? 'text-success' : 'text-danger'}`} data-label="Amount">
+                      {item.type === 'INCOMING' ? '+' : '-'} ₹{item.amount.toLocaleString("en-IN")}
+                    </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="7" className="text-center py-40">
-                    <Icon icon="solar:document-text-outline" className="display-4 text-neutral-300" />
-                    <p className="text-secondary-light mt-2">No payment collection records found.</p>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="d-flex justify-content-between align-items-center mt-24">
-            <p className="text-sm text-secondary-light mb-0">
-              Showing {Math.min((currentPage - 1) * itemsPerPage + 1, reportData.length)} to{" "}
-              {Math.min(currentPage * itemsPerPage, reportData.length)} of {reportData.length} entries
-            </p>
-            <div className="d-flex align-items-center gap-2">
-              <button
-                className="btn btn-sm btn-light"
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage(1)}
-              >
-                «
-              </button>
-              <button
-                className="btn btn-sm btn-light"
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage((p) => p - 1)}
-              >
-                Previous
-              </button>
-
-              {/* Page number buttons — show at most 5 pages around current */}
-              {Array.from({ length: totalPages }, (_, i) => i + 1)
-                .filter(
-                  (page) =>
-                    page === 1 ||
-                    page === totalPages ||
-                    Math.abs(page - currentPage) <= 2
-                )
-                .reduce((acc, page, idx, arr) => {
-                  if (idx > 0 && page - arr[idx - 1] > 1) {
-                    acc.push("...");
-                  }
-                  acc.push(page);
-                  return acc;
-                }, [])
-                .map((page, idx) =>
-                  page === "..." ? (
-                    <span key={`ellipsis-${idx}`} className="px-8 text-secondary-light">...</span>
-                  ) : (
-                    <button
-                      key={page}
-                      className={`btn btn-sm ${currentPage === page ? "btn-primary" : "btn-light"}`}
-                      onClick={() => setCurrentPage(page)}
-                    >
-                      {page}
-                    </button>
-                  )
+                ))}
+                {!loading && reportData.length === 0 && (
+                    <tr>
+                        <td colSpan="4" className="text-center py-5">
+                          <Icon icon="solar:document-text-broken" width="48" className="text-muted mb-2" />
+                          <div className="text-muted small">No records match your selection.</div>
+                        </td>
+                    </tr>
                 )}
-
-              <button
-                className="btn btn-sm btn-light"
-                disabled={currentPage === totalPages}
-                onClick={() => setCurrentPage((p) => p + 1)}
-              >
-                Next
-              </button>
-              <button
-                className="btn btn-sm btn-light"
-                disabled={currentPage === totalPages}
-                onClick={() => setCurrentPage(totalPages)}
-              >
-                »
-              </button>
-            </div>
+              </tbody>
+            </table>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

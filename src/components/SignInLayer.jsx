@@ -70,9 +70,9 @@ const SignInLayer = () => {
     <section className='auth bg-base d-flex align-items-center justify-content-center flex-wrap'>
       <div className='py-32 px-24 d-flex flex-column justify-content-center'>
         <div className='max-w-464-px mx-auto w-100'>
-          <div className="d-flex flex-column align-items-center justify-content-around">
-            <Link to='/' className='mb-40 max-w-290-px'>
-              <img src='/assets/images/logo.png' alt='' />
+          <div className="d-flex flex-column align-items-center justify-content-center">
+            <Link to='/' className='mb-40 max-w-290-px d-flex flex-column align-items-center justify-content-center'>
+              <img src='/assets/images/logo.png' className="img-fluid" style={{maxWidth : "50%"}} alt='' />
             </Link>
             <h4 className='mb-12'>Sign In to your Account</h4>
             <p className='mb-32 text-secondary-light text-lg text-center'>

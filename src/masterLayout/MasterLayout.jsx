@@ -1,16 +1,8 @@
 import React, { useEffect, useRef, useState, useMemo } from "react";
 import { Icon } from "@iconify/react/dist/iconify.js";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
-import HasPermission from "../components/HasPermission";
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../features/auth/authSlice";
-import { getAllProjects } from "../features/projects/projectService";
-import { allStaffFunction } from "../features/staff/staffService";
-import { allCustomerFunction } from "../features/customers/customerService";
-import { clearNotifications, updatePaymentReminders } from "../features/notification/notificationSlice";
-import { fetchPaymentReminders } from "../features/notification/notificationService";
-import { fetchAllPayments } from "../features/payment/paymentService";
-import { fetchAllStagesForStats } from "../features/stages/stageService";
 import api from ".././api/axios.js"
 
 const MasterLayout = () => {
@@ -20,102 +12,18 @@ const MasterLayout = () => {
 
   // Redux Selectors
   const { user } = useSelector((state) => state.auth);
-  const { paymentReminders, totalCount } = useSelector((state) => state.notification);
-  const allStages = useSelector((state) => state.stages.allStages) || [];
-
-  // ✅ Pull the projects list from Redux — already loaded on mount
-  const allProjects = useSelector((state) => state.projects.projects) || [];
-
-  // ✅ Build a projectId → projectName lookup map (O(1) lookups, not O(n) per render)
-  const projectMap = useMemo(() => {
-    const map = {};
-    allProjects.forEach((p) => {
-      map[p.id] = p.projectName || p.name || "Unknown Project";
-    });
-    return map;
-  }, [allProjects]);
-
-  const overdue = paymentReminders?.overdue || [];
-  const unpaidCompleted = paymentReminders?.unpaidCompleted || [];
-
+  
   // Local State & Refs
   const [initialLoading, setInitialLoading] = useState(true);
   const [showAlert, setShowAlert] = useState(false);
   const [sidebarActive, seSidebarActive] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
-  const prevCountRef = useRef(totalCount);
-
-  const formatCurrency = (amount) => {
-    const validAmount = isNaN(Number(amount)) ? 0 : Number(amount);
-    return new Intl.NumberFormat("en-IN", {
-      style: "currency",
-      currency: "INR",
-      maximumFractionDigits: 0,
-    }).format(validAmount);
-  };
-
-  // Reminder fetcher — runs at 6:30, 12:30, 18:30
-  const lastRunRef = useRef();
-  useEffect(() => {
-    const checkTime = () => {
-      const now = new Date();
-      const currentTime = `${now.getHours()}:${now.getMinutes()}`;
-      const targetTimes = ["6:30", "12:30", "18:30"];
-      if (targetTimes.includes(currentTime) && lastRunRef.current !== currentTime) {
-        lastRunRef.current = currentTime;
-        fetchPaymentReminders(dispatch);
-      }
-    };
-    const interval = setInterval(checkTime, 1000);
-    return () => clearInterval(interval);
-  }, [dispatch]);
-
-  // Sync stages to payment reminders
-  useEffect(() => {
-    if (allStages.length > 0) {
-      const today = new Date();
-      const currentOverdue = allStages.filter(
-        (stage) =>
-          Number(stage.paid) < Number(stage.amount) &&
-          stage.duration &&
-          new Date(stage.duration) < today
-      );
-      const currentUnpaidCompleted = allStages.filter(
-        (stage) =>
-          stage.status === "Completed" && Number(stage.paid) < Number(stage.amount)
-      );
-      dispatch(
-        updatePaymentReminders({
-          overdue: currentOverdue,
-          unpaidCompleted: currentUnpaidCompleted,
-        })
-      );
-    }
-  }, [allStages, dispatch]);
-
-  // Show floating alert when totalCount increases
-  useEffect(() => {
-    if (totalCount > prevCountRef.current) {
-      setShowAlert(true);
-      const timer = setTimeout(() => setShowAlert(false), 5000);
-      return () => clearTimeout(timer);
-    }
-    prevCountRef.current = totalCount;
-  }, [totalCount]);
 
   // Fetch all data once on mount
   useEffect(() => {
     const fetchAllData = async () => {
       try {
         setInitialLoading(true);
-        await Promise.all([
-          getAllProjects(dispatch),
-          allStaffFunction(dispatch),
-          allCustomerFunction(dispatch),
-          fetchPaymentReminders(dispatch),
-          fetchAllPayments(dispatch),
-          fetchAllStagesForStats(dispatch),
-        ]);
       } catch (error) {
         console.error("Error loading dashboard data:", error);
       } finally {
@@ -126,34 +34,11 @@ const MasterLayout = () => {
   }, []);
 
 
-  // For email
-
-  const isFirstRender = useRef(true);
-
+  // Sidebar dropdown logic & Mobile Menu Auto-Close
   useEffect(() => {
-    // Skip the very first render — we only want to fire on NEW notifications
-    if (isFirstRender.current) {
-        isFirstRender.current = false;
-        prevCountRef.current = totalCount; // sync the ref on mount
-        return;
-    }
+    // --- FIX: Close mobile menu whenever the route changes ---
+    setMobileMenu(false);
 
-    // Only fire if count went UP (new alerts arrived)
-    if (totalCount > prevCountRef.current) {
-        const stagesToNotify = [
-            ...overdue.map(s => ({ ...s, type: 'overdue' })),
-            ...unpaidCompleted.map(s => ({ ...s, type: 'unpaid' })),
-        ];
-        if (stagesToNotify.length > 0) {
-            api.post('/notify/email', { stages: stagesToNotify })
-                .then(res => console.log(`✉️ Email triggered for ${res.data.sent} stage(s)`))
-                .catch(err => console.error('Email trigger failed:', err));
-        }
-    }
-}, [totalCount]);
-
-  // Sidebar dropdown logic
-  useEffect(() => {
     const handleDropdownClick = (event) => {
       event.preventDefault();
       const clickedLink = event.currentTarget;
@@ -182,41 +67,22 @@ const MasterLayout = () => {
         trigger.removeEventListener("click", handleDropdownClick)
       );
     };
-  }, [location.pathname]);
+  }, [location.pathname]); // This dependency ensures the effect runs on every page change
 
   const sidebarControl = () => seSidebarActive(!sidebarActive);
   const mobileMenuControl = () => setMobileMenu(!mobileMenu);
 
   const handleLogout = () => {
     dispatch(logout());
-    dispatch(clearNotifications());
     navigate("/sign-in");
   };
 
   // Route active checks
-  const isCustomerRoute =
-    location.pathname.startsWith("/customers-list") ||
-    location.pathname.startsWith("/add-customer") ||
-    location.pathname.startsWith("/edit-customer");
-  const isStaffRoute =
-    location.pathname.startsWith("/staff-list") ||
-    location.pathname.startsWith("/add-staff") ||
-    location.pathname.startsWith("/edit-staff");
-  const isProjectRoute =
-    location.pathname.startsWith("/projects-list") ||
-    location.pathname.startsWith("/add-projects") ||
-    location.pathname.startsWith("/projects/");
+  const isWalletRoute =
+    location.pathname.startsWith("/balance-list") ||
+    location.pathname.startsWith("/add-balance") ||
+    location.pathname.startsWith("/edit-balance");
 
-  // ─────────────────────────────────────────────────────────────
-  // Helper: resolve the project name for a notification item.
-  // Priority: item.projectName (if backend already sends it)
-  //           → projectMap lookup by item.projectId
-  //           → fallback string
-  // ─────────────────────────────────────────────────────────────
-  const resolveProjectName = (item) =>
-    item.projectName ||
-    (item.projectId && projectMap[item.projectId]) ||
-    "Unknown Project";
 
   return (
     <section className={mobileMenu ? "overlay active" : "overlay"}>
@@ -242,178 +108,75 @@ const MasterLayout = () => {
         </div>
         <div className="sidebar-menu-area">
           <ul className="sidebar-menu" id="sidebar-menu">
+  {/* --- Overview Section --- */}
+  <li className="sidebar-menu-header" style={{ fontSize: '10px', color: '#94a3b8', padding: '10px 20px', textTransform: 'uppercase', fontWeight: 700 }}>
+    Analytics
+  </li>
+  <li>
+    <NavLink
+      to="/"
+      className={({ isActive }) =>
+        `${isActive ? "active-page" : ""} d-flex align-items-center gap-2`
+      }
+    >
+      <Icon icon="solar:widget-bolt-bold-duotone" className="menu-icon" />
+      <span>Command Center</span>
+    </NavLink>
+  </li>
 
-            <HasPermission permission={["view-dashboard", "view-admin"]} mode="any">
-              <li>
-                <NavLink
-                  to="/"
-                  className={({ isActive }) =>
-                    `${isActive ? "active-page" : ""} d-flex align-items-center gap-2`
-                  }
-                >
-                  <Icon icon="solar:home-smile-angle-outline" className="menu-icon" />
-                  <span>Dashboard</span>
-                </NavLink>
-              </li>
-            </HasPermission>
+  {/* --- Treasury / Wallet Section --- */}
+  <li className="sidebar-menu-header" style={{ fontSize: '10px', color: '#94a3b8', padding: '20px 20px 10px', textTransform: 'uppercase', fontWeight: 700 }}>
+    Finance
+  </li>
+  <li className={`dropdown ${isWalletRoute ? "open" : ""}`}>
+    <NavLink
+      to="#"
+      className={`d-flex align-items-center ${isWalletRoute ? "active" : ""}`}
+    >
+      <Icon icon="solar:wallet-money-bold-duotone" className="menu-icon" />
+      <span>Treasury</span>
+    </NavLink>
+    <ul
+      className="sidebar-submenu"
+      style={{
+        maxHeight: isWalletRoute ? "500px" : "0px",
+        overflow: "hidden",
+        transition: "max-height 0.3s ease",
+      }}
+    >
+      <li>
+        <NavLink
+          to="/add-balance"
+          className={({ isActive }) => (isActive ? "active-page" : "")}
+        >
+          <i className="ri-add-circle-fill circle-icon text-success-main w-auto" /> 
+          Top Up Balance
+        </NavLink>
+      </li>
+      <li>
+        <NavLink
+          to="/balance-list"
+          className={({ isActive }) => (isActive ? "active-page" : "")}
+        >
+          <i className="ri-exchange-funds-fill circle-icon text-primary-600 w-auto" /> 
+          Transaction Logs
+        </NavLink>
+      </li>
+    </ul>
+  </li>
 
-            <HasPermission permission={["view-customers", "create-customer"]} mode="any">
-              <li className={`dropdown ${isCustomerRoute ? "open" : ""} mt-3`}>
-                <NavLink
-                  to="/customers-list"
-                  className={`d-flex align-items-center ${isCustomerRoute ? "active" : ""}`}
-                >
-                  <Icon icon="flowbite:users-group-outline" className="menu-icon" />
-                  <span>Customers</span>
-                </NavLink>
-                <ul
-                  className="sidebar-submenu"
-                  style={{
-                    maxHeight: isCustomerRoute ? "500px" : "0px",
-                    overflow: "hidden",
-                    transition: "max-height 0.3s ease",
-                  }}
-                >
-                  <HasPermission permission={"create-customer"}>
-                    <li>
-                      <NavLink
-                        to="/add-customer"
-                        className={({ isActive }) => (isActive ? "active-page" : "")}
-                      >
-                        <i className="ri-circle-fill circle-icon text-info-main w-auto" /> Add Customer
-                      </NavLink>
-                    </li>
-                  </HasPermission>
-                  <HasPermission permission={"view-customers"}>
-                    <li>
-                      <NavLink
-                        to="/customers-list"
-                        className={({ isActive }) => (isActive ? "active-page" : "")}
-                      >
-                        <i className="ri-circle-fill circle-icon text-primary-600 w-auto" /> Customer List
-                      </NavLink>
-                    </li>
-                  </HasPermission>
-                </ul>
-              </li>
-            </HasPermission>
+  {/* --- Operational Sections --- */}
+  <li>
+    <NavLink
+      to="/reports"
+      className={({ isActive }) => (isActive ? "active-page" : "")}
+    >
+      <Icon icon="solar:document-list-bold-duotone" className="menu-icon" />
+      <span>Financial Reports</span>
+    </NavLink>
+  </li>
 
-            <HasPermission permission={["view-staffs", "create-staff"]} mode="any">
-              <li className={`dropdown ${isStaffRoute ? "open" : ""}`}>
-                <NavLink to="/staff-list" className="d-flex align-items-center">
-                  <Icon icon="flowbite:user-circle-outline" className="menu-icon" />
-                  <span>Staffs</span>
-                </NavLink>
-                <ul
-                  className="sidebar-submenu"
-                  style={{
-                    maxHeight: isStaffRoute ? "500px" : "0px",
-                    overflow: "hidden",
-                    transition: "max-height 0.3s ease",
-                  }}
-                >
-                  <HasPermission permission={"create-staff"}>
-                    <li>
-                      <NavLink
-                        to="/add-staff"
-                        className={({ isActive }) => (isActive ? "active-page" : "")}
-                      >
-                        <i className="ri-circle-fill circle-icon text-info-main w-auto" /> Add Staff
-                      </NavLink>
-                    </li>
-                  </HasPermission>
-                  <HasPermission permission={"view-staffs"}>
-                    <li>
-                      <NavLink
-                        to="/staff-list"
-                        className={({ isActive }) => (isActive ? "active-page" : "")}
-                      >
-                        <i className="ri-circle-fill circle-icon text-primary-600 w-auto" /> Staffs List
-                      </NavLink>
-                    </li>
-                  </HasPermission>
-                </ul>
-              </li>
-            </HasPermission>
-
-            <HasPermission permission={["view-projects", "create-projects"]} mode="any">
-              <li className={`dropdown ${isProjectRoute ? "open" : ""}`}>
-                <NavLink
-                  to="/projects-list"
-                  className={`d-flex align-items-center ${isProjectRoute ? "active" : ""}`}
-                >
-                  <Icon icon="solar:folder-with-files-outline" className="menu-icon" />
-                  <span>Projects</span>
-                </NavLink>
-                <ul
-                  className="sidebar-submenu"
-                  style={{
-                    maxHeight: isProjectRoute ? "500px" : "0px",
-                    overflow: "hidden",
-                    transition: "max-height 0.3s ease",
-                  }}
-                >
-                  <HasPermission permission={"create-projects"}>
-                    <li>
-                      <NavLink
-                        to="/add-projects"
-                        className={({ isActive }) => (isActive ? "active-page" : "")}
-                      >
-                        <i className="ri-circle-fill circle-icon text-info-main w-auto" /> Add Project
-                      </NavLink>
-                    </li>
-                  </HasPermission>
-                  <HasPermission permission={"view-projects"}>
-                    <li>
-                      <NavLink
-                        to="/projects-list"
-                        className={({ isActive }) => (isActive ? "active-page" : "")}
-                      >
-                        <i className="ri-circle-fill circle-icon text-primary-600 w-auto" /> Project List
-                      </NavLink>
-                    </li>
-                  </HasPermission>
-                </ul>
-              </li>
-            </HasPermission>
-
-            <HasPermission permission={"manage-access"}>
-              <li>
-                <NavLink
-                  to="/role-access"
-                  className={({ isActive }) => (isActive ? "active-page" : "")}
-                >
-                  <Icon icon="solar:home-smile-angle-outline" className="menu-icon" />
-                  <span>Role &amp; Access</span>
-                </NavLink>
-              </li>
-            </HasPermission>
-
-            <HasPermission permission={"manage-remainders"}>
-              <li className="mt-3">
-                <NavLink
-                  to="/remainders"
-                  className={({ isActive }) => (isActive ? "active-page" : "")}
-                >
-                  <Icon icon="solar:bell-bing-outline" className="menu-icon" />
-                  <span>Notifications</span>
-                </NavLink>
-              </li>
-            </HasPermission>
-
-            <HasPermission permission={"view-reports"}>
-              <li className="mt-3">
-                <NavLink
-                  to="/reports"
-                  className={({ isActive }) => (isActive ? "active-page" : "")}
-                >
-                  <Icon icon="solar:chart-square-outline" className="menu-icon" />
-                  <span>Reports</span>
-                </NavLink>
-              </li>
-            </HasPermission>
-
-          </ul>
+</ul>
         </div>
       </aside>
 
@@ -437,118 +200,6 @@ const MasterLayout = () => {
 
             <div className="col-auto">
               <div className="d-flex flex-wrap align-items-center gap-3">
-
-                <HasPermission permission={"manage-remainders"}>
-                  {/* ── NOTIFICATION DROPDOWN ── */}
-                  <div className="dropdown">
-                    <button
-                      className="has-indicator w-40-px h-40-px bg-neutral-200 rounded-circle d-flex justify-content-center align-items-center"
-                      type="button"
-                      data-bs-toggle="dropdown"
-                    >
-                      <Icon icon="iconoir:bell" className="text-primary-light text-xl" />
-                      {totalCount > 0 && (
-                        <span
-                          className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
-                          style={{ fontSize: "10px" }}
-                        >
-                          {totalCount}
-                        </span>
-                      )}
-                    </button>
-
-                    <div className="dropdown-menu to-top dropdown-menu-lg p-0">
-                      <div className="m-16 py-12 px-16 radius-8 bg-primary-50 mb-16 d-flex align-items-center justify-content-between gap-2">
-                        <h6 className="text-lg text-primary-light fw-semibold mb-0">
-                          Notifications
-                        </h6>
-                        <span className="text-primary-600 fw-semibold text-lg w-40-px h-40-px rounded-circle bg-base d-flex justify-content-center align-items-center">
-                          {totalCount.toString().padStart(2, "0")}
-                        </span>
-                      </div>
-
-                      <div className="max-h-400-px overflow-y-auto scroll-sm pe-4">
-
-                        {/* ── OVERDUE REMINDERS ── */}
-                        {overdue.map((item, index) => {
-                          // ✅ Resolve project name from the Redux projectMap
-                          const projectName = resolveProjectName(item);
-                          const balance =
-                            item.balance ?? Number(item.amount) - Number(item.paid);
-
-                          return (
-                            <Link
-                              key={`overdue-${index}`}
-                              to={`/projects/${item.projectId}`}
-                              className="px-24 py-12 d-flex align-items-start gap-3 hover-bg-neutral-50 border-bottom"
-                            >
-                              <span className="w-44-px h-44-px bg-danger-subtle text-danger-main rounded-circle d-flex justify-content-center align-items-center flex-shrink-0">
-                                <Icon icon="solar:danger-bold" />
-                              </span>
-                              <div className="flex-grow-1 overflow-hidden">
-                                <h6 className="text-md fw-semibold mb-0 text-danger-main text-truncate">
-                                  Overdue: {item.stage_Name}
-                                </h6>
-                                {/* ✅ Now shows the real project name */}
-                                <p className="mb-0 text-sm text-secondary-light text-truncate">
-                                  {projectName}
-                                </p>
-                                <p className="mb-0 text-xs fw-bold text-danger-600">
-                                  Balance: {formatCurrency(balance)}
-                                </p>
-                              </div>
-                            </Link>
-                          );
-                        })}
-
-                        {/* ── UNPAID COMPLETED REMINDERS ── */}
-                        {unpaidCompleted.map((item, index) => {
-                          // ✅ Resolve project name from the Redux projectMap
-                          const projectName = resolveProjectName(item);
-                          const balance =
-                            item.balance ?? Number(item.amount) - Number(item.paid);
-
-                          return (
-                            <Link
-                              key={`unpaid-${index}`}
-                              to={`/projects/${item.projectId}`}
-                              className="px-24 py-12 d-flex align-items-start gap-3 hover-bg-neutral-50 border-bottom"
-                            >
-                              <span className="w-44-px h-44-px bg-warning-subtle text-warning-main rounded-circle d-flex justify-content-center align-items-center flex-shrink-0">
-                                <Icon icon="solar:check-read-bold" />
-                              </span>
-                              <div className="flex-grow-1 overflow-hidden">
-                                <h6 className="text-md fw-semibold mb-0 text-warning-main">
-                                  Payment Pending
-                                </h6>
-                                {/* ✅ Now shows stage name + real project name */}
-                                <p className="mb-0 text-sm text-secondary-light text-truncate">
-                                  {item.stage_Name} — {projectName}
-                                </p>
-                                <p className="mb-0 text-xs fw-bold text-warning-600">
-                                  Due: {formatCurrency(balance)}
-                                </p>
-                              </div>
-                            </Link>
-                          );
-                        })}
-
-                        {totalCount === 0 && (
-                          <div className="p-24 text-center text-secondary-light">
-                            All caught up!
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="text-center py-12 px-16">
-                        <Link to="/remainders" className="text-primary-600 fw-semibold text-md">
-                          View All
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                </HasPermission>
-
                 {/* ── PROFILE DROPDOWN ── */}
                 <div className="dropdown">
                   <button
@@ -620,46 +271,17 @@ const MasterLayout = () => {
         {/* Footer */}
         <footer className="d-footer">
           <div className="row align-items-center justify-content-between">
-            <div className="col-auto">
-              <p className="mb-0">© 2026 Infinus Tech. All Rights Reserved.</p>
-            </div>
+            
             <div className="col-auto">
               <p className="mb-0">
-                Made by{" "}
-                <a
-                  href="https://saitechnosolutions.com/"
-                  rel="noreferrer"
-                  target="_blank"
-                  className="text-primary-600"
-                >
-                  Sai Techno Solutions
-                </a>
+                Made with 💖{" "}
+                
+                  By Harish
+                
               </p>
             </div>
           </div>
         </footer>
-
-        {/* Floating Alert */}
-        <HasPermission permission={"manage-remainders"}>
-          {showAlert && (
-            <div className="position-fixed bottom-0 end-0 m-24 z-3 animate__animated animate__slideInRight">
-              <div className="bg-white radius-12 shadow-lg border-start border-4 border-danger-main p-16 d-flex align-items-center gap-3">
-                <div className="bg-danger-100 w-40-px h-40-px rounded-circle d-flex justify-content-center align-items-center">
-                  <Icon icon="solar:bell-bing-bold" className="text-danger-main text-xl" />
-                </div>
-                <div>
-                  <h6 className="text-sm mb-0 fw-bold">Action Required!</h6>
-                  <p className="text-xs text-secondary-light mb-0">
-                    New payment reminders received.
-                  </p>
-                </div>
-                <button onClick={() => setShowAlert(false)} className="ms-2">
-                  <Icon icon="line-md:close" />
-                </button>
-              </div>
-            </div>
-          )}
-        </HasPermission>
       </main>
     </section>
   );

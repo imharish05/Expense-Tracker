@@ -1,49 +1,74 @@
-import { useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useDispatch } from "react-redux";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { Toaster } from 'react-hot-toast';
+import toast, { Toaster } from 'react-hot-toast';
 
 // Layout & Components
 import ProtectedLayout from "./components/ProtectedLayout";
-import HasPermission from "./components/HasPermission";
 import RouteScrollToTop from "./helper/RouteScrollToTop";
-
-// Pages
 import HomePageOne from "./pages/HomePageOne";
-import AddUserPage from "./pages/AddUserPage";
-import ErrorPage from "./pages/ErrorPage";
-import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ReportPage from "./pages/ReportPage";
 import SignInPage from "./pages/SignInPage";
 import SignUpPage from "./pages/SignUpPage";
-import UsersListPage from "./pages/UsersListPage";
-import ReportPage from "./pages/ReportPage";
-import ProjectListPage from "./pages/ProjectListPage";
-import EditUserPageList from "./pages/EditUserListPage";
-import SingleProjectPage from "./pages/SingleProjectPage";
-import AddProjectPage from "./pages/AddProjectPage";
-import AddStaffPage from "./pages/AddStaffPage";
-import EditProjectPage from "./pages/EditProjectPage";
-import StaffListPage from "./pages/StaffListPage";
-import EditStaffListPage from "./pages/EditStaffListPage";
-import PermissionPage from "./pages/PermissionPage";
-import NotificationAlertPage from "./pages/NotificationAlertPage";
-// Services
+import ErrorPage from "./pages/ErrorPage";
+import TreasurePage from "./pages/TreasurePage";
+import TransactionPage from "./pages/TransactionPage";
+
+// Services & API
+import api from "./api/axios";
 import { loadUserFunction } from "./features/auth/authService";
-import AccessDeniedLayer from "./components/AccessDeniedLayer";
+import { fetchAllExpenseData } from "./features/expense/expenseService";
 
 function App() {
   const dispatch = useDispatch();
+  
+  // Treasury and Global State
+  const [treasuryData, setTreasuryData] = useState({ totalBalance: 0, recentLogs: [] });
+  const [globalLoading, setGlobalLoading] = useState(true);
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      loadUserFunction(dispatch);
-    } else {
-      dispatch({ type: 'auth/setInitialized' });
+  /**
+   * loadAppData - Defined with useCallback so it can be passed 
+   * safely to child components for refreshing.
+   */
+  const loadAppData = useCallback(async () => {
+    try {
+      // Parallel fetch for everything
+      await Promise.all([
+        dispatch(fetchAllExpenseData("monthly")),
+        api.get("/treasury/status").then(res => setTreasuryData(res.data))
+      ]);
+    } catch (err) {
+      toast.error("Failed to sync financial records");
+      console.error(err);
+    } finally {
+      setGlobalLoading(false);
     }
   }, [dispatch]);
 
-  
+  // Handle Auth and Initial Data Load
+  useEffect(() => {
+    const initApp = async () => {
+      const token = localStorage.getItem("token");
+      if (token) {
+        await loadUserFunction(dispatch);
+        await loadAppData(); // Load data only if token exists
+      } else {
+        dispatch({ type: 'auth/setInitialized' });
+        setGlobalLoading(false);
+      }
+    };
+    initApp();
+  }, [dispatch, loadAppData]);
+
+  if (globalLoading) {
+    return (
+      <div className="d-flex justify-content-center align-items-center" style={{height: '100vh'}}>
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <BrowserRouter>
@@ -53,25 +78,14 @@ function App() {
         {/* Public Routes */}
         <Route path='/sign-in' element={<SignInPage />} />
         <Route path='/sign-up' element={<SignUpPage />} />
-        <Route path='/forgot-password' element={<ForgotPasswordPage />} />
-        <Route path = "/access-denied" element = {<AccessDeniedLayer/>}/>
+
         {/* Protected Routes */}
         <Route element={<ProtectedLayout />}>
-        <Route path='*' element={<ErrorPage />} />
-          <Route path='/' element={<HasPermission permission={["view-admin", "view-dashboard"]} redirect={true}><HomePageOne /></HasPermission > } />
-          <Route path='/projects-list' element={<HasPermission permission="view-projects" redirect={true}><ProjectListPage /></HasPermission>} />
-          <Route path='/add-projects' element={<HasPermission permission="create-projects" redirect={true}><AddProjectPage /></HasPermission>} />
-          <Route path='/edit-project/:id' element={<HasPermission permission="edit-projects" redirect={true}><EditProjectPage /></HasPermission>} />
-          <Route path='/projects/:id' element={<HasPermission permission="view-projects" redirect={true}><SingleProjectPage /></HasPermission>} />
-          <Route path='/customers-list' element={<HasPermission permission="view-customers" redirect={true}><UsersListPage /></HasPermission>} />
-          <Route path='/add-customer' element={<HasPermission permission="create-customer" redirect={true}><AddUserPage /></HasPermission>} />
-          <Route path='/edit-customer/:id' element={<HasPermission permission="edit-customer" redirect={true}><EditUserPageList /></HasPermission>} />
-          <Route path='/staff-list' element={<HasPermission permission="view-staffs" redirect={true}><StaffListPage /></HasPermission>} />
-          <Route path='/add-staff' element={<HasPermission permission="create-staff" redirect={true}><AddStaffPage /></HasPermission>} />
-          <Route path='/edit-staff/:id' element={<HasPermission permission="edit-staff" redirect={true}><EditStaffListPage /></HasPermission>} />
-          <Route path='/role-access' element={<HasPermission permission="manage-permissions" redirect={true}><PermissionPage /></HasPermission>} />
-          <Route path='/remainders' element={<HasPermission permission="manage-remainders" redirect={true}><NotificationAlertPage /></HasPermission>} />
-          <Route path='/reports' element={<HasPermission permission="view-reports" redirect={true}><ReportPage /></HasPermission>} />
+          <Route path='/' element={<HomePageOne treasury={treasuryData} refresh={loadAppData} />} />
+          <Route path='/add-balance' element={<TreasurePage treasury={treasuryData} refresh={loadAppData} />} />
+          <Route path='/balance-list' element={<TransactionPage treasury={treasuryData} refresh={loadAppData} />} />
+          <Route path='/reports' element={<ReportPage />} />
+          <Route path='*' element={<ErrorPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
