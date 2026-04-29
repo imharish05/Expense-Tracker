@@ -99,18 +99,15 @@ const handleDelete = (id, type) => {
         <div className="text-xxs text-muted">This action cannot be undone.</div>
       </div>
       <div className="d-flex gap-2">
-        {/* Cancel Button */}
         <button
           onClick={() => toast.dismiss(t.id)}
           className="btn btn-light btn-sm radius-8 py-1 px-3 border text-xs fw-bold"
         >
           No
         </button>
-        {/* Confirm Button */}
         <button
           onClick={() => {
             toast.dismiss(t.id);
-            // Execute the delete logic
             dispatch(deleteEntry(id, type)).then(() => fetchTreasury());
           }}
           className="btn btn-danger btn-sm radius-8 py-1 px-2 text-xs fw-bold"
@@ -121,7 +118,7 @@ const handleDelete = (id, type) => {
     </div>
   ), {
     id: "confirm-delete-action",
-    duration: 6000, // Stays open longer to give user time to think
+    duration: 6000,
     style: {
       minWidth: '300px',
       borderRadius: '12px',
@@ -136,7 +133,6 @@ const handleDelete = (id, type) => {
     const formData = new FormData(e.target);
     const updatedData = Object.fromEntries(formData.entries());
 
-    // Map logic back to schema keys
     if (editModal.data.type === 'OUTGOING') {
         updatedData.item = updatedData.entity;
         updatedData.paid_by = updatedData.payer;
@@ -163,7 +159,7 @@ const handleDelete = (id, type) => {
       type: "INCOMING",
       payer: "Company",
       amount: Number(p.amount) || 0,
-      isProject: true // Flag to hide edit/delete for project payments if necessary
+      isProject: true 
     }));
 
     const capitalInjections = treasury.map((log) => ({
@@ -353,13 +349,13 @@ const handleDelete = (id, type) => {
           </div>
 
           {/* Table */}
-          {/* Table */}
 <div className="table-responsive" style={{ borderRadius: 16, overflow: 'hidden', border: '1px solid #e8edf4', boxShadow: '0 2px 12px rgba(15,23,42,0.06)' }}>
   <table className="table align-middle responsive-report-table mb-0" style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
     <thead>
       <tr style={{ background: 'linear-gradient(135deg, #f1f5f9 0%, #e8edf4 100%)' }}>
         <th style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.08em', color: '#64748b', padding: '14px 16px 14px 24px', borderBottom: '2px solid #e2e8f0', whiteSpace: 'nowrap', textTransform: 'uppercase' }}>Timeline</th>
-        <th style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.08em', color: '#64748b', padding: '14px 16px', borderBottom: '2px solid #e2e8f0', textTransform: 'uppercase' }}>Particulars & Reference</th>
+        <th style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.08em', color: '#64748b', padding: '14px 16px', borderBottom: '2px solid #e2e8f0', textTransform: 'uppercase' }}>Entity</th>
+        <th style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.08em', color: '#64748b', padding: '14px 16px', borderBottom: '2px solid #e2e8f0', textTransform: 'uppercase' }}>Reference</th>
         <th style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.08em', color: '#64748b', padding: '14px 16px', borderBottom: '2px solid #e2e8f0', textTransform: 'uppercase' }}>Status</th>
         <th style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.08em', color: '#64748b', padding: '14px 16px', borderBottom: '2px solid #e2e8f0', textAlign: 'right', textTransform: 'uppercase' }}>Transaction</th>
         <th style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.08em', color: '#64748b', padding: '14px 24px 14px 16px', borderBottom: '2px solid #e2e8f0', textAlign: 'center', textTransform: 'uppercase' }}>Actions</th>
@@ -368,7 +364,7 @@ const handleDelete = (id, type) => {
     <tbody>
       {loading ? (
         <tr>
-          <td colSpan="5" style={{ textAlign: 'center', padding: '56px 0', color: '#94a3b8', fontSize: 13 }}>
+          <td colSpan="6" style={{ textAlign: 'center', padding: '56px 0', color: '#94a3b8', fontSize: 13 }}>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
               <div style={{ width: 36, height: 36, borderRadius: '50%', border: '3px solid #e2e8f0', borderTopColor: '#5B8EF0', animation: 'spin 0.8s linear infinite' }} />
               Synchronizing Ledger...
@@ -407,15 +403,53 @@ const handleDelete = (id, type) => {
               </div>
             </td>
 
-            {/* Particulars */}
-            <td data-label="Particulars" style={{ padding: '14px 16px', borderBottom: '1px solid #f1f5f9', maxWidth: 240 }}>
-              <div style={{ fontWeight: 700, fontSize: 13, color: '#0f172a', textTransform: 'capitalize', marginBottom: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {item.entity}
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#94a3b8', fontWeight: 500 }}>
-                <Icon icon={isIncoming ? "solar:wallet-bold-duotone" : "solar:user-bold-duotone"} width="11" style={{ flexShrink: 0 }} />
-                <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.description}</span>
-              </div>
+            {/* Entity Column (New Split) */}
+            <td data-label="Entity" style={{ padding: '14px 16px', borderBottom: '1px solid #f1f5f9' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{
+                        width: '28px',
+                        height: '28px',
+                        borderRadius: '8px',
+                        background: isIncoming ? '#f0fdf4' : '#fff1f2',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        border: `1px solid ${isIncoming ? '#dcfce7' : '#fee2e2'}`
+                    }}>
+                        <Icon 
+                            icon={isIncoming ? "solar:user-rounded-bold-duotone" : "solar:shop-bold-duotone"} 
+                            width="16" 
+                            style={{ color: isIncoming ? '#16a34a' : '#ef4444' }} 
+                        />
+                    </div>
+                    <span style={{ fontWeight: 700, fontSize: '13px', color: '#0f172a', whiteSpace: 'nowrap' }}>
+                        {item.entity}
+                    </span>
+                </div>
+            </td>
+
+            {/* Reference Column (New Split) */}
+            <td data-label="Reference" style={{ padding: '14px 16px', borderBottom: '1px solid #f1f5f9' }}>
+                <div style={{ 
+                    fontSize: '10px', 
+                    color: '#64748b', 
+                    fontWeight: 600,
+                    background: '#f1f5f9',
+                    padding: '4px 10px',
+                    borderRadius: '6px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.02em',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    maxWidth: '180px',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap'
+                }}>
+                    <Icon icon="lucide:info" width="10" />
+                    {item.description}
+                </div>
             </td>
 
             {/* Status Badge */}
@@ -484,7 +518,7 @@ const handleDelete = (id, type) => {
       })}
       {!loading && reportData.length === 0 && (
         <tr>
-          <td colSpan="5" style={{ textAlign: 'center', padding: '64px 0' }}>
+          <td colSpan="6" style={{ textAlign: 'center', padding: '64px 0' }}>
             <Icon icon="solar:document-text-broken" width="44" style={{ color: '#cbd5e1', display: 'block', margin: '0 auto 12px' }} />
             <div style={{ fontSize: 13, fontWeight: 600, color: '#94a3b8' }}>No records match your selection.</div>
             <div style={{ fontSize: 11, color: '#cbd5e1', marginTop: 4 }}>Try adjusting your filters</div>
